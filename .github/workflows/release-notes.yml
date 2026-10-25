@@ -1,0 +1,28 @@
+name: Update release notes
+
+# Rewrites a published release's title and notes from its CHANGELOG.md section.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v1.1.0"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Update notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          .github/scripts/release-notes.sh "${TAG#v}" > notes.md
+          test -s notes.md
+          gh release edit "$TAG" --title "$TAG" --notes-file notes.md

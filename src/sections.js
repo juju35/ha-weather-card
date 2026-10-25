@@ -1,0 +1,458 @@
+/*
+ * The sections of the weather card, in the order of `sections`: each one draws itself from the card's model and
+ * returns nothing when it has no data, so that a missing integration simply hides its section.
+ */
+
+const WX_CARDINALS = {
+  en: ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"],
+  fr: ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"],
+};
+
+// A wind bearing in degrees, or already a cardinal point ("NW"), as { deg, label }.
+function wxBearing(lang, b) {
+  const n = wxNumber(b);
+  const en = WX_CARDINALS.en;
+  if (n == null) {
+    const i = en.indexOf(String(b ?? "").toUpperCase());
+    return i < 0 ? null : { deg: i * 22.5, label: (WX_CARDINALS[lang] || en)[i] };
+  }
+  const i = Math.round((((n % 360) + 360) % 360) / 22.5) % 16;
+  return { deg: n, label: (WX_CARDINALS[lang] || en)[i] };
+}
+
+// A colour for a temperature in °C (cold blue → mild green → hot red), for the daily range bars.
+const WX_TEMP_STOPS = [
+  [-10, [92, 107, 192]],
+  [0, [41, 182, 246]],
+  [10, [38, 198, 218]],
+  [16, [102, 187, 106]],
+  [22, [255, 202, 40]],
+  [28, [251, 140, 0]],
+  [35, [229, 57, 53]],
+];
+function wxTempColor(c) {
+  const s = WX_TEMP_STOPS;
+  if (c <= s[0][0]) return `rgb(${s[0][1]})`;
+  for (let i = 1; i < s.length; i++) {
+    if (c <= s[i][0]) {
+      const k = (c - s[i - 1][0]) / (s[i][0] - s[i - 1][0]);
+      return `rgb(${s[i][1].map((v, j) => Math.round(s[i - 1][1][j] + (v - s[i - 1][1][j]) * k)).join(",")})`;
+    }
+  }
+  return `rgb(${s.at(-1)[1]})`;
+}
+const wxToC = (t, unit) => (/F/.test(unit || "") ? ((t - 32) * 5) / 9 : t);
+
+const wxSectionTitle = (card, key, extra = "") =>
+  `<div class="section-title"><span>${wxEsc(card._t(`s_${key}`))}</span>${extra}</div>`;
+
+const wxChip = (icon, text, { color, cls = "", more, title, style } = {}) =>
+  `<span class="chip ${cls}"${color ? ` style="--k:${color}${style ? `;${style}` : ""}"` : style ? ` style="${style}"` : ""}${
+    more ? ` data-more="${wxEsc(more)}" role="button" tabindex="0"` : ""
+  }${title ? ` title="${wxEsc(title)}"` : ""}><ha-icon icon="${icon}"></ha-icon>${wxEsc(text)}</span>`;
+
+// ── Alerts: weather warnings, drought restrictions, lightning nearby, storms in the forecast ──
+function wxAlertChips(card, m, { onlyActive = false } = {}) {
+  const out = [];
+  const al = m.alerts;
+  if (al) {
+    const active = al.phenomena.filter((p) => p.level >= 2).sort((a, b) => b.level - a.level);
+    for (const p of active) {
+      out.push(
+        wxChip(p.icon, `${card._t(`ph_${p.key}`)}`, {
+          color: WX_ALERT_COLORS[p.level],
+          cls: `tint lvl${p.level}${p.level >= 3 ? " pulse" : ""}`,
+          more: al.entity,
+          title: card._t("vigilance_level", { v: card._t(`lvl_${p.level}`) }),
+        }),
+      );
+    }
+    if (!active.length && !onlyActive) out.push(wxChip("mdi:shield-check-outline", card._t("no_alert"), { color: WX_ALERT_COLORS[1], cls: "tint", more: al.entity }));
+  }
+  const vg = m.vigieau;
+  if (vg && (vg.level >= 1 || !onlyActive)) {
+    out.push(
+      wxChip(vg.level >= 1 ? "mdi:water-alert-outline" : "mdi:water-check-outline", `${card._t("vigieau")} · ${card._t(`vg_${vg.level}`)}`, {
+        color: WX_VG_COLORS[vg.level],
+        cls: `tint${vg.level >= 3 ? " pulse" : ""}`,
+        more: vg.entity,
+      }),
+    );
+  }
+  const lt = m.lightning;
+  if (lt?.count > 0) {
+    const d = lt.dist != null ? `${wxFmtNum(m.lang, lt.dist, 0)} ${lt.unit}` : "";
+    out.push(
+      wxChip("mdi:flash", d ? card._t("lightning_n", { n: lt.count, d }) : `${card._t("lightning")} · ${lt.count}`, {
+        color: "#7e57c2",
+        cls: "tint pulse bolt",
+        more: lt.entity,
+      }),
+    );
+  }
+  if (m.storm) out.push(wxChip("mdi:weather-lightning", card._t("storm_at", { t: m.storm }), { color: "#7e57c2", cls: "tint" }));
+  return out;
+}
+
+function wxSectionAlerts(card, m) {
+  const chips = wxAlertChips(card, m);
+  if (!chips.length) return "";
+  const restrictions = m.vigieau?.restrictions?.length
+    ? `<ul class="restrictions">${m.vigieau.restrictions
+        .slice(0, 4)
+        .map((r) => `<li><b>${wxEsc(r.usage)}</b>${r.text ? ` · ${wxEsc(r.text)}` : ""}</li>`)
+        .join("")}</ul>`
+    : "";
+  return `<div class="section s-alerts">${wxSectionTitle(card, "alerts")}<div class="chips">${chips.join("")}</div>${restrictions}</div>`;
+}
+
+// ── Rain in the next hour (Météo-France), with the rain / snow / frost chances ──
+function wxSectionRain(card, m) {
+  const r = m.rain;
+  const chances = [
+    ["rain_chance", "mdi:umbrella-outline"],
+    ["snow_chance", "mdi:snowflake"],
+    ["freeze_chance", "mdi:snowflake-alert"],
+  ]
+    .filter(([k]) => m.chances?.[k] != null && (k === "rain_chance" || m.chances[k] > 0))
+    .map(([k, icon]) => wxChip(icon, card._t(k, { v: `${wxFmtNum(m.lang, m.chances[k], 0)} %` }), { more: m.ent[k] }));
+  if (!r && !chances.length) return "";
+  let body = "";
+  if (r) {
+    const segs = r.segments
+      .map(
+        (s, i) =>
+          `<span class="seg l${s.level}" style="flex:${s.span};--d:${(i * 0.05).toFixed(2)}s" title="${wxEsc(
+            `${card._t("min_n", { n: s.min })} · ${card._t(`rain_${s.level}`)}`,
+          )}"></span>`,
+      )
+      .join("");
+    const ticks = [0, 15, 30, 45, 60].map((n) => `<span>${wxEsc(n ? card._t("min_n", { n }) : card._t("now"))}</span>`).join("");
+    body =
+      `<div class="rain-head${r.raining ? " wet" : ""}" data-more="${wxEsc(m.ent.next_rain)}" role="button" tabindex="0"><ha-icon icon="${
+        r.raining ? "mdi:weather-pouring" : r.next != null ? "mdi:weather-rainy" : "mdi:weather-cloudy-clock"
+      }"></ha-icon><span>${wxEsc(r.headline)}</span></div>` +
+      `<div class="rainbar">${segs}</div><div class="ticks">${ticks}</div>`;
+  }
+  return `<div class="section s-rain">${wxSectionTitle(card, "rain")}${body}${chances.length ? `<div class="chips">${chances.join("")}</div>` : ""}</div>`;
+}
+
+// ── Hourly forecast: icons, a temperature curve and the precipitation ──
+const WX_COL = 52;
+function wxSectionHourly(card, m) {
+  const h = m.hourly;
+  if (!h?.length) return "";
+  const temps = h.map((x) => x.temperature).filter((t) => t != null);
+  if (!temps.length) return "";
+  const lo = Math.min(...temps);
+  const hi = Math.max(...temps);
+  const W = h.length * WX_COL;
+  const y = (t) => (hi === lo ? 30 : 40 - ((t - lo) / (hi - lo)) * 20);
+  const pts = h.map((x, i) => [i * WX_COL + WX_COL / 2, y(x.temperature ?? lo)]);
+  // A smooth curve through the points (Catmull-Rom as cubic Béziers).
+  let d = `M${pts[0][0]} ${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) {
+    const p0 = pts[i - 2] || pts[i - 1];
+    const p1 = pts[i - 1];
+    const p2 = pts[i];
+    const p3 = pts[i + 1] || p2;
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += `C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p2[0]} ${p2[1].toFixed(1)}`;
+  }
+  const area = `${d}L${pts.at(-1)[0]} 48L${pts[0][0]} 48Z`;
+  const labels = pts
+    .map((p, i) =>
+      h[i].temperature == null ? "" : `<circle cx="${p[0]}" cy="${p[1].toFixed(1)}" r="2.4"/><text x="${p[0]}" y="${(p[1] - 6).toFixed(1)}">${wxFmtNum(m.lang, h[i].temperature, 0)}°</text>`,
+    )
+    .join("");
+  const curve =
+    `<svg class="curve" width="${W}" height="48" viewBox="0 0 ${W} 48"><defs><linearGradient id="wx-area" x1="0" y1="0" x2="0" y2="1">` +
+    '<stop offset="0" stop-color="var(--wx-color)" stop-opacity=".28"/><stop offset="1" stop-color="var(--wx-color)" stop-opacity="0"/></linearGradient></defs>' +
+    `<path class="area" d="${area}" fill="url(#wx-area)"/><path class="line" d="${d}" pathLength="100"/><g class="pts">${labels}</g></svg>`;
+  const top = h
+    .map(
+      (x, i) =>
+        `<div class="hcol${i === 0 ? " now" : ""}"><span class="t">${wxEsc(i === 0 ? card._t("now") : wxTime(m.lang, x.datetime, true))}</span>` +
+        `<ha-icon icon="${wxCondIcon(x.condition, x.night)}" style="color:${wxCondColor(x.condition, x.night)}"></ha-icon></div>`,
+    )
+    .join("");
+  // The precipitation of each hour: its probability, or its amount when the provider gives no probability.
+  const bottom = h
+    .map((x) => {
+      const p = x.precipitation_probability;
+      const amount = x.precipitation;
+      const pct = p != null ? p : amount != null ? Math.min(100, amount * 25) : 0;
+      const txt = p != null ? (p ? `${wxFmtNum(m.lang, p, 0)} %` : "") : amount ? `${wxFmtNum(m.lang, amount, 1)}` : "";
+      return `<div class="pcol"><div class="pbar"><span style="height:${Math.max(0, Math.min(100, pct))}%"></span></div><span class="pv">${wxEsc(txt)}</span></div>`;
+    })
+    .join("");
+  return (
+    `<div class="section s-hourly">${wxSectionTitle(card, "hourly")}<div class="hscroll"><div class="track" style="width:${W}px">` +
+    `<div class="hrow">${top}</div>${curve}<div class="hrow">${bottom}</div></div></div></div>`
+  );
+}
+
+// ── Daily forecast: one row a day, with its temperature range against the whole week ──
+function wxSectionDaily(card, m) {
+  const days = m.daily;
+  if (!days?.length) return "";
+  const lows = days.map((d) => d.templow ?? d.temperature).filter((t) => t != null);
+  const highs = days.map((d) => d.temperature).filter((t) => t != null);
+  if (!highs.length) return "";
+  const min = Math.min(...lows, ...(m.temp != null ? [m.temp] : []));
+  const max = Math.max(...highs, ...(m.temp != null ? [m.temp] : []));
+  const span = max - min || 1;
+  const unit = m.tempUnit;
+  const rows = days
+    .map((d, i) => {
+      const lo = d.templow ?? d.temperature;
+      const hi = d.temperature;
+      const left = ((lo - min) / span) * 100;
+      const width = Math.max(4, ((hi - lo) / span) * 100);
+      const grad = `linear-gradient(90deg, ${wxTempColor(wxToC(lo, unit))}, ${wxTempColor(wxToC(hi, unit))})`;
+      const today = i === 0 && wxSameDay(new Date(d.datetime), new Date());
+      const now = today && m.temp != null ? `<span class="nowdot" style="left:${(((m.temp - min) / span) * 100).toFixed(1)}%"></span>` : "";
+      const p = d.precipitation_probability;
+      return (
+        `<div class="drow" style="--d:${(i * 0.06).toFixed(2)}s"><span class="day">${wxEsc(today ? card._t("today") : wxDay(m.lang, d.datetime))}</span>` +
+        `<ha-icon icon="${wxCondIcon(d.condition, false)}" style="color:${wxCondColor(d.condition, false)}"></ha-icon>` +
+        `<span class="pp">${p ? `${wxFmtNum(m.lang, p, 0)} %` : ""}</span>` +
+        `<span class="lo">${wxFmtNum(m.lang, lo, 0)}°</span>` +
+        `<span class="range"><span class="fill" style="left:${left.toFixed(1)}%;width:${width.toFixed(1)}%;background:${grad}"></span>${now}</span>` +
+        `<span class="hi">${wxFmtNum(m.lang, hi, 0)}°</span></div>`
+      );
+    })
+    .join("");
+  return `<div class="section s-daily">${wxSectionTitle(card, "daily")}<div class="daily">${rows}</div></div>`;
+}
+
+// ── UV index: a gauge with the current value, today's peak and the advice of its level ──
+function wxSectionUv(card, m) {
+  const u = m.uv;
+  if (!u) return "";
+  const lvl = u.level;
+  const pos = Math.min(100, (u.v / 11) * 100);
+  const peak = u.max != null && u.max > u.v ? card._t("uv_max", { v: wxFmtNum(m.lang, u.max, 0) }) : "";
+  return (
+    `<div class="section s-uv">${wxSectionTitle(card, "uv")}` +
+    `<div class="uvhead"${u.entity ? ` data-more="${wxEsc(u.entity)}" role="button" tabindex="0"` : ""}><span class="uvval" style="--k:${WX_UV[lvl].color}">${wxFmtNum(m.lang, u.v, 0)}</span>` +
+    `<div class="uvtxt"><b style="color:${WX_UV[lvl].color}">${wxEsc(card._t(`uv_${lvl}`))}</b><span>${wxEsc(card._t(`uv_advice_${lvl}`))}${peak ? ` · ${wxEsc(peak)}` : ""}</span></div></div>` +
+    `<div class="uvbar"><span class="mark" style="left:${pos.toFixed(1)}%;--k:${WX_UV[lvl].color}"></span></div></div>`
+  );
+}
+
+// ── Pollen: one row per species, the most present first ──
+function wxSectionPollen(card, m) {
+  const p = m.pollen;
+  if (!p) return "";
+  const risk =
+    p.risk != null
+      ? `<span class="chip tint" style="--k:${WX_LEVEL5[p.risk]}" data-more="${wxEsc(m.ent.pollen_risk)}" role="button" tabindex="0"><ha-icon icon="mdi:flower-pollen"></ha-icon>${wxEsc(card._t(`pl_${p.risk}`))}</span>`
+      : "";
+  const items = p.items.filter((x) => x.level >= 1).slice(0, 8);
+  const rows = items.length
+    ? items
+        .map(
+          (x, i) =>
+            `<div class="prow" data-more="${wxEsc(x.entity)}" role="button" tabindex="0" style="--k:${WX_LEVEL5[x.level]};--d:${(i * 0.05).toFixed(2)}s">` +
+            `<ha-icon icon="${/grass|weed|ragweed|mugwort|plantain|sorrel|nettle/.test(x.species) ? "mdi:grass" : "mdi:tree-outline"}"></ha-icon>` +
+            `<span class="pname">${wxEsc(card._t(`p_${x.species}`))}</span>` +
+            `<span class="dots">${[1, 2, 3, 4, 5].map((n) => `<i class="${n <= x.level ? "on" : ""}"></i>`).join("")}</span>` +
+            `<span class="plabel">${wxEsc(card._t(`pl_${x.level}`))}</span></div>`,
+        )
+        .join("")
+    : `<div class="empty-line"><ha-icon icon="mdi:flower-pollen-outline"></ha-icon>${wxEsc(card._t("pollen_none"))}</div>`;
+  return `<div class="section s-pollen">${wxSectionTitle(card, "pollen", risk)}<div class="pollen">${rows}</div></div>`;
+}
+
+// ── Sun: its course over the day, sunrise and sunset ──
+function wxSectionSun(card, m) {
+  const s = m.sun;
+  if (!s) return "";
+  const P0 = [24, 56];
+  const C = [200, -20];
+  const P2 = [376, 56];
+  const at = (t) => [(1 - t) ** 2 * P0[0] + 2 * (1 - t) * t * C[0] + t * t * P2[0], (1 - t) ** 2 * P0[1] + 2 * (1 - t) * t * C[1] + t * t * P2[1]];
+  const arc = `M${P0[0]} ${P0[1]}Q${C[0]} ${C[1]} ${P2[0]} ${P2[1]}`;
+  let done = "";
+  let dot = "";
+  if (s.up) {
+    const t = wxClamp(s.frac, 0, 1);
+    const mid = [(1 - t) * P0[0] + t * C[0], (1 - t) * P0[1] + t * C[1]];
+    const [x, y] = at(t);
+    done = `<path class="done" d="M${P0[0]} ${P0[1]}Q${mid[0].toFixed(1)} ${mid[1].toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)}"/>`;
+    dot = `<circle class="sunglow" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9"/><circle class="sundot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5"/>`;
+  }
+  const dl = Math.max(0, Math.round((s.set - s.rise) / 60000));
+  return (
+    `<div class="section s-sun">${wxSectionTitle(card, "sun")}<div class="sun${s.up ? " up" : ""}" data-more="${wxEsc(m.ent.sun)}" role="button" tabindex="0">` +
+    `<svg viewBox="0 0 400 64" preserveAspectRatio="xMidYMid meet"><path class="horizon" d="M0 56H400"/><path class="arc" d="${arc}"/>${done}${dot}</svg>` +
+    `<div class="suntimes"><span><ha-icon icon="mdi:weather-sunset-up"></ha-icon>${wxEsc(wxTime(m.lang, s.rise))}</span>` +
+    `<span class="dl">${wxEsc(card._t("daylight", { h: Math.floor(dl / 60), m: String(dl % 60).padStart(2, "0") }))}</span>` +
+    `<span><ha-icon icon="mdi:weather-sunset-down"></ha-icon>${wxEsc(wxTime(m.lang, s.set))}</span></div></div></div>`
+  );
+}
+
+const WX_SECTION_RENDER = {
+  alerts: wxSectionAlerts,
+  rain: wxSectionRain,
+  hourly: wxSectionHourly,
+  daily: wxSectionDaily,
+  uv: wxSectionUv,
+  pollen: wxSectionPollen,
+  sun: wxSectionSun,
+};
+
+// ── Styles ───────────────────────────────────────────────────────────────────
+const WX_STYLES = `${WX_SCENE_STYLES}
+  :host { display: block; height: 100%; }
+  ha-card { height: 100%; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+  ha-card > *, .section, .info, .hero > div { min-width: 0; }
+  .empty { display: flex; align-items: center; gap: 10px; color: var(--secondary-text-color); }
+  .header { display: flex; align-items: center; gap: 10px; }
+  .badge { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+           background: color-mix(in srgb, var(--wx-color) 16%, transparent); color: var(--wx-color); transition: background .4s, color .4s; }
+  .badge ha-icon { --mdc-icon-size: 22px; }
+  .titles { flex: 1; min-width: 0; cursor: pointer; }
+  .name { font-size: 16px; font-weight: 500; line-height: 1.25; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sub { font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .st { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; padding: 1px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;
+        white-space: nowrap; background: color-mix(in srgb, var(--st-color, var(--wx-color)) 15%, transparent); color: var(--st-color, var(--wx-color)); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .st.alert .dot { animation: wx-blink 1.4s ease-in-out infinite; }
+  button { font: inherit; cursor: pointer; border: none; }
+  .zoom { all: unset; flex-shrink: 0; cursor: pointer; width: 24px; height: 24px; margin: -4px -4px -4px 0; border-radius: 50%;
+          display: grid; place-items: center; color: var(--secondary-text-color); }
+  .zoom ha-icon { --mdc-icon-size: 16px; }
+  .zoom:hover { background: color-mix(in srgb, var(--secondary-text-color) 16%, transparent); color: var(--primary-text-color); }
+  .zoom:focus-visible, [role=button]:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 1px; }
+  [data-more] { cursor: pointer; }
+
+  .hero { display: flex; align-items: center; gap: 14px; }
+  .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; cursor: pointer; }
+  .big .val { font-size: 40px; font-weight: 300; line-height: 1; color: var(--primary-text-color); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .big .val small { font-size: 18px; color: var(--secondary-text-color); font-weight: 400; }
+  .big .hilo { font-size: 13px; color: var(--secondary-text-color); white-space: nowrap; }
+  .big .hilo b { font-weight: 500; color: var(--primary-text-color); }
+  .feels { font-size: 12px; color: var(--secondary-text-color); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; padding: 1px 8px 1px 5px; border-radius: 12px;
+          background: var(--secondary-background-color, rgba(128,128,128,.12)); color: var(--secondary-text-color); white-space: nowrap; }
+  .chip ha-icon { --mdc-icon-size: 13px; }
+  .chip.tint { background: color-mix(in srgb, var(--k) 16%, transparent); color: var(--k); }
+  .chip.tint.lvl2 { color: color-mix(in srgb, var(--k) 70%, var(--primary-text-color)); }
+  .chip.pulse { animation: wx-chip 2s ease-in-out infinite; }
+  .chip.bolt ha-icon { animation: wx-blink 1.2s steps(2) infinite; }
+  .chip .arrow { display: inline-flex; transition: transform .6s; }
+
+  .section { display: flex; flex-direction: column; gap: 8px; }
+  .section-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 500;
+                   color: var(--secondary-text-color); text-transform: uppercase; letter-spacing: .04em; }
+  .section-title .chip { text-transform: none; letter-spacing: 0; }
+  .empty-line { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--secondary-text-color); }
+  .empty-line ha-icon { --mdc-icon-size: 16px; }
+
+  .restrictions { margin: 0; padding-left: 18px; font-size: 12px; color: var(--secondary-text-color); display: flex; flex-direction: column; gap: 2px; }
+  .restrictions b { font-weight: 500; color: var(--primary-text-color); }
+
+  .rain-head { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--primary-text-color); }
+  .rain-head ha-icon { --mdc-icon-size: 18px; color: #42a5f5; }
+  .rain-head.wet ha-icon { animation: wx-bob-icon 1.6s ease-in-out infinite; }
+  .rainbar { display: flex; gap: 2px; height: 14px; border-radius: 7px; overflow: hidden; background: var(--secondary-background-color, rgba(128,128,128,.12)); }
+  .rainbar .seg { min-width: 2px; transform-origin: bottom; }
+  .enter .rainbar .seg { animation: wx-rise .5s ease-out both; animation-delay: var(--d, 0s); }
+  .rainbar .seg.l0 { background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); }
+  .rainbar .seg.l1 { background: ${WX_RAIN_COLORS[1]}; }
+  .rainbar .seg.l2 { background: ${WX_RAIN_COLORS[2]}; }
+  .rainbar .seg.l3 { background: ${WX_RAIN_COLORS[3]}; }
+  .ticks { display: flex; justify-content: space-between; font-size: 10px; color: var(--secondary-text-color); margin-top: -4px; }
+
+  .hscroll { overflow-x: auto; overflow-y: hidden; margin: 0 -12px; padding: 0 12px; scrollbar-width: thin; }
+  .track { display: flex; flex-direction: column; }
+  .hrow { display: flex; }
+  .hcol, .pcol { width: ${WX_COL}px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .hcol .t { font-size: 11px; color: var(--secondary-text-color); white-space: nowrap; }
+  .hcol.now .t { color: var(--primary-text-color); font-weight: 500; }
+  .hcol ha-icon { --mdc-icon-size: 22px; }
+  .curve { display: block; overflow: visible; }
+  .curve .line { fill: none; stroke: var(--wx-color); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 100; }
+  .enter .curve .line { animation: wx-draw 1.2s ease-out both; }
+  .enter .curve .area { animation: wx-fade 1.2s ease-out both; }
+  .curve circle { fill: var(--card-background-color, #fff); stroke: var(--wx-color); stroke-width: 1.6; }
+  .curve text { font-size: 11px; font-weight: 500; text-anchor: middle; fill: var(--primary-text-color); font-family: inherit; }
+  .pbar { width: 6px; height: 22px; border-radius: 3px; background: var(--secondary-background-color, rgba(128,128,128,.12)); display: flex; align-items: flex-end; overflow: hidden; }
+  .pbar span { width: 100%; background: #42a5f5; border-radius: 3px; transform-origin: bottom; }
+  .enter .pbar span { animation: wx-rise .6s ease-out both; }
+  .pv { font-size: 10px; color: #42a5f5; min-height: 12px; font-variant-numeric: tabular-nums; }
+
+  .daily { display: flex; flex-direction: column; gap: 4px; }
+  .drow { display: grid; grid-template-columns: 84px 24px 38px 30px 1fr 30px; align-items: center; gap: 8px; font-size: 13px; }
+  .enter .drow, .enter .prow { animation: wx-slide .45s ease-out both; animation-delay: var(--d, 0s); }
+  .drow .day { color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .drow ha-icon { --mdc-icon-size: 22px; }
+  .drow .pp { font-size: 11px; color: #42a5f5; text-align: right; font-variant-numeric: tabular-nums; }
+  .drow .lo { color: var(--secondary-text-color); text-align: right; font-variant-numeric: tabular-nums; }
+  .drow .hi { color: var(--primary-text-color); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .range { position: relative; height: 6px; border-radius: 3px; background: var(--secondary-background-color, rgba(128,128,128,.15)); }
+  .range .fill { position: absolute; top: 0; bottom: 0; border-radius: 3px; transform-origin: left; }
+  .enter .range .fill { animation: wx-grow .7s ease-out both; animation-delay: calc(var(--d, 0s) + .1s); }
+  .range .nowdot { position: absolute; top: 50%; width: 8px; height: 8px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--card-background-color, #fff);
+                   border: 1px solid var(--primary-text-color); }
+
+  .uvhead { display: flex; align-items: center; gap: 10px; }
+  .uvval { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; font-weight: 500; flex: none;
+           background: color-mix(in srgb, var(--k) 18%, transparent); color: var(--k); }
+  .uvtxt { display: flex; flex-direction: column; font-size: 12px; color: var(--secondary-text-color); min-width: 0; }
+  .uvtxt b { font-size: 14px; font-weight: 500; }
+  .uvbar { position: relative; height: 6px; border-radius: 3px; margin: 2px 4px;
+           background: linear-gradient(90deg, #43a047 0%, #43a047 18%, #fdd835 27%, #fdd835 45%, #fb8c00 55%, #fb8c00 64%, #e53935 73%, #e53935 91%, #8e24aa 100%); }
+  .uvbar .mark { position: absolute; top: 50%; width: 12px; height: 12px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--card-background-color, #fff);
+                 border: 2px solid var(--k); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+  .enter .uvbar .mark { animation: wx-pop .6s ease-out both; }
+
+  .pollen { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+  .prow { display: flex; align-items: center; gap: 6px; font-size: 13px; min-width: 0; }
+  .prow ha-icon { --mdc-icon-size: 16px; color: var(--k); flex: none; }
+  .pname { flex: 1; min-width: 0; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dots { display: inline-flex; gap: 2px; flex: none; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: color-mix(in srgb, var(--secondary-text-color) 22%, transparent); }
+  .dots i.on { background: var(--k); }
+  .plabel { display: none; }
+
+  .sun svg { width: 100%; height: 64px; overflow: visible; }
+  .sun .horizon { stroke: var(--divider-color, rgba(128,128,128,.25)); stroke-width: 1; }
+  .sun .arc { fill: none; stroke: color-mix(in srgb, var(--secondary-text-color) 45%, transparent); stroke-width: 1.4; stroke-dasharray: 3 4; }
+  .sun .done { fill: none; stroke: #ffb300; stroke-width: 2.4; stroke-linecap: round; }
+  .sun .sundot { fill: #ffca28; stroke: #fff8e1; stroke-width: 1.5; }
+  .sun .sunglow { fill: #ffca28; opacity: .3; transform-box: fill-box; transform-origin: center; animation: wx-breathe 3s ease-in-out infinite; }
+  .suntimes { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--secondary-text-color); margin-top: -4px; }
+  .suntimes span { display: inline-flex; align-items: center; gap: 4px; }
+  .suntimes ha-icon { --mdc-icon-size: 16px; color: #ffb300; }
+  .suntimes .dl { font-size: 11px; }
+
+  ha-card.mini { gap: 8px; }
+  ha-card.mini .badge { width: 32px; height: 32px; }
+  ha-card.mini .badge ha-icon { --mdc-icon-size: 18px; }
+  ha-card.mini .name { font-size: 14px; }
+  .content { display: flex; align-items: center; gap: 12px; }
+  ha-card.mini .scene { width: 88px; height: 70px; border-radius: 12px; }
+  ha-card.mini .big .val { font-size: 30px; }
+  .line { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary-text-color); min-width: 0; }
+  .line ha-icon { --mdc-icon-size: 14px; flex-shrink: 0; }
+  .line span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  @keyframes wx-blink { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+  @keyframes wx-chip { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--k) 45%, transparent); } 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--k) 0%, transparent); } }
+  @keyframes wx-bob-icon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(2px); } }
+  @keyframes wx-rise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes wx-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes wx-draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+  @keyframes wx-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes wx-slide { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+  @keyframes wx-pop { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
+  ha-card.still *, ha-card.still *::before { animation: none !important; }
+  @media (prefers-reduced-motion: reduce) { ha-card * { animation: none !important; } }
+  @media (max-width: 420px) { .pollen { grid-template-columns: 1fr; } }
+`;

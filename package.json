@@ -1,0 +1,18 @@
+{
+  "name": "ha-weather-card",
+  "version": "1.0.0",
+  "description": "Animated weather card for Home Assistant: forecast, rain in the next hour, weather alerts, thunderstorms, UV index, pollen, air quality and VigiEau drought restrictions, with a mini card.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/build.mjs && node --check dist/ha-weather-card.js",
+    "test": "node --test test/*.test.mjs",
+    "screenshots": "node scripts/screenshots/weather.mjs && node scripts/screenshots/animation.mjs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@mdi/js": "^7.4.47",
+    "playwright": "^1.56.1"
+  }
+}

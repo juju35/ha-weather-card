@@ -1,0 +1,7 @@
+{
+  "name": "Weather Plus Card",
+  "render_readme": true,
+  "content_in_root": false,
+  "filename": "ha-weather-card.js",
+  "homeassistant": "2024.8.0"
+}

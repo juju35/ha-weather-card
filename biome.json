@@ -1,0 +1,23 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.6.2/schema.json",
+  "files": {
+    "includes": ["**/*.js", "**/*.mjs", "!**/dist", "!**/vendor", "!**/node_modules", "!**/*.min.js"]
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "correctness": { "noInnerDeclarations": "off" },
+      "suspicious": { "noAssignInExpressions": "off" },
+      "performance": { "noDynamicNamespaceImportAccess": "off" }
+    }
+  },
+  "formatter": { "enabled": false },
+  "assist": { "enabled": false },
+  "javascript": { "globals": ["customElements", "HTMLElement", "hass"] },
+  "overrides": [
+    {
+      "includes": ["src/shared.js", "src/scene.js", "src/sections.js"],
+      "linter": { "rules": { "correctness": { "noUnusedVariables": "off" } } }
+    }
+  ]
+}
