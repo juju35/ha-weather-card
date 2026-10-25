@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+### Changes
+- New **moon** section (`moon`, in the default sections): today's moon drawn in its real phase, its name (*Gibbeuse croissante*), how much of it is lit and its day in the cycle, and the dates of the next full and new moons. The phase is computed from the date, so no integration is needed; the Moon integration's `sensor.moon_phase` names it when it is there. Mirrored in the southern hemisphere.
+- The night scenes draw the moon in today's phase, with its unlit part faintly visible and a halo as bright as the moon is full.
+
 ## 1.2.0
 
 ### Changes

@@ -29,7 +29,7 @@ Like the other `ha-*` cards: header with a status pill, illustration next to the
 
 `custom:weather-plus-card` — A `weather` entity and the sensors of the weather integrations around it.
 
-- **Animated scene** for each condition, by day and by night (from `sun.sun`): the sun's rays turn and its glow breathes, the moon shines among twinkling stars, clouds drift, rain falls (harder when it pours), snow flutters down, hail bounces, lightning flashes over the cloud, fog rolls and the wind blows in gusts; a warning sign for exceptional weather. `animations: false` or the system's *reduce motion* setting keeps it still
+- **Animated scene** for each condition, by day and by night (from `sun.sun`): the sun's rays turn and its glow breathes, the moon shines in its real phase among twinkling stars, clouds drift, rain falls (harder when it pours), snow flutters down, hail bounces, lightning flashes over the cloud, fog rolls and the wind blows in gusts; a warning sign for exceptional weather. `animations: false` or the system's *reduce motion* setting keeps it still
 - The temperature in large with today's high and low, the feels-like temperature, and chips for humidity, wind (an arrow turned to its direction, gusts on hover), pressure, UV index, pollen and air quality (*Pollen: low*, *Air: fair*, in the colour of their level)
 - The **status pill** shows the highest weather warning (*Orange warning*), else lightning nearby (*Lightning 6 km away*), else the condition
 - Every chip, row and reading opens the more-info dialog of its entity
@@ -46,6 +46,7 @@ Sections, in the order of `sections` (a section with no data hides itself):
 | `uv` | The UV index on its scale, its level and the advice that goes with it, today's peak | A UV sensor (Météo-France, OpenUV…), else the weather entity's `uv_index` |
 | `pollen` | The overall pollen risk (1 very low … 6 extremely high) with its advice and main species, then one row per species on six levels, the most present first; a high risk (4 and up) also shows in the alerts | Pollens (RNSA), Atmo France, Google Pollen, or any pollen sensor |
 | `sun` | The sun's course over the day, sunrise, sunset and the daylight length | `sun.sun` |
+| `moon` | Today's moon drawn as it looks (mirrored south of the equator), its phase, how much of it is lit and its day in the cycle, the next full and new moons | Computed from the date; the phase name from the [Moon](https://www.home-assistant.io/integrations/moon/) integration when it is set up |
 
 ### Mini card
 
@@ -76,6 +77,7 @@ The other sections read the sensors of these integrations, found by their transl
 | Air quality index | Atmo France *qualité globale*, or any outdoor `aqi` sensor (WAQI, AirVisual…); else the worst pollutant | `aqi` |
 | Pollutants | Atmo France, WAQI, AirVisual, Google Air Quality, Airly, sensor.community… (an indoor purifier's PM2.5 is left out; Atmo's day-ahead *-J+1* copies too) | `air` (a map: `pm25`, `pm10`, `o3`, `no2`, `so2`) |
 | Sun | `sun.sun` | `sun` |
+| Moon phase | [Moon](https://www.home-assistant.io/integrations/moon/) (`sensor.moon_phase`), optional | `moon` |
 
 ## Installation
 
@@ -125,7 +127,7 @@ entity: weather.paris
 |---|---|---|---|
 | `entity` | string | first `weather.*` | The weather entity |
 | `name` | string | its name | Card title |
-| `sections` | list | `[alerts, rain, hourly, daily, air, uv, pollen, sun]` | Sections shown, in this order |
+| `sections` | list | `[alerts, rain, hourly, daily, air, uv, pollen, sun, moon]` | Sections shown, in this order |
 | `hours` | number | `12` | Hours of the hourly forecast |
 | `days` | number | `5` | Days of the daily forecast |
 | `animations` | boolean | `true` | Animate the scene and the sections |

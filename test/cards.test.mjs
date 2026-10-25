@@ -360,3 +360,26 @@ test("pollen: Atmo's top level, a high risk in the alerts, the risk from the spe
   const out = html(card({}, h));
   assert.match(out, /s-pollen.*<span class="uvval" style="--k:#ff5050">4<\/span>.*High<\/b><span>Allergy sufferers: air the house early, rinse your hair · mostly grass/);
 });
+
+test("moon: phase from the date, matching known moons", () => {
+  // Full moon on 26 Oct 2026, new moon on 9 Nov 2026 (UTC, ± half a day).
+  assert.equal(lib.wxMoonPhase(lib.wxMoonAge(new Date(Date.UTC(2026, 9, 26, 12)))), "full_moon");
+  assert.equal(lib.wxMoonPhase(lib.wxMoonAge(new Date(Date.UTC(2026, 10, 9, 12)))), "new_moon");
+  assert.equal(lib.wxMoonPhase(lib.wxMoonAge(new Date(Date.UTC(2026, 9, 23, 12)))), "waxing_gibbous");
+  assert.equal(lib.wxMoonPhase(lib.wxMoonAge(new Date(Date.UTC(2026, 10, 2, 14)))), "last_quarter");
+  assert.ok(lib.wxMoonLight(lib.wxMoonAge(new Date(Date.UTC(2026, 9, 26, 12)))) > 0.98);
+  // Waxing crescent: lit on the right, a thin terminator bulging right.
+  assert.match(lib.wxMoonLit(24, 24, 17, 4), /A17 17 0 0 1 24 41A\d+\.\d+ 17 0 0 0 24 7Z/);
+});
+
+test("moon: section and night scene follow today's phase; the Moon integration names it", () => {
+  const h = makeHass("fr", { "sensor.moon_phase": { state: "waxing_gibbous" } });
+  h.entities["sensor.moon_phase"] = { entity_id: "sensor.moon_phase", translation_key: "phase" };
+  const out = html(card({}, h));
+  const moon = out.slice(out.indexOf("s-moon"));
+  assert.match(moon, /<b>Gibbeuse croissante<\/b><span>Éclairée à \d+ % · jour \d+ sur 29/);
+  assert.match(moon, /data-more="sensor.moon_phase"/);
+  assert.ok(moon.indexOf("Pleine lune") < moon.indexOf("Nouvelle lune"));
+  const night = html(card({}, makeHass("en", { "weather.paris": { state: "clear-night" } })));
+  assert.match(night, /class="earthshine"/);
+});

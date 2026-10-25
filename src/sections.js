@@ -362,6 +362,30 @@ function wxSectionSun(card, m) {
   );
 }
 
+// ── Moon: today's phase drawn as it looks, its name and light, and the next full and new moons ──
+function wxSectionMoon(card, m) {
+  const mo = m.moon;
+  if (!mo) return "";
+  const date = (d) => d.toLocaleDateString(m.lang, { weekday: "short", day: "numeric", month: "short" });
+  const next = [
+    ["next_full", mo.nextFull, "mdi:moon-full"],
+    ["next_new", mo.nextNew, "mdi:moon-new"],
+  ]
+    .sort((a, b) => a[1] - b[1])
+    .map(([k, d, icon]) => `<span class="mnext"><ha-icon icon="${icon}"></ha-icon><span>${wxEsc(card._t(k))}</span><b>${wxEsc(date(d))}</b></span>`)
+    .join("");
+  const svg =
+    `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><radialGradient id="wx-mf2" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#fffde7"/>` +
+    '<stop offset="1" stop-color="#ffe082"/></radialGradient></defs><circle class="mglow" cx="24" cy="24" r="23"/><circle class="mdark" cx="24" cy="24" r="17"/>' +
+    `<g fill="url(#wx-mf2)">${wxMoonLit(24, 24, 17, mo.age, mo.flip)}</g></svg>`;
+  return (
+    `<div class="section s-moon">${wxSectionTitle(card, "moon")}<div class="moonrow"${mo.entity ? ` data-more="${wxEsc(mo.entity)}" role="button" tabindex="0"` : ""}>` +
+    `<div class="mdisc">${svg}</div><div class="uvtxt"><b>${wxEsc(card._t(`mp_${mo.phase}`))}</b>` +
+    `<span>${wxEsc(card._t("moon_lit", { v: Math.round(mo.light * 100), d: Math.floor(mo.age) + 1 }))}</span></div>` +
+    `<div class="mnexts">${next}</div></div></div>`
+  );
+}
+
 const WX_SECTION_RENDER = {
   alerts: wxSectionAlerts,
   rain: wxSectionRain,
@@ -371,6 +395,7 @@ const WX_SECTION_RENDER = {
   uv: wxSectionUv,
   pollen: wxSectionPollen,
   sun: wxSectionSun,
+  moon: wxSectionMoon,
 };
 
 // ── Styles ───────────────────────────────────────────────────────────────────
@@ -504,6 +529,17 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .suntimes ha-icon { --mdc-icon-size: 16px; color: #ffb300; }
   .suntimes .dl { font-size: 11px; }
 
+  .moonrow { display: flex; align-items: center; gap: 12px; }
+  .mdisc { width: 48px; height: 48px; flex: none; }
+  .mdisc svg { width: 100%; height: 100%; overflow: visible; }
+  .mdisc .mglow { fill: #fff8e1; opacity: .12; transform-box: fill-box; transform-origin: center; animation: wx-breathe 6s ease-in-out infinite; }
+  .mdisc .mdark { fill: color-mix(in srgb, var(--secondary-text-color) 22%, transparent); }
+  .moonrow .uvtxt { flex: 1; }
+  .moonrow .uvtxt b { color: var(--primary-text-color); }
+  .mnexts { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+  .mnext { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--secondary-text-color); white-space: nowrap; }
+  .mnext ha-icon { --mdc-icon-size: 14px; }
+  .mnext b { font-weight: 500; color: var(--primary-text-color); }
   ha-card.mini { gap: 8px; }
   ha-card.mini .badge { width: 32px; height: 32px; }
   ha-card.mini .badge ha-icon { --mdc-icon-size: 18px; }

@@ -19,11 +19,46 @@ const wxSun = (cx, cy, r) =>
     return `<path d="M${p(1.32)}L${p(1.68)}"/>`;
   }).join("")}</g><circle class="disc" r="${r}" fill="url(#wx-sun)"/></g>`;
 
-const wxMoon = (cx, cy, r) =>
-  `<g class="moon"><circle class="halo" cx="${cx}" cy="${cy}" r="${(r * 1.7).toFixed(1)}" fill="url(#wx-mglow)"/>` +
-  `<mask id="wx-mm"><rect width="100" height="80" fill="#000"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="#fff"/>` +
-  `<circle cx="${(cx + r * 0.55).toFixed(1)}" cy="${(cy - r * 0.35).toFixed(1)}" r="${(r * 0.88).toFixed(1)}" fill="#000"/></mask>` +
-  `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#wx-moonf)" mask="url(#wx-mm)"/></g>`;
+// ── Moon ──
+// The moon's age in days since the last new moon, from a reference new moon (6 Jan 2000, 18:14 UTC) and the mean
+// synodic month: within a few hours of the true phase, enough to draw it and name it.
+const WX_SYNODIC = 29.530588853;
+const WX_NEW_MOON_REF = Date.UTC(2000, 0, 6, 18, 14);
+function wxMoonAge(date = new Date()) {
+  const days = (new Date(date).getTime() - WX_NEW_MOON_REF) / 864e5;
+  return ((days % WX_SYNODIC) + WX_SYNODIC) % WX_SYNODIC;
+}
+const WX_MOON_PHASES = ["new_moon", "waxing_crescent", "first_quarter", "waxing_gibbous", "full_moon", "waning_gibbous", "last_quarter", "waning_crescent"];
+// The Moon integration's bins, on its 0–28 scale: new, quarters and full last about a day, the others the days between.
+const WX_MOON_BINS = [0.5, 6.5, 7.5, 13.5, 14.5, 20.5, 21.5, 27.5];
+function wxMoonPhase(age) {
+  const d = (age / WX_SYNODIC) * 28;
+  const i = WX_MOON_BINS.findIndex((b) => d < b);
+  return i < 0 ? "new_moon" : WX_MOON_PHASES[i];
+}
+const wxMoonLight = (age) => (1 - Math.cos((2 * Math.PI * age) / WX_SYNODIC)) / 2;
+
+// The lit part of the moon at `age`: a half disc on the lit side closed by the terminator, an ellipse whose width
+// follows the phase. Northern hemisphere: lit on the right while waxing; `flip` mirrors it for the southern one.
+function wxMoonLit(cx, cy, r, age, flip = false) {
+  const p = age / WX_SYNODIC;
+  const k = Math.cos(2 * Math.PI * p);
+  const rx = Math.abs(k * r).toFixed(2);
+  const waxing = p < 0.5;
+  const outer = waxing ? 1 : 0;
+  const term = waxing === k > 0 ? 0 : 1;
+  const d = `M${cx} ${cy - r}A${r} ${r} 0 0 ${outer} ${cx} ${cy + r}A${rx} ${r} 0 0 ${term} ${cx} ${cy - r}Z`;
+  return `<path d="${d}"${flip ? ` transform="translate(${2 * cx} 0) scale(-1 1)"` : ""}/>`;
+}
+
+const wxMoon = (cx, cy, r, moon = {}) => {
+  const age = moon.age ?? wxMoonAge();
+  return (
+    `<g class="moon"><circle class="halo" cx="${cx}" cy="${cy}" r="${(r * 1.7).toFixed(1)}" fill="url(#wx-mglow)" opacity="${(0.25 + 0.75 * wxMoonLight(age)).toFixed(2)}"/>` +
+    `<circle class="earthshine" cx="${cx}" cy="${cy}" r="${r}"/>` +
+    `<g fill="url(#wx-moonf)">${wxMoonLit(cx, cy, r, age, moon.flip)}</g></g>`
+  );
+};
 
 const WX_STAR_POS = [
   [16, 16, 1],
@@ -76,13 +111,14 @@ const WX_DEFS =
 // The pieces of each condition's scene; `night` swaps the sun for the moon and adds the stars.
 const WX_RAIN_X = [30, 40, 50, 60, 70, 35, 55, 65];
 const WX_POUR_X = [28, 34, 40, 46, 52, 58, 64, 70, 76, 31, 43, 55, 67];
-function wxSceneSvg(cond, night) {
-  const body = night ? wxStars() + wxMoon(50, 38, 15) : wxSun(50, 40, 16);
-  const smallBody = night ? wxStars(4) + wxMoon(36, 28, 11) : wxSun(36, 28, 12);
+// `moon`: { age, flip } of the night scenes' moon, today's phase by default.
+function wxSceneSvg(cond, night, moon = {}) {
+  const body = night ? wxStars() + wxMoon(50, 38, 15, moon) : wxSun(50, 40, 16);
+  const smallBody = night ? wxStars(4) + wxMoon(36, 28, 11, moon) : wxSun(36, 28, 12);
   const top = (tone, cls) => wxCloud(22, 8, 1.05, tone, cls);
   const parts = {
     sunny: body,
-    "clear-night": wxStars() + wxMoon(50, 38, 15),
+    "clear-night": wxStars() + wxMoon(50, 38, 15, moon),
     partlycloudy: smallBody + wxCloud(30, 30, 1.05, "l", "front"),
     cloudy: wxCloud(10, 14, 0.85, "b", "back") + wxCloud(30, 30, 1.05, "l", "front"),
     fog: wxCloud(22, 6, 1, "b", "back") + wxFog([48, 56, 64, 72]),
@@ -101,9 +137,9 @@ function wxSceneSvg(cond, night) {
 }
 
 // The scene in its frame; `still` turns the animations off.
-function wxScene(cond, night, still) {
+function wxScene(cond, night, still, moon) {
   const cls = ["scene", `c-${cond || "unknown"}`, night ? "night" : "day", still ? "still" : ""].filter(Boolean).join(" ");
-  return `<div class="${cls}">${wxSceneSvg(cond, night)}</div>`;
+  return `<div class="${cls}">${wxSceneSvg(cond, night, moon)}</div>`;
 }
 
 const WX_SCENE_STYLES = `
@@ -115,6 +151,7 @@ const WX_SCENE_STYLES = `
   .scene .glow { transform-box: fill-box; transform-origin: center; animation: wx-breathe 4s ease-in-out infinite; }
   .scene .halo { transform-box: fill-box; transform-origin: center; animation: wx-breathe 6s ease-in-out infinite; }
   .scene .moon { animation: wx-bob 8s ease-in-out infinite; }
+  .scene .earthshine { fill: #b0bec5; opacity: .18; }
   .scene .stars path { fill: #fff8e1; transform-box: fill-box; transform-origin: center; animation: wx-twinkle 3s ease-in-out infinite; }
   .scene .stars g:nth-child(2n) path { animation-delay: -1.1s; animation-duration: 2.4s; }
   .scene .stars g:nth-child(3n) path { animation-delay: -2s; animation-duration: 3.6s; }

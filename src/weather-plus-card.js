@@ -245,6 +245,26 @@ class WeatherPlusCard extends WxElement {
     return { entity: ent.vigieau, level, restrictions };
   }
 
+  // The moon: its phase drawn from its age, named by the Moon integration when it is there (same phase, its words);
+  // mirrored in the southern hemisphere.
+  _moonModel(ent) {
+    const now = new Date();
+    const age = wxMoonAge(now);
+    const st = this._st(ent.moon);
+    const named = wxUnavailable(st) ? null : wxNorm(st.state);
+    const phase = WX_MOON_PHASES.includes(named) ? named : wxMoonPhase(age);
+    const inDays = (d) => new Date(now.getTime() + d * 864e5);
+    return {
+      age,
+      phase,
+      light: wxMoonLight(age),
+      flip: Number(this._hass.config?.latitude) < 0,
+      nextFull: inDays((WX_SYNODIC / 2 - age + WX_SYNODIC) % WX_SYNODIC),
+      nextNew: inDays(WX_SYNODIC - age),
+      entity: ent.moon,
+    };
+  }
+
   _airModel(ent) {
     const pollutants = Object.entries(ent.air || {})
       .map(([key, id]) => {
@@ -367,6 +387,7 @@ class WeatherPlusCard extends WxElement {
       storm: storm ? wxTime(lang, storm.datetime, true) : null,
       pollen: this._pollenModel(ent),
       sun,
+      moon: this._moonModel(ent),
     };
   }
 
@@ -469,7 +490,7 @@ class WeatherPlusCard extends WxElement {
     const feels = m.feels != null && Math.round(m.feels) !== Math.round(m.temp ?? m.feels) ? `<div class="feels">${wxEsc(this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }))}</div>` : "";
     const chips = this._heroChips(m);
     const hero =
-      `<div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still)}</div>` +
+      `<div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
       `<div class="info">${this._bigTemp(m)}${feels}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>`;
     // A section's entry animations (bars growing, the curve drawing itself) play when it first shows, not on every
     // update: the forecasts, for one, arrive after the first render.
@@ -494,7 +515,7 @@ class WeatherPlusCard extends WxElement {
     }
     const chips = wxAlertChips(this, m, { onlyActive: true }).slice(0, 2);
     return (
-      `<div class="content"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still)}</div>` +
+      `<div class="content"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
       `<div class="info">${this._bigTemp(m)}${lines.join("")}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>`
     );
   }

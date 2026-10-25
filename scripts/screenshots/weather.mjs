@@ -55,7 +55,7 @@ const SETUPS = {
   card: card("weather-plus-card"),
   mini: card("weather-plus-mini-card"),
   storm: card("weather-plus-card", { sections: ["alerts", "rain", "hourly"] }, STORM),
-  night: card("weather-plus-card", { sections: ["hourly", "daily", "sun"] }, { "weather.paris": { state: "clear-night", temperature: 11.2 } }, NIGHT),
+  night: card("weather-plus-card", { sections: ["hourly", "daily", "sun", "moon"] }, { "weather.paris": { state: "clear-night", temperature: 11.2 } }, NIGHT),
   conditions: (lang) => ({ cards: conditionCards(lang), cols: 2 }),
 };
 

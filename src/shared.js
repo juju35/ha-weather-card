@@ -80,6 +80,18 @@ const WX_I18N = {
     s_uv: "UV",
     s_pollen: "Pollen",
     s_sun: "Sun",
+    s_moon: "Moon",
+    mp_new_moon: "New moon",
+    mp_waxing_crescent: "Waxing crescent",
+    mp_first_quarter: "First quarter",
+    mp_waxing_gibbous: "Waxing gibbous",
+    mp_full_moon: "Full moon",
+    mp_waning_gibbous: "Waning gibbous",
+    mp_last_quarter: "Last quarter",
+    mp_waning_crescent: "Waning crescent",
+    moon_lit: "{v} % lit · day {d} of 29",
+    next_full: "Full moon",
+    next_new: "New moon",
     // Rain in the next hour
     rain_none: "No rain within the hour",
     rain_now: "{v} now",
@@ -278,6 +290,18 @@ const WX_I18N = {
     s_uv: "UV",
     s_pollen: "Pollens",
     s_sun: "Soleil",
+    s_moon: "Lune",
+    mp_new_moon: "Nouvelle lune",
+    mp_waxing_crescent: "Premier croissant",
+    mp_first_quarter: "Premier quartier",
+    mp_waxing_gibbous: "Gibbeuse croissante",
+    mp_full_moon: "Pleine lune",
+    mp_waning_gibbous: "Gibbeuse décroissante",
+    mp_last_quarter: "Dernier quartier",
+    mp_waning_crescent: "Dernier croissant",
+    moon_lit: "Éclairée à {v} % · jour {d} sur 29",
+    next_full: "Pleine lune",
+    next_new: "Nouvelle lune",
     rain_none: "Pas de pluie dans l'heure",
     rain_now: "{v} en ce moment",
     rain_now_until: "{v} en ce moment, fin dans {n} min",
@@ -662,6 +686,7 @@ const WX_ROLES = {
     id: /lightning_(counter|count|strikes)|nombre_d_eclairs|impacts_de_foudre/,
     test: (st) => st.attributes.eclairs_20_min != null,
   },
+  moon: { keys: ["phase"], id: /(^|_)moon_phase$|phase_(de_la_)?lune/ },
   lightning_distance: { keys: ["lightning_distance"], id: /lightning_distance|distance_(de_la_)?foudre|distance_eclair/ },
   aqi: {
     keys: ["aqi"],
@@ -846,7 +871,7 @@ const wxMini = (Base) =>
   };
 
 // ── Editor (built on Home Assistant's ha-form) ───────────────────────────────
-const WX_SECTIONS = ["alerts", "rain", "hourly", "daily", "air", "uv", "pollen", "sun"];
+const WX_SECTIONS = ["alerts", "rain", "hourly", "daily", "air", "uv", "pollen", "sun", "moon"];
 const WX_DEFAULTS = { sections: WX_SECTIONS, hours: 12, days: 5, animations: true };
 
 class WxCardEditor extends HTMLElement {
