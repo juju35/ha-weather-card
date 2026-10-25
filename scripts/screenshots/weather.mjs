@@ -2,7 +2,7 @@
 // Usage: npm install && npm run build && node scripts/screenshots/weather.mjs
 // (CHROMIUM_PATH=/path/to/chromium to use a browser of your own)
 import { fileURLToPath } from "node:url";
-import { DAY, NIGHT, pair, shoot } from "./harness.mjs";
+import { addCards, DAY, launch, NIGHT, openPage, pair, root, shoot } from "./harness.mjs";
 import { mockHass } from "./mock.mjs";
 
 // The screenshots are still: the scene drawn without its animations, rain and snow in place.
@@ -64,4 +64,22 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     shots: [...pair("card"), ...pair("mini"), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 })],
     setup: (s, lang) => SETUPS[s.file.replace(/-dark$/, "")](lang),
   });
+
+  // The full screen detail, on a desktop and on a phone.
+  const browser = await launch();
+  for (const [file, theme, width, height] of [
+    ["popup", "light", 1280, 860],
+    ["popup-dark", "dark", 1280, 860],
+    ["popup-phone", "light", 390, 844],
+  ]) {
+    const page = await openPage(browser, { theme, width: 360 });
+    await page.setViewportSize({ width, height });
+    const lang = theme === "dark" ? "fr" : "en";
+    await addCards(page, [{ tag: "weather-plus-card", config, hass: mockHass(lang, {}, DAY), open: '[data-action="popup"]' }]);
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: `${root}screenshots/${file}.png`, animations: "disabled" });
+    console.log(`screenshots/${file}.png`);
+    await page.close();
+  }
+  await browser.close();
 }

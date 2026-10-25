@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.0
+
+### Changes
+- **Full screen detail**: a button at the top right of the card and the mini card opens the detail over the whole screen and its width — a larger scene, the sections side by side as the width allows, 24 hours and 10 days of forecast. It closes with its button, Escape, a click outside, or the back button on a phone. `popup: false` removes the button.
+- Hourly forecast: the wind of each hour, an arrow pointing where it blows with its speed, the gusts on hover, strong gusts (50 km/h and up) highlighted.
+- Rain: today's rainfall (Météo-France *daily precipitation*) and the forecast totals for the next 6 and 24 hours.
+- Pressure trend over 3 hours from the recorder's history, on the pressure chip (rising, falling or steady, the change on hover); cloud cover chip.
+- Air quality and pollen: tomorrow's level next to the section title from Atmo France's *-J+1* sensors, and in the alerts when tomorrow gets poor or high.
+- Sun: dawn, golden hour and dusk; moon: moonrise and moonset. Computed for Home Assistant's location, no integration needed.
+
+### Fixes
+- The status pill stays readable in a light theme (a yellow warning was yellow on pale yellow).
+
 ## 1.3.0
 
 ### Changes

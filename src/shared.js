@@ -81,6 +81,20 @@ const WX_I18N = {
     s_pollen: "Pollen",
     s_sun: "Sun",
     s_moon: "Moon",
+    dawn: "Dawn",
+    dusk: "Dusk",
+    golden_hour: "Golden hour",
+    moonrise: "Moonrise",
+    moonset: "Moonset",
+    tomorrow_v: "Tomorrow: {v}",
+    air_tomorrow: "Air tomorrow: {v}",
+    pollen_tomorrow: "Pollen tomorrow: {v}",
+    rain_today: "Today {v}",
+    rain_next: "Next {h} h: {v}",
+    clouds_n: "{v} % clouds",
+    trend_up: "Rising: {v} in 3 h",
+    trend_down: "Falling: {v} in 3 h",
+    trend_steady: "Steady over 3 h",
     mp_new_moon: "New moon",
     mp_waxing_crescent: "Waxing crescent",
     mp_first_quarter: "First quarter",
@@ -197,6 +211,8 @@ const WX_I18N = {
     daylight: "{h} h {m} of daylight",
     // Mini card / zoom
     zoom_in: "Show the full card",
+    popup_open: "Full screen",
+    popup_close: "Close",
     zoom_out: "Back to the compact view",
     today: "Today",
     // Editor
@@ -211,6 +227,8 @@ const WX_I18N = {
     ed_days: "Days",
     ed_days_helper: "Daily forecast length",
     ed_animations: "Animations",
+    ed_popup: "Full screen button",
+    ed_popup_helper: "Button at the top right that opens the detail over the whole screen",
     ed_zoom: "Detail button",
     ed_zoom_helper: "Button at the top right that switches the mini card to the full card and back",
     ed_language: "Language",
@@ -291,6 +309,20 @@ const WX_I18N = {
     s_pollen: "Pollens",
     s_sun: "Soleil",
     s_moon: "Lune",
+    dawn: "Aube",
+    dusk: "Crépuscule",
+    golden_hour: "Heure dorée",
+    moonrise: "Lever",
+    moonset: "Coucher",
+    tomorrow_v: "Demain : {v}",
+    air_tomorrow: "Air demain : {v}",
+    pollen_tomorrow: "Pollens demain : {v}",
+    rain_today: "Aujourd'hui {v}",
+    rain_next: "{h} prochaines h : {v}",
+    clouds_n: "{v} % de nuages",
+    trend_up: "En hausse : {v} en 3 h",
+    trend_down: "En baisse : {v} en 3 h",
+    trend_steady: "Stable sur 3 h",
     mp_new_moon: "Nouvelle lune",
     mp_waxing_crescent: "Premier croissant",
     mp_first_quarter: "Premier quartier",
@@ -402,6 +434,8 @@ const WX_I18N = {
     sunset: "Coucher",
     daylight: "{h} h {m} de jour",
     zoom_in: "Afficher la carte complète",
+    popup_open: "Plein écran",
+    popup_close: "Fermer",
     zoom_out: "Revenir à la vue compacte",
     today: "Aujourd'hui",
     ed_entity: "Entité météo",
@@ -415,6 +449,8 @@ const WX_I18N = {
     ed_days: "Jours",
     ed_days_helper: "Durée des prévisions quotidiennes",
     ed_animations: "Animations",
+    ed_popup: "Bouton plein écran",
+    ed_popup_helper: "Bouton en haut à droite qui ouvre le détail sur tout l'écran",
     ed_zoom: "Bouton détail",
     ed_zoom_helper: "Bouton en haut à droite qui passe la mini-carte en carte complète et inversement",
     ed_language: "Langue",
@@ -687,6 +723,14 @@ const WX_ROLES = {
     test: (st) => st.attributes.eclairs_20_min != null,
   },
   moon: { keys: ["phase"], id: /(^|_)moon_phase$|phase_(de_la_)?lune/ },
+  cloud_cover: { keys: ["cloud_cover"], id: /cloud_cover(age)?$|couverture_nuageuse$|nebulosite$/ },
+  daily_precipitation: { keys: ["daily_precipitation"], id: /daily_precipitation$|precipitation_(du_jour|today)$|cumul_de_pluie_du_jour$/ },
+  // Atmospheric pressure, for its trend: the weather entity's device first.
+  pressure: {
+    keys: ["pressure"],
+    id: /(^|_)(pressure|pression(_atmospherique)?)$/,
+    need: (st) => ["atmospheric_pressure", "pressure"].includes(st.attributes.device_class),
+  },
   lightning_distance: { keys: ["lightning_distance"], id: /lightning_distance|distance_(de_la_)?foudre|distance_eclair/ },
   aqi: {
     keys: ["aqi"],
@@ -713,6 +757,10 @@ function wxByDevice(reg) {
 }
 
 // Sensor ids of the instance, without the hidden or disabled ones.
+// The day-ahead copy of a sensor (Atmo's "-J+1", "_tomorrow"), for tomorrow's level.
+const wxAheadOf = (hass, id) =>
+  id ? [`${id}_j_1`, `${id}_tomorrow`, `${id}_demain`].find((x) => hass.states[x] && !wxUnavailable(hass.states[x])) : undefined;
+
 // Day-ahead copies (Atmo's "-J+1", "_tomorrow") are forecasts, not the current reading.
 const WX_AHEAD = /(_j_?\d|_demain|_tomorrow|_day_?\d)$/;
 function wxSensors(hass) {
@@ -872,7 +920,7 @@ const wxMini = (Base) =>
 
 // ── Editor (built on Home Assistant's ha-form) ───────────────────────────────
 const WX_SECTIONS = ["alerts", "rain", "hourly", "daily", "air", "uv", "pollen", "sun", "moon"];
-const WX_DEFAULTS = { sections: WX_SECTIONS, hours: 12, days: 5, animations: true };
+const WX_DEFAULTS = { sections: WX_SECTIONS, hours: 12, days: 5, animations: true, popup: true };
 
 class WxCardEditor extends HTMLElement {
   static mini = false;
@@ -912,7 +960,11 @@ class WxCardEditor extends HTMLElement {
       {
         type: "grid",
         name: "",
-        schema: [{ name: "animations", selector: { boolean: {} } }, ...(this.constructor.mini ? [{ name: "zoom", selector: { boolean: {} } }] : [])],
+        schema: [
+          { name: "animations", selector: { boolean: {} } },
+          { name: "popup", selector: { boolean: {} } },
+          ...(this.constructor.mini ? [{ name: "zoom", selector: { boolean: {} } }] : []),
+        ],
       },
       {
         name: "advanced",

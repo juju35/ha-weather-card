@@ -139,7 +139,7 @@ test("card: rain in the next hour, alerts, VigiEau, lightning, pollen, UV and su
   assert.match(out, /class="chip tint"[^>]*title="Risque pollinique"><ha-icon icon="mdi:flower-pollen"><\/ha-icon>Pollens : moyen/);
   assert.match(out, /Modéré.*Lunettes et crème solaire/);
   assert.match(out, /class="sun up"/);
-  assert.match(out, /10 h 27 de jour/);
+  assert.match(out, /10 h 28 de jour/);
 });
 
 test("card: sections follow `sections`, and hide without data", () => {
@@ -149,7 +149,9 @@ test("card: sections follow `sections`, and hide without data", () => {
   const h = makeHass();
   for (const id of Object.keys(h.states)) if (id.startsWith("sensor.")) delete h.states[id];
   const bare = html(card({}, h));
-  assert.doesNotMatch(bare, /s-rain|s-pollen/);
+  assert.doesNotMatch(bare, /s-pollen|rainbar/);
+  // The rain section is left with the totals of the hourly forecast.
+  assert.match(bare, /s-rain.*Next 6 h: /);
   // Only the storm of the hourly forecast is left in the alerts.
   assert.match(bare, /s-alerts.*Storms possible at 6 PM<\/span><\/div><\/div>/);
   assert.match(bare, /s-daily/);
@@ -382,4 +384,85 @@ test("moon: section and night scene follow today's phase; the Moon integration n
   assert.ok(moon.indexOf("Pleine lune") < moon.indexOf("Nouvelle lune"));
   const night = html(card({}, makeHass("en", { "weather.paris": { state: "clear-night" } })));
   assert.match(night, /class="earthshine"/);
+});
+
+const tick = () => new Promise((r) => setTimeout(r, 0));
+
+test("hourly wind: arrow, speed, gusts on hover, strong gusts highlighted", () => {
+  const out = html(card());
+  assert.equal((out.match(/class="wcol/g) || []).length, 12);
+  assert.match(out, /<div class="wcol" title="SW · 18 km\/h · gusts 34 km\/h"><span class="arrow" style="transform:rotate\(45deg\)">/);
+  assert.match(out, /<div class="wcol strong" title="W · 38 km\/h · gusts 68 km\/h">/);
+});
+
+test("rain totals: today from the provider, the next 6 and 24 hours from the forecast", () => {
+  const out = html(card({}, makeHass("fr")));
+  assert.match(out, /Aujourd&#39;hui 6,6 mm/);
+  assert.match(out, /6 prochaines h : 3,6 mm/);
+  assert.match(out, /24 prochaines h : 6 mm/);
+});
+
+test("cloud cover and pressure trend from the history", async () => {
+  const h = makeHass("en");
+  const el = card({}, h);
+  assert.match(html(el), /40 % clouds/);
+  assert.match(h.apiCalls[0][1], /^history\/period\/.*filter_entity_id=sensor\.paris_pressure&minimal_response&no_attributes$/);
+  await tick();
+  assert.match(html(el), /class="chip trend up"[^>]*title="Pressure · Rising: \+2\.8 hPa in 3 h"><ha-icon icon="mdi:trending-up">/);
+});
+
+test("tomorrow: Atmo's J+1 air and pollen levels next to the titles, a worse tomorrow in the alerts", () => {
+  const out = html(card({}, makeHass("fr")));
+  assert.match(out, /Qualité de l&#39;air<\/span><span class="chip tint"[^>]*>.*Demain : mauvais/);
+  assert.match(out, /Pollens<\/span><span class="chip tint"[^>]*>.*Demain : élevé/);
+  assert.match(out, /s-alerts.*Air demain : mauvais.*Pollens demain : élevé/);
+});
+
+test("astro: sunrise, sunset, dawn, dusk and golden hour in Paris, moonrise and moonset", () => {
+  const f = (d) => d.toISOString().slice(11, 16);
+  const day = new Date(Date.UTC(2026, 5, 21, 10));
+  const s = lib.wxSunTimes(day, 48.8566, 2.3522);
+  // Paris, 21 June: sunrise 03:47 UTC, sunset 19:58 UTC, civil twilight 03:04 / 20:41 UTC (± 3 min).
+  const near = (d, hhmm) => Math.abs(d - new Date(`2026-06-21T${hhmm}:00Z`)) < 3 * 60000;
+  assert.ok(near(s.goldenMorning[0], "03:47"), f(s.goldenMorning[0]));
+  assert.ok(near(s.goldenEvening[1], "19:58"), f(s.goldenEvening[1]));
+  assert.ok(near(s.dawn, "03:04"), f(s.dawn));
+  assert.ok(near(s.dusk, "20:41"), f(s.dusk));
+  assert.ok(s.goldenEvening[0] < s.goldenEvening[1]);
+  const mo = lib.wxMoonTimes(day, 48.8566, 2.3522);
+  assert.ok(mo.rise || mo.set);
+});
+
+test("sun and moon sections: dawn, golden hour, dusk; moonrise and moonset", () => {
+  const out = html(card({}, makeHass("fr")));
+  assert.match(out, /sunextra.*Aube \d\d:\d\d.*Heure dorée \d\d:\d\d.*Crépuscule \d\d:\d\d/);
+  assert.match(out, /class="mtimes"><span title="Lever"><ha-icon icon="mdi:arrow-up-thin"><\/ha-icon>(\d\d:\d\d|—)<\/span><span title="Coucher">/);
+});
+
+test("full screen detail: opens over the page with 24 hours and 10 days, closes with its button or Escape", () => {
+  const h = makeHass("fr");
+  h.forecasts.daily = [...h.forecasts.daily, ...h.forecasts.daily.map((d, i) => ({ ...d, datetime: new Date(new Date(d.datetime).getTime() + (i + 7) * 864e5).toISOString() }))];
+  const el = card({}, h);
+  assert.match(html(el), /data-action="popup" title="Plein écran"/);
+  el._onClick({ composedPath: () => [{ dataset: { action: "popup" } }] });
+  const doc = lib.document;
+  assert.equal(doc.body.children.length, 1);
+  assert.equal(doc.body.style.overflow, "hidden");
+  assert.equal(lib.window.history.state.weatherPlusPopup, true);
+  const pop = doc.body.children[0].shadowRoot.innerHTML;
+  assert.match(pop, /class="backdrop"><div class="sheet" role="dialog" aria-modal="true" aria-label="Paris">/);
+  assert.match(pop, /data-action="close" title="Fermer"/);
+  assert.equal((pop.match(/class="hcol/g) || []).length, 24);
+  assert.equal((pop.match(/class="drow"/g) || []).length, 10);
+  assert.match(pop, /class="section enter s-daily"/);
+  // The card keeps its own lengths.
+  assert.equal((html(el).match(/class="drow"/g) || []).length, 5);
+  // Updates reach the open popup.
+  el.hass = makeHass("fr", { "weather.paris": { temperature: 19 } });
+  assert.match(doc.body.children[0].shadowRoot.innerHTML, /<span class="val">19<small>/);
+  doc.listeners.keydown({ key: "Escape", composedPath: () => [] });
+  assert.equal(doc.body.children.length, 0);
+  assert.equal(doc.body.style.overflow, "");
+  assert.equal(lib.window.history.state, null);
+  assert.doesNotMatch(html(card({ popup: false })), /data-action="popup"/);
 });

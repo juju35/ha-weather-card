@@ -84,6 +84,7 @@ class WeatherPlusCard extends WxElement {
   disconnectedCallback() {
     clearInterval(this._tick);
     this._unsubscribe();
+    this._closePopup();
   }
 
   getCardSize() {
@@ -143,6 +144,38 @@ class WeatherPlusCard extends WxElement {
     this._subKey = null;
   }
 
+  // ── Sun and moon events of the day, for Home Assistant's location (computed once a day) ──
+  _astro() {
+    const lat = Number(this._hass.config?.latitude);
+    const lon = Number(this._hass.config?.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || (lat === 0 && lon === 0)) return null;
+    const now = new Date();
+    const key = `${now.toDateString()}:${lat}:${lon}`;
+    if (this._astroKey !== key) {
+      this._astroKey = key;
+      this._astroCache = { sun: wxSunTimes(now, lat, lon), moon: wxMoonTimes(now, lat, lon) };
+    }
+    return this._astroCache;
+  }
+
+  // ── Pressure trend over 3 hours, from the recorder's history (fetched every 15 minutes) ──
+  _fetchTrend(id) {
+    if (!id || !this._hass.callApi || (this._trendFor === id && Date.now() - this._trendAt < 15 * 60000)) return;
+    this._trendFor = id;
+    this._trendAt = Date.now();
+    const start = new Date(Date.now() - 3 * 3600000).toISOString();
+    const weather = id.startsWith("weather.");
+    const path = `history/period/${start}?filter_entity_id=${id}${weather ? "&significant_changes_only=0" : "&minimal_response&no_attributes"}`;
+    Promise.resolve(this._hass.callApi("GET", path))
+      .then((res) => {
+        const pts = (res?.[0] || []).map((x) => wxNumber(weather ? x.attributes?.pressure : x.state)).filter((v) => v != null);
+        this._trend = pts.length >= 2 ? { delta: pts.at(-1) - pts[0], id } : null;
+        this._sig = null;
+        this._update();
+      })
+      .catch(() => {});
+  }
+
   // ── Model ──
   _update() {
     if (!this._config || !this._hass || !this.shadowRoot) return;
@@ -153,7 +186,8 @@ class WeatherPlusCard extends WxElement {
       const s = hass.states[id];
       return s ? [id, s.state, s.attributes] : null;
     });
-    const sig = JSON.stringify([this._lang(), this._zoomed, this._fcv, Math.floor(Date.now() / 60000), states]);
+    this._fetchTrend(ent.pressure || ent.weather);
+    const sig = JSON.stringify([this._lang(), this._zoomed, !!this._popup, this._fcv, Math.floor(Date.now() / 60000), states]);
     if (sig === this._sig) return;
     this._sig = sig;
     this._render();
@@ -262,7 +296,31 @@ class WeatherPlusCard extends WxElement {
       nextFull: inDays((WX_SYNODIC / 2 - age + WX_SYNODIC) % WX_SYNODIC),
       nextNew: inDays(WX_SYNODIC - age),
       entity: ent.moon,
+      times: this._astro()?.moon || null,
     };
+  }
+
+  // Precipitation: today's total from the provider, and the sums of the hourly forecast over the next 6 and 24 hours.
+  _rainTotals(ent, hourly, unit) {
+    // From the start of the current hour: the next 6 hours are this one and the 5 after it.
+    const from = new Date();
+    from.setMinutes(0, 0, 0);
+    const sum = (h) =>
+      hourly
+        .filter((x) => {
+          const t = new Date(x.datetime).getTime();
+          return t >= from.getTime() && t < from.getTime() + h * 3600000;
+        })
+        .reduce((acc, x) => acc + (wxNumber(x.precipitation) || 0), 0);
+    const hasAmounts = hourly.some((x) => x.precipitation != null);
+    const today = this._num(ent.daily_precipitation);
+    const out = {
+      unit: this._st(ent.daily_precipitation)?.attributes.unit_of_measurement || unit,
+      today,
+      next6: hasAmounts ? sum(6) : null,
+      next24: hasAmounts ? sum(24) : null,
+    };
+    return out.today != null || out.next6 || out.next24 ? out : null;
   }
 
   _airModel(ent) {
@@ -281,7 +339,8 @@ class WeatherPlusCard extends WxElement {
     if (level == null && pollutants.length) level = Math.max(...pollutants.map((p) => p.level));
     if (level == null) return null;
     const zone = st?.attributes["Nom de la zone"] || st?.attributes.zone || "";
-    return { level, value: wxNum(st), entity: ent.aqi || pollutants[0]?.entity, zone, pollutants };
+    const ahead = this._st(wxAheadOf(this._hass, ent.aqi));
+    return { level, value: wxNum(st), entity: ent.aqi || pollutants[0]?.entity, zone, pollutants, tomorrow: ahead ? wxAirLevel(ahead) : null };
   }
 
   _pollenModel(ent) {
@@ -302,10 +361,12 @@ class WeatherPlusCard extends WxElement {
     if (!items.length && risk == null) return null;
     // The overall risk when a sensor gives it, else the most present species.
     const level = risk ?? Math.max(0, ...items.map((x) => x.level));
-    return { items, level, entity: risk != null ? ent.pollen_risk : items[0]?.entity };
+    const ahead = this._st(wxAheadOf(this._hass, ent.pollen_risk));
+    return { items, level, entity: risk != null ? ent.pollen_risk : items[0]?.entity, tomorrow: ahead ? wxPollenLevel(ahead.state, ahead.attributes) : null };
   }
 
-  _model() {
+  // `wide`: the full screen detail, which shows more hours and days.
+  _model(wide = false) {
     const hass = this._hass;
     const ent = this._entities();
     const lang = this._lang();
@@ -323,7 +384,7 @@ class WeatherPlusCard extends WxElement {
     const isNight = (d) => (sun ? tod(d) < tod(sun.rise) || tod(d) >= tod(sun.set) : d.getHours() < 7 || d.getHours() >= 21);
     const hourly = (fc.hourly || [])
       .filter((x) => new Date(x.datetime).getTime() > now - 3600000)
-      .slice(0, Math.max(0, Number(this._config.hours) || 0))
+      .slice(0, Math.max(0, Number(this._config.hours) || 0, wide ? 24 : 0))
       .map((x) => ({ ...x, night: x.is_daytime != null ? !x.is_daytime : isNight(new Date(x.datetime)) }));
     const dailyAll = fc.daily || (fc.twice_daily ? wxFoldTwiceDaily(fc.twice_daily) : a.forecast || []);
     const daily = dailyAll
@@ -331,7 +392,7 @@ class WeatherPlusCard extends WxElement {
         const d = new Date(x.datetime);
         return d.getTime() > now - 864e5 || wxSameDay(d, new Date());
       })
-      .slice(0, Math.max(0, Number(this._config.days) || 0));
+      .slice(0, Math.max(0, Number(this._config.days) || 0, wide ? 10 : 0));
     const today = dailyAll.find((x) => wxSameDay(new Date(x.datetime), new Date()));
 
     const uvSensor = this._num(ent.uv);
@@ -388,6 +449,10 @@ class WeatherPlusCard extends WxElement {
       pollen: this._pollenModel(ent),
       sun,
       moon: this._moonModel(ent),
+      totals: this._rainTotals(ent, fc.hourly || [], a.precipitation_unit || "mm"),
+      clouds: this._num(ent.cloud_cover) ?? wxNumber(a.cloud_coverage),
+      trend: this._trend?.id === (ent.pressure || ent.weather) ? this._trend.delta : null,
+      sunTimes: this._astro()?.sun || null,
     };
   }
 
@@ -422,6 +487,7 @@ class WeatherPlusCard extends WxElement {
         `<style>${WX_STYLES}</style><style>:host{--wx-color:${WX_IDLE}}</style><ha-card><div class="header"><div class="badge"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon></div>` +
         `<div class="titles" data-more="${wxEsc(ent.weather)}"><div class="name">${wxEsc(c.name || wxWeatherName(st) || this._t("title"))}</div></div>` +
         `<span class="st"><span class="dot"></span>${wxEsc(this._t("unavailable"))}</span>${this._zoomButton()}</div></ha-card>`;
+      this._closePopup();
       return;
     }
     const m = this._model();
@@ -435,8 +501,9 @@ class WeatherPlusCard extends WxElement {
       `<div class="titles" data-more="${wxEsc(ent.weather)}"><div class="name">${wxEsc(m.name)}</div>${
         m.status.alert && !this._compact() ? `<div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div>` : ""
       }</div>` +
-      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}"><span class="dot"></span>${wxEsc(m.status.text)}</span>${this._zoomButton()}</div>`;
+      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}"><span class="dot"></span>${wxEsc(m.status.text)}</span>${this._popupButton()}${this._zoomButton()}</div>`;
     this.shadowRoot.innerHTML = `${head}${this._compact() ? this._miniBody(m) : this._fullBody(m)}</ha-card>`;
+    if (this._popup) this._renderPopup();
   }
 
   _bigTemp(m) {
@@ -461,7 +528,21 @@ class WeatherPlusCard extends WxElement {
         `<span class="chip" title="${wxEsc(title)}">${arrow}${wxEsc(`${wxFmtNum(m.lang, Number(a.wind_speed), 0)} ${unit}${b ? ` ${b.label}` : ""}`)}</span>`,
       );
     }
-    if (a.pressure != null) out.push(wxChip("mdi:gauge", `${wxFmtNum(m.lang, Number(a.pressure), 0)} ${a.pressure_unit || "hPa"}`, { title: this._t("pressure") }));
+    if (a.pressure != null) {
+      const unit = a.pressure_unit || "hPa";
+      const d = m.trend;
+      const dir = d == null ? null : d >= 1 ? "up" : d <= -1 ? "down" : "steady";
+      const delta = d == null ? "" : `${d > 0 ? "+" : d < 0 ? "−" : ""}${wxFmtNum(m.lang, Math.abs(d), 1)} ${unit}`;
+      const icon = { up: "mdi:trending-up", down: "mdi:trending-down", steady: "mdi:trending-neutral" }[dir] || "mdi:gauge";
+      out.push(
+        wxChip(icon, `${wxFmtNum(m.lang, Number(a.pressure), 0)} ${unit}`, {
+          title: `${this._t("pressure")}${dir ? ` · ${this._t(`trend_${dir}`, { v: delta })}` : ""}`,
+          cls: dir ? `trend ${dir}` : "",
+          more: m.ent.pressure,
+        }),
+      );
+    }
+    if (m.clouds != null) out.push(wxChip("mdi:cloud-percent-outline", this._t("clouds_n", { v: wxFmtNum(m.lang, m.clouds, 0) }), { title: this._t("cloud_cover"), more: m.ent.cloud_cover }));
     if (m.uv) out.push(wxChip("mdi:sun-wireless-outline", this._t("uv_n", { v: wxFmtNum(m.lang, m.uv.v, 0) }), { color: WX_UV[m.uv.level].color, cls: "tint", more: m.uv.entity, title: this._t(`uv_${m.uv.level}`) }));
     if (m.pollen?.level >= 1) {
       out.push(
@@ -492,18 +573,97 @@ class WeatherPlusCard extends WxElement {
     const hero =
       `<div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
       `<div class="info">${this._bigTemp(m)}${feels}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>`;
-    // A section's entry animations (bars growing, the curve drawing itself) play when it first shows, not on every
-    // update: the forecasts, for one, arrive after the first render.
     this._shown ||= new Set();
-    const sections = (this._config.sections || WX_SECTIONS)
+    return hero + this._sections(m, this._shown);
+  }
+
+  // A section's entry animations (bars growing, the curve drawing itself) play when it first shows in `shown`, not
+  // on every update: the forecasts, for one, arrive after the first render.
+  _sections(m, shown) {
+    return (this._config.sections || WX_SECTIONS)
       .map((s) => {
         const out = WX_SECTION_RENDER[s]?.(this, m) || "";
-        if (!out || this._shown.has(s)) return out;
-        this._shown.add(s);
+        if (!out || shown.has(s)) return out;
+        shown.add(s);
         return out.replace('class="section ', 'class="section enter ');
       })
       .join("");
-    return hero + sections;
+  }
+
+  // ── Full screen detail ──
+  // A layer over the whole window, appended to the page's body so that no card container clips it: the card's header,
+  // a larger scene, then the sections side by side as the width allows, with 24 hours and 10 days of forecast.
+  // It closes with its button, Escape, or the browser's back button on a phone.
+  _popupButton() {
+    if (this._config.popup === false) return "";
+    const label = wxEsc(this._t("popup_open"));
+    return `<button class="zoom" data-action="popup" title="${label}" aria-label="${label}"><ha-icon icon="mdi:fullscreen"></ha-icon></button>`;
+  }
+
+  _openPopup() {
+    if (this._popup) return;
+    const host = document.createElement("div");
+    host.className = "weather-plus-popup";
+    const root = host.attachShadow({ mode: "open" });
+    root.addEventListener("click", (ev) => {
+      const path = ev.composedPath();
+      if (path.some((n) => n.dataset?.action === "close") || !path.some((n) => n.classList?.contains?.("sheet"))) {
+        this._closePopup();
+        return;
+      }
+      this._onClick(ev);
+    });
+    this._onPopupKey = (ev) => {
+      if (ev.key === "Escape") this._closePopup();
+      else if ((ev.key === "Enter" || ev.key === " ") && ev.composedPath?.()[0]?.dataset?.more) this._onClick(ev);
+    };
+    this._onPopupBack = () => this._closePopup(true);
+    document.addEventListener("keydown", this._onPopupKey);
+    window.addEventListener?.("popstate", this._onPopupBack);
+    window.history?.pushState?.({ weatherPlusPopup: true }, "");
+    this._bodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.body.appendChild(host);
+    this._popup = host;
+    this._popupShown = new Set();
+    this._renderPopup();
+    root.querySelector?.(".close")?.focus?.();
+  }
+
+  // `fromBack`: the back button already left the history entry the popup added.
+  _closePopup(fromBack = false) {
+    if (!this._popup) return;
+    this._popup.remove?.();
+    document.body.removeChild?.(this._popup);
+    this._popup = null;
+    document.removeEventListener("keydown", this._onPopupKey);
+    window.removeEventListener?.("popstate", this._onPopupBack);
+    document.body.style.overflow = this._bodyOverflow || "";
+    if (!fromBack && window.history?.state?.weatherPlusPopup) window.history.back();
+    this.shadowRoot?.querySelector?.('[data-action="popup"]')?.focus?.();
+  }
+
+  _renderPopup() {
+    const st = this._st(this._entities().weather);
+    if (!st || wxUnavailable(st)) return;
+    const m = this._model(true);
+    m.name = this._config.name || wxWeatherName(st) || this._t("title");
+    m.status = this._status(m);
+    m.still = this._config.animations === false;
+    const close = wxEsc(this._t("popup_close"));
+    const feels = m.feels != null ? `<div class="feels">${wxEsc(this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }))}</div>` : "";
+    const chips = this._heroChips(m);
+    this._popup.shadowRoot.innerHTML =
+      `<style>${WX_STYLES}${WX_POPUP_STYLES}</style><style>:host{--wx-color:${m.color}}</style>` +
+      `<div class="backdrop"><div class="sheet" role="dialog" aria-modal="true" aria-label="${wxEsc(m.name)}">` +
+      `<ha-card class="popup${m.still ? " still" : ""}"><div class="header">` +
+      `<div class="badge" data-more="${wxEsc(m.ent.weather)}"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon></div>` +
+      `<div class="titles" data-more="${wxEsc(m.ent.weather)}"><div class="name">${wxEsc(m.name)}</div><div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div></div>` +
+      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}"><span class="dot"></span>${wxEsc(m.status.text)}</span>` +
+      `<button class="close" data-action="close" title="${close}" aria-label="${close}"><ha-icon icon="mdi:close"></ha-icon></button></div>` +
+      `<div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
+      `<div class="info">${this._bigTemp(m)}${feels}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>` +
+      `<div class="grid">${this._sections(m, this._popupShown)}</div></ha-card></div></div>`;
   }
 
   _miniBody(m) {
@@ -526,6 +686,10 @@ class WeatherPlusCard extends WxElement {
     if (!el) return;
     if (el.dataset.action === "zoom") {
       this._toggleZoom(ev);
+      return;
+    }
+    if (el.dataset.action === "popup") {
+      this._openPopup();
       return;
     }
     if (el.dataset.more) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: el.dataset.more }, bubbles: true, composed: true }));

@@ -110,6 +110,17 @@ function wxAlertChips(card, m, { onlyActive = false } = {}) {
       }),
     );
   }
+  if (m.air?.tomorrow >= 4 && m.air.level < 4) {
+    out.push(wxChip("mdi:calendar-alert", card._t("air_tomorrow", { v: card._t(`aq_${m.air.tomorrow}`).toLowerCase() }), { color: WX_AQ_COLORS[m.air.tomorrow], cls: "tint" }));
+  }
+  if (m.pollen?.tomorrow >= 4 && m.pollen.level < 4) {
+    out.push(
+      wxChip("mdi:calendar-alert", card._t("pollen_tomorrow", { v: card._t(`pl_${m.pollen.tomorrow}`).toLowerCase() }), {
+        color: WX_LEVEL_COLORS[m.pollen.tomorrow],
+        cls: "tint",
+      }),
+    );
+  }
   if (m.storm) out.push(wxChip("mdi:weather-lightning", card._t("storm_at", { t: m.storm }), { color: "#7e57c2", cls: "tint" }));
   return out;
 }
@@ -136,6 +147,16 @@ function wxSectionRain(card, m) {
   ]
     .filter(([k]) => m.chances?.[k] != null && (k === "rain_chance" || m.chances[k] > 0))
     .map(([k, icon]) => wxChip(icon, card._t(k, { v: `${wxFmtNum(m.lang, m.chances[k], 0)} %` }), { more: m.ent[k] }));
+  const t = m.totals;
+  const amount = (v) => `${wxFmtNum(m.lang, v, 1)} ${t.unit}`;
+  const totals = t
+    ? [
+        t.today != null ? wxChip("mdi:weather-rainy", card._t("rain_today", { v: amount(t.today) }), { more: m.ent.daily_precipitation }) : "",
+        t.next6 != null ? wxChip("mdi:clock-outline", card._t("rain_next", { h: 6, v: amount(t.next6) })) : "",
+        t.next24 != null ? wxChip("mdi:calendar-today-outline", card._t("rain_next", { h: 24, v: amount(t.next24) })) : "",
+      ].filter(Boolean)
+    : [];
+  chances.push(...totals);
   if (!r && !chances.length) return "";
   let body = "";
   if (r) {
@@ -199,6 +220,25 @@ function wxSectionHourly(card, m) {
     .join("");
   // The precipitation of each hour: its probability, or its amount when the provider gives no probability.
   const wet = h.some((x) => x.precipitation_probability > 0 || x.precipitation > 0);
+  // The wind of each hour: an arrow pointing where it blows, its speed, the gusts on hover.
+  const windy = h.some((x) => x.wind_speed != null);
+  const wunit = m.a.wind_speed_unit || "km/h";
+  const wind = windy
+    ? h
+        .map((x) => {
+          const b = wxBearing(m.lang, x.wind_bearing);
+          const gust = wxNumber(x.wind_gust_speed);
+          const title = [b?.label, x.wind_speed != null ? `${wxFmtNum(m.lang, x.wind_speed, 0)} ${wunit}` : "", gust ? card._t("gusts", { v: `${wxFmtNum(m.lang, gust, 0)} ${wunit}` }) : ""]
+            .filter(Boolean)
+            .join(" · ");
+          const strong = (gust ?? x.wind_speed ?? 0) >= 50;
+          return (
+            `<div class="wcol${strong ? " strong" : ""}" title="${wxEsc(title)}">${b ? `<span class="arrow" style="transform:rotate(${(b.deg + 180) % 360}deg)"><ha-icon icon="mdi:navigation"></ha-icon></span>` : ""}` +
+            `<span>${x.wind_speed != null ? wxFmtNum(m.lang, x.wind_speed, 0) : ""}</span></div>`
+          );
+        })
+        .join("")
+    : "";
   const bottom = h
     .map((x) => {
       const p = x.precipitation_probability;
@@ -210,7 +250,7 @@ function wxSectionHourly(card, m) {
     .join("");
   return (
     `<div class="section s-hourly">${wxSectionTitle(card, "hourly")}<div class="hscroll"><div class="track" style="width:${W}px">` +
-    `<div class="hrow">${top}</div>${curve}${wet ? `<div class="hrow">${bottom}</div>` : ""}</div></div></div>`
+    `<div class="hrow">${top}</div>${curve}${wet ? `<div class="hrow">${bottom}</div>` : ""}${windy ? `<div class="hrow">${wind}</div>` : ""}</div></div></div>`
   );
 }
 
@@ -276,6 +316,15 @@ function wxIndexHead(level, label, sub, entity) {
   );
 }
 
+// Tomorrow's level next to the section title (Atmo's "-J+1" sensors), with an arrow when it changes.
+function wxTomorrowChip(card, level, prefix) {
+  if (level == null) return "";
+  return wxChip("mdi:calendar-arrow-right", card._t("tomorrow_v", { v: card._t(`${prefix}_${level}`).toLowerCase() }), {
+    color: WX_LEVEL_COLORS[level],
+    cls: "tint",
+  });
+}
+
 // rows: [{ entity, level, icon, name, title }]
 const wxLevelRows = (rows) =>
   rows
@@ -307,7 +356,7 @@ function wxSectionAir(card, m) {
   );
   const sub = [card._t(`aq_advice_${a.level}`), a.zone].filter(Boolean).join(" · ");
   return (
-    `<div class="section s-air">${wxSectionTitle(card, "air")}${wxIndexHead(a.level, card._t(`aq_${a.level}`), sub, a.entity)}` +
+    `<div class="section s-air">${wxSectionTitle(card, "air", wxTomorrowChip(card, a.tomorrow, "aq"))}${wxIndexHead(a.level, card._t(`aq_${a.level}`), sub, a.entity)}` +
     `${rows ? `<div class="pollen">${rows}</div>` : ""}</div>`
   );
 }
@@ -329,7 +378,7 @@ function wxSectionPollen(card, m) {
     })),
   );
   return (
-    `<div class="section s-pollen">${wxSectionTitle(card, "pollen")}${wxIndexHead(p.level, card._t(`pl_${p.level}`), sub, p.entity)}` +
+    `<div class="section s-pollen">${wxSectionTitle(card, "pollen", wxTomorrowChip(card, p.tomorrow, "pl"))}${wxIndexHead(p.level, card._t(`pl_${p.level}`), sub, p.entity)}` +
     `${rows ? `<div class="pollen">${rows}</div>` : ""}</div>`
   );
 }
@@ -358,8 +407,28 @@ function wxSectionSun(card, m) {
     `<svg viewBox="0 0 400 64" preserveAspectRatio="xMidYMid meet"><path class="horizon" d="M0 56H400"/><path class="arc" d="${arc}"/>${done}${dot}</svg>` +
     `<div class="suntimes"><span><ha-icon icon="mdi:weather-sunset-up"></ha-icon>${wxEsc(wxTime(m.lang, s.rise))}</span>` +
     `<span class="dl">${wxEsc(card._t("daylight", { h: Math.floor(dl / 60), m: String(dl % 60).padStart(2, "0") }))}</span>` +
-    `<span><ha-icon icon="mdi:weather-sunset-down"></ha-icon>${wxEsc(wxTime(m.lang, s.set))}</span></div></div></div>`
+    `<span><ha-icon icon="mdi:weather-sunset-down"></ha-icon>${wxEsc(wxTime(m.lang, s.set))}</span></div>${wxSunExtras(card, m)}</div></div>`
   );
+}
+
+// Dawn, the evening golden hour and dusk (the morning one in its tooltip).
+function wxSunExtras(card, m) {
+  const t = m.sunTimes;
+  if (!t) return "";
+  const range = (r) => (r ? `${wxTime(m.lang, r[0])}–${wxTime(m.lang, r[1])}` : "");
+  const golden = t.goldenEvening || t.goldenMorning;
+  const items = [
+    t.dawn ? wxChip("mdi:weather-sunset-up", `${card._t("dawn")} ${wxTime(m.lang, t.dawn)}`) : "",
+    golden
+      ? wxChip("mdi:camera-iris", `${card._t("golden_hour")} ${wxTime(m.lang, golden[0])}`, {
+          color: "#ffb300",
+          cls: "tint",
+          title: [range(t.goldenMorning), range(t.goldenEvening)].filter(Boolean).join(" · "),
+        })
+      : "",
+    t.dusk ? wxChip("mdi:weather-sunset-down", `${card._t("dusk")} ${wxTime(m.lang, t.dusk)}`) : "",
+  ].filter(Boolean);
+  return items.length ? `<div class="chips sunextra">${items.join("")}</div>` : "";
 }
 
 // ── Moon: today's phase drawn as it looks, its name and light, and the next full and new moons ──
@@ -381,7 +450,12 @@ function wxSectionMoon(card, m) {
   return (
     `<div class="section s-moon">${wxSectionTitle(card, "moon")}<div class="moonrow"${mo.entity ? ` data-more="${wxEsc(mo.entity)}" role="button" tabindex="0"` : ""}>` +
     `<div class="mdisc">${svg}</div><div class="uvtxt"><b>${wxEsc(card._t(`mp_${mo.phase}`))}</b>` +
-    `<span>${wxEsc(card._t("moon_lit", { v: Math.round(mo.light * 100), d: Math.floor(mo.age) + 1 }))}</span></div>` +
+    `<span>${wxEsc(card._t("moon_lit", { v: Math.round(mo.light * 100), d: Math.floor(mo.age) + 1 }))}</span>${
+      mo.times
+        ? `<span class="mtimes"><span title="${wxEsc(card._t("moonrise"))}"><ha-icon icon="mdi:arrow-up-thin"></ha-icon>${wxEsc(mo.times.rise ? wxTime(m.lang, mo.times.rise) : "—")}</span>` +
+          `<span title="${wxEsc(card._t("moonset"))}"><ha-icon icon="mdi:arrow-down-thin"></ha-icon>${wxEsc(mo.times.set ? wxTime(m.lang, mo.times.set) : "—")}</span></span>`
+        : ""
+    }</div>` +
     `<div class="mnexts">${next}</div></div></div>`
   );
 }
@@ -412,7 +486,9 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .st { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; padding: 1px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;
-        white-space: nowrap; background: color-mix(in srgb, var(--st-color, var(--wx-color)) 15%, transparent); color: var(--st-color, var(--wx-color)); }
+        white-space: nowrap; background: color-mix(in srgb, var(--st-color, var(--wx-color)) 18%, transparent);
+        color: color-mix(in srgb, var(--st-color, var(--wx-color)) 72%, var(--primary-text-color)); }
+  .st .dot { background: var(--st-color, var(--wx-color)); }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   .st.alert .dot { animation: wx-blink 1.4s ease-in-out infinite; }
   button { font: inherit; cursor: pointer; border: none; }
@@ -481,6 +557,11 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .enter .pbar span { animation: wx-rise .6s ease-out both; }
   .pv { font-size: 10px; color: #42a5f5; min-height: 12px; font-variant-numeric: tabular-nums; }
 
+  .wcol { width: ${WX_COL}px; flex: none; display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 4px;
+          font-size: 11px; color: var(--secondary-text-color); font-variant-numeric: tabular-nums; }
+  .wcol .arrow { display: inline-flex; }
+  .wcol ha-icon { --mdc-icon-size: 12px; }
+  .wcol.strong { color: #26a69a; font-weight: 600; }
   .daily { display: flex; flex-direction: column; gap: 4px; }
   .drow { display: grid; grid-template-columns: 84px 24px 38px 30px 1fr 30px; align-items: center; gap: 8px; font-size: 13px; }
   .enter .drow, .enter .prow { animation: wx-slide .45s ease-out both; animation-delay: var(--d, 0s); }
@@ -529,6 +610,12 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .suntimes ha-icon { --mdc-icon-size: 16px; color: #ffb300; }
   .suntimes .dl { font-size: 11px; }
 
+  .sunextra { justify-content: center; margin-top: 6px; }
+  .mtimes { display: flex; gap: 10px; margin-top: 2px; white-space: nowrap; }
+  .mtimes > span { display: inline-flex; align-items: center; }
+  .mtimes ha-icon { --mdc-icon-size: 14px; }
+  .chip.trend.up ha-icon { color: #ef6c00; }
+  .chip.trend.down ha-icon { color: #1e88e5; }
   .moonrow { display: flex; align-items: center; gap: 12px; }
   .mdisc { width: 48px; height: 48px; flex: none; }
   .mdisc svg { width: 100%; height: 100%; overflow: visible; }
@@ -563,4 +650,35 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   ha-card.still *, ha-card.still *::before { animation: none !important; }
   @media (prefers-reduced-motion: reduce) { ha-card * { animation: none !important; } }
   @media (max-width: 420px) { .pollen { grid-template-columns: 1fr; } }
+`;
+
+// ── Full screen detail ───────────────────────────────────────────────────────
+const WX_POPUP_STYLES = `
+  :host { all: initial; display: block; font-family: var(--paper-font-body1_-_font-family, var(--ha-font-family-body, Roboto, sans-serif));
+          color: var(--primary-text-color); -webkit-font-smoothing: antialiased; }
+  .backdrop { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.5); animation: wx-fade .2s ease-out both; }
+  .sheet { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; background: var(--card-background-color, #fff);
+           animation: wx-sheet .28s cubic-bezier(.2,.8,.2,1) both; }
+  ha-card.popup { --ha-card-border-radius: 0; --ha-card-box-shadow: none; border-radius: 0; box-shadow: none; min-height: 100%; height: auto;
+                  overflow: visible; gap: 20px; box-sizing: border-box; max-width: 1600px; margin: 0 auto;
+                  padding: max(12px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
+  .popup .header { position: sticky; top: 0; z-index: 2; padding: 10px 0; margin: -10px 0 0; background: var(--card-background-color, #fff); }
+  .popup .name { font-size: 20px; }
+  .close { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; margin-left: 4px;
+           background: var(--secondary-background-color, rgba(128,128,128,.12)); color: var(--primary-text-color); }
+  .close:hover { background: color-mix(in srgb, var(--primary-text-color) 14%, transparent); }
+  .close:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 2px; }
+  .popup .hero { gap: 24px; }
+  .popup .scene { width: 220px; height: 176px; border-radius: 24px; }
+  .popup .big .val { font-size: 64px; }
+  .popup .big .val small { font-size: 26px; }
+  .popup .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 28px 40px; align-items: start; }
+  .popup .grid > .s-alerts, .popup .grid > .s-hourly { grid-column: 1 / -1; }
+  .popup .hscroll { margin: 0; padding: 0 0 6px; }
+  @keyframes wx-sheet { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+  @media (max-width: 600px) {
+    .popup .hero { flex-direction: column; align-items: flex-start; }
+    .popup .scene { width: 100%; height: 130px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .backdrop, .sheet { animation: none !important; } }
 `;

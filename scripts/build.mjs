@@ -5,7 +5,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-export const PARTS = ["shared", "scene", "sections"];
+export const PARTS = ["shared", "astro", "scene", "sections"];
 export const CARDS = ["weather-plus-card"];
 const root = fileURLToPath(new URL("..", import.meta.url));
 const pkg = JSON.parse(readFileSync(`${root}package.json`, "utf8"));

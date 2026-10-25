@@ -30,23 +30,24 @@ Like the other `ha-*` cards: header with a status pill, illustration next to the
 `custom:weather-plus-card` — A `weather` entity and the sensors of the weather integrations around it.
 
 - **Animated scene** for each condition, by day and by night (from `sun.sun`): the sun's rays turn and its glow breathes, the moon shines in its real phase among twinkling stars, clouds drift, rain falls (harder when it pours), snow flutters down, hail bounces, lightning flashes over the cloud, fog rolls and the wind blows in gusts; a warning sign for exceptional weather. `animations: false` or the system's *reduce motion* setting keeps it still
-- The temperature in large with today's high and low, the feels-like temperature, and chips for humidity, wind (an arrow turned to its direction, gusts on hover), pressure, UV index, pollen and air quality (*Pollen: low*, *Air: fair*, in the colour of their level)
+- The temperature in large with today's high and low, the feels-like temperature, and chips for humidity, wind (an arrow turned to its direction, gusts on hover), pressure (with its 3-hour trend from the history: rising, falling or steady), cloud cover, UV index, pollen and air quality (*Pollen: low*, *Air: fair*, in the colour of their level)
 - The **status pill** shows the highest weather warning (*Orange warning*), else lightning nearby (*Lightning 6 km away*), else the condition
 - Every chip, row and reading opens the more-info dialog of its entity
+- **Full screen** button (top right, `popup: false` removes it): the detail over the whole screen and its width, sections side by side as the width allows, with 24 hours and 10 days of forecast; it closes with its button, Escape, a click outside or the back button on a phone
 
 Sections, in the order of `sections` (a section with no data hides itself):
 
 | Section | What it shows | From |
 |---|---|---|
 | `alerts` | Weather warnings by phenomenon in plain words with their colour (*High waves · yellow*, *Heavy rain · orange*; the official name in the tooltip), pulsing from orange; drought restrictions with their level and the restricted uses; lightning strikes and their distance; a poor air quality; thunderstorms in the hourly forecast | Météo-France *weather alert*, VigiEau, Blitzortung, the forecast |
-| `rain` | Rain in the next hour as a 5-minute timeline coloured by intensity, with *Heavy rain in 15 min* / *Light rain now, stopping in 10 min*; rain, snow and frost chances | Météo-France *next rain*, *rain / snow / freeze chance* |
-| `hourly` | Icons by day or night, a temperature curve that draws itself, precipitation probability (or amount) bars; scrolls sideways | `weather.get_forecasts` (hourly) |
+| `rain` | Rain in the next hour as a 5-minute timeline coloured by intensity, with *Heavy rain in 15 min* / *Light rain now, stopping in 10 min*; rain, snow and frost chances; today's rainfall and the forecast totals for the next 6 and 24 hours | Météo-France *next rain*, *rain / snow / freeze chance*, *daily precipitation*, the hourly forecast |
+| `hourly` | Icons by day or night, a temperature curve that draws itself, precipitation probability (or amount) bars, the wind of each hour (an arrow, its speed, the gusts on hover, strong gusts highlighted); scrolls sideways | `weather.get_forecasts` (hourly) |
 | `daily` | One row a day: icon, precipitation probability, low and high on a range bar coloured by temperature against the whole week, the current temperature on today's | `weather.get_forecasts` (daily, or twice daily folded into days) |
-| `air` | The air quality index (1 good … 6 extremely poor) with its advice and zone, then each pollutant — PM2.5, PM10, ozone, NO₂, SO₂ — on the six levels, the most degraded first; a poor air (level 4 and up) also shows in the alerts | Atmo France (index and pollutants), or the concentrations of WAQI, AirVisual, Google Air Quality, Airly, sensor.community… placed on the European EAQI thresholds |
+| `air` | The air quality index (1 good … 6 extremely poor) with its advice and zone, and tomorrow's next to the title, then each pollutant — PM2.5, PM10, ozone, NO₂, SO₂ — on the six levels, the most degraded first; a poor air (level 4 and up) also shows in the alerts | Atmo France (index and pollutants), or the concentrations of WAQI, AirVisual, Google Air Quality, Airly, sensor.community… placed on the European EAQI thresholds |
 | `uv` | The UV index on its scale, its level and the advice that goes with it, today's peak | A UV sensor (Météo-France, OpenUV…), else the weather entity's `uv_index` |
-| `pollen` | The overall pollen risk (1 very low … 6 extremely high) with its advice and main species, then one row per species on six levels, the most present first; a high risk (4 and up) also shows in the alerts | Pollens (RNSA), Atmo France, Google Pollen, or any pollen sensor |
-| `sun` | The sun's course over the day, sunrise, sunset and the daylight length | `sun.sun` |
-| `moon` | Today's moon drawn as it looks (mirrored south of the equator), its phase, how much of it is lit and its day in the cycle, the next full and new moons | Computed from the date; the phase name from the [Moon](https://www.home-assistant.io/integrations/moon/) integration when it is set up |
+| `pollen` | The overall pollen risk (1 very low … 6 extremely high) with its advice and main species, and tomorrow's next to the title, then one row per species on six levels, the most present first; a high risk (4 and up) also shows in the alerts | Pollens (RNSA), Atmo France, Google Pollen, or any pollen sensor |
+| `sun` | The sun's course over the day, sunrise, sunset and the daylight length; dawn, golden hour and dusk | `sun.sun`, and Home Assistant's location |
+| `moon` | Today's moon drawn as it looks (mirrored south of the equator), its phase, how much of it is lit and its day in the cycle, moonrise and moonset, the next full and new moons | Computed from the date; the phase name from the [Moon](https://www.home-assistant.io/integrations/moon/) integration when it is set up |
 
 ### Mini card
 
@@ -77,6 +78,10 @@ The other sections read the sensors of these integrations, found by their transl
 | Air quality index | Atmo France *qualité globale*, or any outdoor `aqi` sensor (WAQI, AirVisual…); else the worst pollutant | `aqi` |
 | Pollutants | Atmo France, WAQI, AirVisual, Google Air Quality, Airly, sensor.community… (an indoor purifier's PM2.5 is left out; Atmo's day-ahead *-J+1* copies too) | `air` (a map: `pm25`, `pm10`, `o3`, `no2`, `so2`) |
 | Sun | `sun.sun` | `sun` |
+| Cloud cover | Météo-France *cloud cover*, else the weather entity's `cloud_coverage` | `cloud_cover` |
+| Pressure trend | The weather entity's pressure sensor (else the entity itself), read from the recorder's history | `pressure` |
+| Today's rainfall | Météo-France *daily precipitation* | `daily_precipitation` |
+| Tomorrow's air and pollen | Atmo France's *-J+1* sensors next to the ones in use | — |
 | Moon phase | [Moon](https://www.home-assistant.io/integrations/moon/) (`sensor.moon_phase`), optional | `moon` |
 
 ## Installation
@@ -131,6 +136,7 @@ entity: weather.paris
 | `hours` | number | `12` | Hours of the hourly forecast |
 | `days` | number | `5` | Days of the daily forecast |
 | `animations` | boolean | `true` | Animate the scene and the sections |
+| `popup` | boolean | `true` | Full screen button that opens the detail over the whole screen |
 | `zoom` | boolean | `true` | Mini card: detail button to unfold the full card |
 | `entities` | map | detected | Overrides of the detected entities, by role (see [Supported integrations](#supported-integrations)) |
 | `language` | string | HA language | `en` or `fr` |
@@ -142,6 +148,7 @@ entity: weather.paris
 | Weather card | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card-dark.png) |
 | Storm, orange warning | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm-dark.png) |
 | Night | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night-dark.png) |
+| Full screen | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup.png) ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-dark.png) |
 | Mini card | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini-dark.png) |
 | Conditions | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions-dark.png) |
 

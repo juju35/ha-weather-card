@@ -61,11 +61,11 @@ const POLLEN = [
 
 export const mockHass = (lang = "en", changes = {}, now = new Date()) => {
   const L = (o) => o[lang] ?? o.en;
-  const rise = at(now, 7, 52);
-  const set = at(now, 18, 21);
+  const rise = at(now, 8, 20);
+  const set = at(now, 18, 50);
   const up = now >= rise && now < set;
-  const nextRise = now < rise ? rise : at(now, 7, 54, 1);
-  const nextSet = now < set ? set : at(now, 18, 19, 1);
+  const nextRise = now < rise ? rise : at(now, 8, 22, 1);
+  const nextSet = now < set ? set : at(now, 18, 48, 1);
   const hour0 = at(now, now.getHours());
   const hourly = HOURLY.map(([condition, temperature, precipitation_probability], i) => ({
     datetime: new Date(hour0.getTime() + i * 3600000).toISOString(),
@@ -73,6 +73,9 @@ export const mockHass = (lang = "en", changes = {}, now = new Date()) => {
     temperature,
     precipitation_probability,
     precipitation: precipitation_probability > 40 ? 1.2 : 0,
+    wind_bearing: [225, 240, 250, 260, 270, 280, 290, 300][i % 8],
+    wind_speed: [18, 20, 24, 30, 38, 32, 26, 20][i % 8],
+    wind_gust_speed: [34, 38, 45, 55, 68, 58, 44, 36][i % 8],
   }));
   const daily = DAILY.map(([condition, temperature, templow, precipitation_probability, uv_index], i) => ({
     datetime: at(now, 12, 0, i).toISOString(),
@@ -125,6 +128,9 @@ export const mockHass = (lang = "en", changes = {}, now = new Date()) => {
     "sensor.paris_rain_chance": [60, { unit_of_measurement: "%", friendly_name: L({ en: "Paris Rain chance", fr: "Paris Risque de pluie" }) }],
     "sensor.paris_snow_chance": [0, { unit_of_measurement: "%", friendly_name: L({ en: "Paris Snow chance", fr: "Paris Risque de neige" }) }],
     "sensor.paris_freeze_chance": [0, { unit_of_measurement: "%", friendly_name: L({ en: "Paris Freeze chance", fr: "Paris Risque de gel" }) }],
+    "sensor.paris_daily_precipitation": [6.6, { device_class: "precipitation", unit_of_measurement: "mm", friendly_name: "Paris Daily precipitation" }],
+    "sensor.paris_cloud_cover": [40, { unit_of_measurement: "%", friendly_name: "Paris Cloud cover" }],
+    "sensor.paris_pressure": [1014, { device_class: "atmospheric_pressure", unit_of_measurement: "hPa", friendly_name: "Paris Pressure" }],
     "sensor.paris_uv": [3, { unit_of_measurement: "UV index", friendly_name: "Paris UV" }],
     "sensor.75_weather_alert": [
       "Jaune",
@@ -163,6 +169,7 @@ export const mockHass = (lang = "en", changes = {}, now = new Date()) => {
     "sensor.atmo_france_ozone_paris": [2, { device_class: "aqi", Libellé: "Moyen", friendly_name: "Atmo France Ozone-Paris" }],
     "sensor.atmo_france_dioxyde_d_azote_paris": [3, { device_class: "aqi", Libellé: "Dégradé", friendly_name: "Atmo France Dioxyde d'azote-Paris" }],
     "sensor.atmo_france_dioxyde_de_soufre_paris": [1, { device_class: "aqi", Libellé: "Bon", friendly_name: "Atmo France Dioxyde de soufre-Paris" }],
+    "sensor.pollens_75_risklevel_j_1": [4, { friendly_name: "Pollens 75 Risk level J+1" }],
     "sensor.atmo_france_pm25_paris_j_1": [5, { device_class: "aqi", friendly_name: "Atmo France PM25-Paris-J+1" }],
     // An indoor air purifier's PM2.5: not outdoor air.
     "sensor.living_room_purifier_pm2_5": [3, { device_class: "pm25", unit_of_measurement: "µg/m³", friendly_name: "Living room purifier PM2.5" }],
@@ -189,7 +196,7 @@ export const mockHass = (lang = "en", changes = {}, now = new Date()) => {
     entities,
     devices: { dev_mf: { name: "Paris" }, dev_pollens: { name: "Pollens 75" } },
     areas: {},
-    config: { unit_system: { temperature: "°C" } },
+    config: { unit_system: { temperature: "°C" }, latitude: 48.8566, longitude: 2.3522 },
     forecasts: { hourly, daily },
   };
 };

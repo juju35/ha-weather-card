@@ -93,6 +93,8 @@ export const addCards = (page, cards, cols = 1) =>
         el.hass = {
           ...hass,
           callService: async () => {},
+          // The pressure 3 hours ago, then now: a rising trend.
+          callApi: async () => [[{ state: "1011.2" }, { state: String(hass.states["sensor.paris_pressure"]?.state ?? 1014) }]],
           connection: {
             subscribeMessage: async (cb, msg) => {
               cb({ type: msg.forecast_type, forecast: hass.forecasts?.[msg.forecast_type] || [] });

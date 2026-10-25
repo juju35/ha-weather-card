@@ -12,6 +12,12 @@ export const makeHass = (lang = "en", changes = {}, now = NOON) => {
     hass.calls.push([domain, service, data]);
     return Promise.resolve();
   };
+  // The pressure 3 hours ago and now, for its trend.
+  hass.apiCalls = [];
+  hass.callApi = (method, path) => {
+    hass.apiCalls.push([method, path]);
+    return Promise.resolve([[{ state: "1011.2" }, { state: "1012.5" }, { state: String(hass.states["sensor.paris_pressure"]?.state ?? 1014) }]]);
+  };
   hass.connection = {
     subscribeMessage(cb, msg) {
       hass.subscriptions.push(msg);
