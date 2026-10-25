@@ -52,6 +52,8 @@ const wxChip = (icon, text, { color, cls = "", more, title, style } = {}) =>
   }${title ? ` title="${wxEsc(title)}"` : ""}><ha-icon icon="${icon}"></ha-icon>${wxEsc(text)}</span>`;
 
 // ── Alerts: weather warnings, drought restrictions, lightning nearby, storms in the forecast ──
+const wxStrikes = (card, n) => (n === 1 ? card._t("strikes_1") : card._t("strikes", { n: wxFmtNum(card._lang(), n, 0) }));
+
 function wxAlertChips(card, m, { onlyActive = false } = {}) {
   const out = [];
   const al = m.alerts;
@@ -72,7 +74,7 @@ function wxAlertChips(card, m, { onlyActive = false } = {}) {
   const vg = m.vigieau;
   if (vg && (vg.level >= 1 || !onlyActive)) {
     out.push(
-      wxChip(vg.level >= 1 ? "mdi:water-alert-outline" : "mdi:water-check-outline", `${card._t("vigieau")} · ${card._t(`vg_${vg.level}`)}`, {
+      wxChip(vg.level >= 1 ? "mdi:water-alert-outline" : "mdi:water-check-outline", vg.level ? card._t("drought", { v: card._t(`vg_${vg.level}`) }) : card._t("vg_0"), {
         color: WX_VG_COLORS[vg.level],
         cls: `tint${vg.level >= 3 ? " pulse" : ""}`,
         more: vg.entity,
@@ -83,7 +85,7 @@ function wxAlertChips(card, m, { onlyActive = false } = {}) {
   if (lt?.count > 0) {
     const d = lt.dist != null ? `${wxFmtNum(m.lang, lt.dist, 0)} ${lt.unit}` : "";
     out.push(
-      wxChip("mdi:flash", d ? card._t("lightning_n", { n: lt.count, d }) : `${card._t("lightning")} · ${lt.count}`, {
+      wxChip("mdi:flash", card._t(d ? "lightning_n" : "lightning_count", { d, s: wxStrikes(card, lt.count) }), {
         color: "#7e57c2",
         cls: "tint pulse bolt",
         more: lt.entity,
@@ -178,6 +180,7 @@ function wxSectionHourly(card, m) {
     )
     .join("");
   // The precipitation of each hour: its probability, or its amount when the provider gives no probability.
+  const wet = h.some((x) => x.precipitation_probability > 0 || x.precipitation > 0);
   const bottom = h
     .map((x) => {
       const p = x.precipitation_probability;
@@ -189,7 +192,7 @@ function wxSectionHourly(card, m) {
     .join("");
   return (
     `<div class="section s-hourly">${wxSectionTitle(card, "hourly")}<div class="hscroll"><div class="track" style="width:${W}px">` +
-    `<div class="hrow">${top}</div>${curve}<div class="hrow">${bottom}</div></div></div></div>`
+    `<div class="hrow">${top}</div>${curve}${wet ? `<div class="hrow">${bottom}</div>` : ""}</div></div></div>`
   );
 }
 
@@ -341,8 +344,8 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; padding: 1px 8px 1px 5px; border-radius: 12px;
           background: var(--secondary-background-color, rgba(128,128,128,.12)); color: var(--secondary-text-color); white-space: nowrap; }
   .chip ha-icon { --mdc-icon-size: 13px; }
-  .chip.tint { background: color-mix(in srgb, var(--k) 16%, transparent); color: var(--k); }
-  .chip.tint.lvl2 { color: color-mix(in srgb, var(--k) 70%, var(--primary-text-color)); }
+  .chip.tint { background: color-mix(in srgb, var(--k) 20%, transparent); color: color-mix(in srgb, var(--k) 72%, var(--primary-text-color)); }
+  .chip.tint ha-icon { color: var(--k); }
   .chip.pulse { animation: wx-chip 2s ease-in-out infinite; }
   .chip.bolt ha-icon { animation: wx-blink 1.2s steps(2) infinite; }
   .chip .arrow { display: inline-flex; transition: transform .6s; }
@@ -382,7 +385,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .enter .curve .area { animation: wx-fade 1.2s ease-out both; }
   .curve circle { fill: var(--card-background-color, #fff); stroke: var(--wx-color); stroke-width: 1.6; }
   .curve text { font-size: 11px; font-weight: 500; text-anchor: middle; fill: var(--primary-text-color); font-family: inherit; }
-  .pbar { width: 6px; height: 22px; border-radius: 3px; background: var(--secondary-background-color, rgba(128,128,128,.12)); display: flex; align-items: flex-end; overflow: hidden; }
+  .pbar { width: 6px; height: 22px; border-radius: 3px; background: color-mix(in srgb, var(--secondary-text-color) 14%, transparent); display: flex; align-items: flex-end; overflow: hidden; }
   .pbar span { width: 100%; background: #42a5f5; border-radius: 3px; transform-origin: bottom; }
   .enter .pbar span { animation: wx-rise .6s ease-out both; }
   .pv { font-size: 10px; color: #42a5f5; min-height: 12px; font-variant-numeric: tabular-nums; }

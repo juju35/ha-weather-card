@@ -67,7 +67,7 @@ export const load = (now = null) => {
   return vm.runInContext(
     `${code}
     ({ wxResolve, wxFindWeather, wxPollenLevel, wxAlertLevel, wxDroughtLevel, wxRainLevel, wxUvLevel, wxBearing, wxCleanConfig,
-       wxSceneSvg, wxTempColor, WX_CONDITIONS, customElements, window,
+       wxSceneSvg, wxTempColor, wxWeatherName, WX_CONDITIONS, customElements, window,
        cards: Object.fromEntries(${JSON.stringify(tags)}.map((t) => [t, customElements.get(t)])) })`,
     ctx,
   );

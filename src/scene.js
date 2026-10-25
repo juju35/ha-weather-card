@@ -35,7 +35,7 @@ const WX_STAR_POS = [
 ];
 const wxStars = (n = 6) =>
   `<g class="stars">${WX_STAR_POS.slice(0, n)
-    .map(([x, y, s]) => `<path transform="translate(${x} ${y}) scale(${s})" d="M0 -3L.8 -.8L3 0L.8 .8L0 3L-.8 .8L-3 0L-.8 -.8Z"/>`)
+    .map(([x, y, s]) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M0 -3L.8 -.8L3 0L.8 .8L0 3L-.8 .8L-3 0L-.8 -.8Z"/></g>`)
     .join("")}</g>`;
 
 // Rain, snow and hail fall from y0, spread over the given x positions.
@@ -116,8 +116,8 @@ const WX_SCENE_STYLES = `
   .scene .halo { transform-box: fill-box; transform-origin: center; animation: wx-breathe 6s ease-in-out infinite; }
   .scene .moon { animation: wx-bob 8s ease-in-out infinite; }
   .scene .stars path { fill: #fff8e1; transform-box: fill-box; transform-origin: center; animation: wx-twinkle 3s ease-in-out infinite; }
-  .scene .stars path:nth-child(2n) { animation-delay: -1.1s; animation-duration: 2.4s; }
-  .scene .stars path:nth-child(3n) { animation-delay: -2s; animation-duration: 3.6s; }
+  .scene .stars g:nth-child(2n) path { animation-delay: -1.1s; animation-duration: 2.4s; }
+  .scene .stars g:nth-child(3n) path { animation-delay: -2s; animation-duration: 3.6s; }
   .scene .cloud { animation: wx-drift 9s ease-in-out infinite; }
   .scene .cloud.back { animation-duration: 13s; animation-direction: reverse; opacity: .92; }
   .scene .rain path { stroke: #42a5f5; stroke-width: 1.8; stroke-linecap: round; opacity: 0; animation: wx-fall 1.1s linear infinite; }

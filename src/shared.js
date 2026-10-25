@@ -91,14 +91,18 @@ const WX_I18N = {
     ph_avalanche: "Avalanches",
     ph_waves: "Waves-submersion",
     no_alert: "No weather warning",
-    vigieau: "Drought restrictions",
-    vg_0: "No restriction",
-    vg_1: "Vigilance",
-    vg_2: "Alert",
-    vg_3: "Reinforced alert",
-    vg_4: "Crisis",
+    vigieau: "Drought",
+    drought: "Drought: {v}",
+    vg_0: "No water restriction",
+    vg_1: "vigilance",
+    vg_2: "alert",
+    vg_3: "reinforced alert",
+    vg_4: "crisis",
     lightning: "Lightning",
-    lightning_n: "{n} strikes · {d}",
+    strikes: "{n} strikes",
+    strikes_1: "1 strike",
+    lightning_count: "Lightning: {s}",
+    lightning_n: "Lightning {d} away ({s})",
     lightning_near: "Lightning {d} away",
     storm_at: "Storms possible at {t}",
     // Pollen
@@ -239,14 +243,18 @@ const WX_I18N = {
     ph_avalanche: "Avalanches",
     ph_waves: "Vagues-submersion",
     no_alert: "Pas de vigilance particulière",
-    vigieau: "Restrictions d'eau",
-    vg_0: "Pas de restriction",
-    vg_1: "Vigilance",
-    vg_2: "Alerte",
-    vg_3: "Alerte renforcée",
-    vg_4: "Crise",
+    vigieau: "Sécheresse",
+    drought: "Sécheresse : {v}",
+    vg_0: "Pas de restriction d'eau",
+    vg_1: "vigilance",
+    vg_2: "alerte",
+    vg_3: "alerte renforcée",
+    vg_4: "crise",
     lightning: "Foudre",
-    lightning_n: "{n} impacts · {d}",
+    strikes: "{n} impacts",
+    strikes_1: "1 impact",
+    lightning_count: "Foudre : {s}",
+    lightning_n: "Foudre à {d} ({s})",
     lightning_near: "Foudre à {d}",
     storm_at: "Orages possibles à {t}",
     pollen_risk: "Risque pollinique",
@@ -577,6 +585,18 @@ function wxFindPollen(hass, sensors) {
     if (!out.has(species)) out.set(species, id);
   }
   return { pollen: [...out.values()], pollen_risk: risk };
+}
+
+// The name of a weather entity without the provider's boilerplate: Météo-France names its entity
+// "Météo-France forecast for city Rennes", other providers "Forecast Home" / "Prévisions Maison".
+function wxWeatherName(st) {
+  const n = String(st?.attributes.friendly_name || "").trim();
+  const short = n
+    .replace(/^.*\bforecast\s+for\s+(the\s+)?(city\s+(of\s+)?)?/i, "")
+    .replace(/^.*\bpr[ée]visions?\s+(m[ée]t[ée]o\s+)?pour\s+(la\s+ville\s+de\s+)?/i, "")
+    .replace(/^(forecast|pr[ée]visions?)\s+/i, "")
+    .trim();
+  return short || n;
 }
 
 function wxFindWeather(hass) {

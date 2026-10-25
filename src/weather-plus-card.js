@@ -372,12 +372,12 @@ class WeatherPlusCard extends WxElement {
     if (wxUnavailable(st)) {
       this.shadowRoot.innerHTML =
         `<style>${WX_STYLES}</style><style>:host{--wx-color:${WX_IDLE}}</style><ha-card><div class="header"><div class="badge"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon></div>` +
-        `<div class="titles" data-more="${wxEsc(ent.weather)}"><div class="name">${wxEsc(c.name || st.attributes.friendly_name || this._t("title"))}</div></div>` +
+        `<div class="titles" data-more="${wxEsc(ent.weather)}"><div class="name">${wxEsc(c.name || wxWeatherName(st) || this._t("title"))}</div></div>` +
         `<span class="st"><span class="dot"></span>${wxEsc(this._t("unavailable"))}</span>${this._zoomButton()}</div></ha-card>`;
       return;
     }
     const m = this._model();
-    m.name = c.name || st.attributes.friendly_name || this._t("title");
+    m.name = c.name || wxWeatherName(st) || this._t("title");
     m.status = this._status(m);
     m.still = still;
     const head =

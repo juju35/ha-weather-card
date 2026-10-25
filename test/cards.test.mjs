@@ -118,9 +118,9 @@ test("card: rain in the next hour, alerts, VigiEau, lightning, pollen, UV and su
   assert.match(out, /Vent violent/);
   assert.match(out, /Orages/);
   assert.doesNotMatch(out, /Canicule/);
-  assert.match(out, /Restrictions d&#39;eau · Alerte/);
-  assert.match(out, /<b>Arrosage<\/b> · Interdit de 9 h à 20 h/);
-  assert.match(out, /12 impacts · 18 km/);
+    assert.match(out, /<b>Arrosage<\/b> · Interdit de 9 h à 20 h/);
+  assert.match(out, /Foudre à 18 km \(12 impacts\)/);
+  assert.match(out, /Sécheresse : alerte</);
   // Pollen: most present first, the absent ones left out.
   const pollen = out.slice(out.indexOf('class="pollen"'));
   assert.ok(pollen.indexOf("Graminées") < pollen.indexOf("Armoise"));
@@ -158,7 +158,7 @@ test("card: red warning, VigiEau crisis and an orange phenomenon pulse", () => {
   assert.match(out, /Red warning/);
   assert.match(out, /chip tint lvl4 pulse[^>]*>.*Strong wind/);
   assert.ok(out.indexOf("Strong wind") < out.indexOf("Thunderstorms"));
-  assert.match(out, /Drought restrictions · Crisis/);
+  assert.match(out, /Drought: crisis/);
 });
 
 test("card: no warning, rain now, clear night, no animation", () => {
@@ -248,4 +248,40 @@ test("editor: defaults are dropped from the YAML", () => {
     "custom:weather-plus-card",
   );
   assert.deepEqual(JSON.parse(JSON.stringify(out)), { type: "custom:weather-plus-card", entity: "weather.paris", days: 3 });
+});
+
+test("labels: lightning without distance, a single strike, no water restriction", () => {
+  const out = html(
+    card(
+      {},
+      makeHass("en", {
+        "sensor.blitzortung_lightning_counter": { state: 1 },
+        "sensor.blitzortung_lightning_distance": { state: "unknown" },
+        "sensor.alert_level_in_paris": { state: "aucune" },
+      }),
+    ),
+  );
+  assert.match(out, /Lightning: 1 strike</);
+  assert.match(out, /No water restriction/);
+});
+
+test("name: the provider's boilerplate is left out", () => {
+  const n = (friendly_name) => lib.wxWeatherName({ attributes: { friendly_name } });
+  assert.equal(n("Météo-France forecast for city Rennes"), "Rennes");
+  assert.equal(n("Forecast Home"), "Home");
+  assert.equal(n("Prévisions Météo pour Rennes"), "Rennes");
+  assert.equal(n("Paris"), "Paris");
+});
+
+test("scene: the stars keep their place while they twinkle", () => {
+  assert.match(lib.wxSceneSvg("clear-night", true), /<g transform="translate\(16 16\) scale\(1\)"><path d=/);
+});
+
+test("hourly: no precipitation row when no hour has any", () => {
+  const h = makeHass();
+  for (const x of h.forecasts.hourly) {
+    x.precipitation_probability = 0;
+    x.precipitation = 0;
+  }
+  assert.doesNotMatch(html(card({}, h)), /class="pcol"/);
 });
