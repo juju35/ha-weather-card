@@ -102,14 +102,28 @@ const WX_I18N = {
     lvl_3: "Orange",
     lvl_4: "Red",
     ph_wind: "Strong wind",
-    ph_rain_flood: "Rain-flood",
+    ph_rain_flood: "Heavy rain",
     ph_thunderstorm: "Thunderstorms",
-    ph_flood: "Flood",
-    ph_snow_ice: "Snow-ice",
+    ph_flood: "River floods",
+    ph_snow_ice: "Snow and ice",
     ph_heat_wave: "Heat wave",
     ph_cold_wave: "Cold wave",
     ph_avalanche: "Avalanches",
-    ph_waves: "Waves-submersion",
+    ph_waves: "High waves",
+    ph_level: "{p} · {l}",
+    lvlw_1: "green",
+    lvlw_2: "yellow",
+    lvlw_3: "orange",
+    lvlw_4: "red",
+    ph_title_wind: "Strong wind warning",
+    ph_title_rain_flood: "Heavy rain and flooding warning",
+    ph_title_thunderstorm: "Thunderstorm warning",
+    ph_title_flood: "River flood warning",
+    ph_title_snow_ice: "Snow and ice warning",
+    ph_title_heat_wave: "Heat wave warning",
+    ph_title_cold_wave: "Cold wave warning",
+    ph_title_avalanche: "Avalanche warning",
+    ph_title_waves: "High waves and coastal flooding warning",
     no_alert: "No weather warning",
     vigieau: "Drought",
     drought: "Drought: {v}",
@@ -134,6 +148,16 @@ const WX_I18N = {
     pl_3: "Moderate",
     pl_4: "High",
     pl_5: "Very high",
+    pl_6: "Extremely high",
+    pollen_chip: "Pollen: {v}",
+    pollen_main: "mostly {v}",
+    pollen_advice_0: "No pollen in the air",
+    pollen_advice_1: "No discomfort expected",
+    pollen_advice_2: "The most sensitive may feel it",
+    pollen_advice_3: "Allergy sufferers: keep your treatment at hand",
+    pollen_advice_4: "Allergy sufferers: air the house early, rinse your hair",
+    pollen_advice_5: "Allergy sufferers: limit time outdoors",
+    pollen_advice_6: "Allergy sufferers: avoid going out",
     p_alder: "Alder",
     p_ash: "Ash",
     p_birch: "Birch",
@@ -274,14 +298,28 @@ const WX_I18N = {
     lvl_3: "orange",
     lvl_4: "rouge",
     ph_wind: "Vent violent",
-    ph_rain_flood: "Pluie-inondation",
+    ph_rain_flood: "Fortes pluies",
     ph_thunderstorm: "Orages",
     ph_flood: "Crues",
-    ph_snow_ice: "Neige-verglas",
+    ph_snow_ice: "Neige et verglas",
     ph_heat_wave: "Canicule",
     ph_cold_wave: "Grand froid",
     ph_avalanche: "Avalanches",
-    ph_waves: "Vagues-submersion",
+    ph_waves: "Fortes vagues",
+    ph_level: "{p} · {l}",
+    lvlw_1: "vert",
+    lvlw_2: "jaune",
+    lvlw_3: "orange",
+    lvlw_4: "rouge",
+    ph_title_wind: "Vigilance vent violent",
+    ph_title_rain_flood: "Vigilance pluie-inondation : fortes pluies, inondations possibles",
+    ph_title_thunderstorm: "Vigilance orages",
+    ph_title_flood: "Vigilance crues des cours d'eau",
+    ph_title_snow_ice: "Vigilance neige-verglas",
+    ph_title_heat_wave: "Vigilance canicule",
+    ph_title_cold_wave: "Vigilance grand froid",
+    ph_title_avalanche: "Vigilance avalanches",
+    ph_title_waves: "Vigilance vagues-submersion : fortes vagues, submersion du littoral possible",
     no_alert: "Pas de vigilance particulière",
     vigieau: "Sécheresse",
     drought: "Sécheresse : {v}",
@@ -305,6 +343,16 @@ const WX_I18N = {
     pl_3: "Moyen",
     pl_4: "Élevé",
     pl_5: "Très élevé",
+    pl_6: "Extrêmement élevé",
+    pollen_chip: "Pollens : {v}",
+    pollen_main: "surtout {v}",
+    pollen_advice_0: "Pas de pollen dans l'air",
+    pollen_advice_1: "Pas de gêne attendue",
+    pollen_advice_2: "Les plus sensibles peuvent être gênés",
+    pollen_advice_3: "Allergiques : garder son traitement à portée",
+    pollen_advice_4: "Allergiques : aérer tôt le matin, se rincer les cheveux",
+    pollen_advice_5: "Allergiques : limiter le temps dehors",
+    pollen_advice_6: "Allergiques : éviter de sortir",
     p_alder: "Aulne",
     p_ash: "Frêne",
     p_birch: "Bouleau",
@@ -446,14 +494,14 @@ const WX_UV = [
 ];
 const wxUvLevel = (v) => (v == null ? null : WX_UV.findIndex((l) => v <= l.max + 0.49));
 
-const WX_LEVEL5 = ["#9e9e9e", "#43a047", "#9ccc65", "#fdd835", "#fb8c00", "#e53935"];
-
-// Pollen: numbers on a 0–5 scale (RNSA, Google Pollen) or 0–6 (Atmo), words in French or English.
+// Pollen on the Atmo scale, 0 none … 6 extremely high: RNSA and Google Pollen (0–5) share its first words, so their
+// numbers read the same; words in French or English.
 function wxPollenLevel(state, attrs = {}) {
   const n = wxNumber(state);
-  if (n != null) return wxClamp(Math.round(n), 0, 5);
+  if (n != null) return wxClamp(Math.round(n), 0, 6);
   const s = wxNorm(attrs.libelle || attrs.Libellé || attrs.category || state);
-  if (/tres_eleve|very_high|extr|tres_haut/.test(s)) return 5;
+  if (/extr/.test(s)) return 6;
+  if (/tres_eleve|very_high|tres_haut/.test(s)) return 5;
   if (/eleve|high|haut|fort/.test(s)) return 4;
   if (/moyen|moder|medium/.test(s)) return 3;
   if (/tres_faible|very_low/.test(s)) return 1;
@@ -588,7 +636,7 @@ const WX_POLLEN_SPECIES = [
   ["tree", /(^|_)trees?($|_)|arbres?($|_)/],
   ["weed", /(^|_)weeds?($|_)|herbace/],
 ];
-const WX_POLLEN_RISK = /risk_?level|niveau_de_risque|risque_pollinique|pollen_?(index|risk|global|risque)|qualite_globale_pollen/;
+const WX_POLLEN_RISK = /risk_?level|niveau_de_risque|risque_pollinique|pollen_?(index|risk|global|risque)|qualite_globale_pollen|(^|_)pollens?( |$)/;
 
 const WX_ROLES = {
   uv: { keys: ["uv", "uv_index", "current_uv_index"], id: /(^|_)uv(_index|_indice)?$|indice_uv|current_uv_index/, not: /uv_max|max_uv|uv_forecast|forecast_uv/ },

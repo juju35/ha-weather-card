@@ -61,11 +61,11 @@ function wxAlertChips(card, m, { onlyActive = false } = {}) {
     const active = al.phenomena.filter((p) => p.level >= 2).sort((a, b) => b.level - a.level);
     for (const p of active) {
       out.push(
-        wxChip(p.icon, `${card._t(`ph_${p.key}`)}`, {
+        wxChip(p.icon, card._t("ph_level", { p: card._t(`ph_${p.key}`), l: card._t(`lvlw_${p.level}`) }), {
           color: WX_ALERT_COLORS[p.level],
           cls: `tint lvl${p.level}${p.level >= 3 ? " pulse" : ""}`,
           more: al.entity,
-          title: card._t("vigilance_level", { v: card._t(`lvl_${p.level}`) }),
+          title: `${card._t(`ph_title_${p.key}`)} · ${card._t("vigilance_level", { v: card._t(`lvl_${p.level}`) })}`,
         }),
       );
     }
@@ -98,6 +98,15 @@ function wxAlertChips(card, m, { onlyActive = false } = {}) {
         color: WX_AQ_COLORS[m.air.level],
         cls: "tint pulse",
         more: m.air.entity,
+      }),
+    );
+  }
+  if (m.pollen?.level >= 4) {
+    out.push(
+      wxChip("mdi:flower-pollen", card._t("pollen_chip", { v: card._t(`pl_${m.pollen.level}`).toLowerCase() }), {
+        color: WX_LEVEL_COLORS[m.pollen.level],
+        cls: "tint pulse",
+        more: m.pollen.entity,
       }),
     );
   }
@@ -254,6 +263,30 @@ function wxSectionUv(card, m) {
   );
 }
 
+// ── Index sections (air, pollen): the level in a round badge with its label and advice, the scale, then one row per
+// pollutant or species on the six levels, the highest first ──
+const WX_LEVEL_COLORS = ["#9e9e9e", ...WX_AQ_COLORS.slice(1)];
+
+function wxIndexHead(level, label, sub, entity) {
+  const color = WX_LEVEL_COLORS[level];
+  return (
+    `<div class="uvhead"${entity ? ` data-more="${wxEsc(entity)}" role="button" tabindex="0"` : ""}><span class="uvval" style="--k:${color}">${level}</span>` +
+    `<div class="uvtxt"><b style="color:color-mix(in srgb, ${color} 75%, var(--primary-text-color))">${wxEsc(label)}</b><span>${wxEsc(sub)}</span></div></div>` +
+    `<div class="aqbar">${[1, 2, 3, 4, 5, 6].map((n) => `<i style="background:${WX_LEVEL_COLORS[n]}"${n === level ? ' class="on"' : ""}></i>`).join("")}</div>`
+  );
+}
+
+// rows: [{ entity, level, icon, name, title }]
+const wxLevelRows = (rows) =>
+  rows
+    .map(
+      (x, i) =>
+        `<div class="prow" data-more="${wxEsc(x.entity)}" role="button" tabindex="0" style="--k:${WX_LEVEL_COLORS[x.level]};--d:${(i * 0.05).toFixed(2)}s" title="${wxEsc(x.title)}">` +
+        `<ha-icon icon="${x.icon}"></ha-icon><span class="pname">${wxEsc(x.name)}</span>` +
+        `<span class="dots">${[1, 2, 3, 4, 5, 6].map((n) => `<i class="${n <= x.level ? "on" : ""}"></i>`).join("")}</span></div>`,
+    )
+    .join("");
+
 // Short pollutant names for the rows; the full name is in the row's tooltip.
 const WX_POL_SHORT = { pm25: "PM2.5", pm10: "PM10", o3: "O₃", no2: "NO₂", so2: "SO₂" };
 
@@ -261,26 +294,21 @@ const WX_POL_SHORT = { pm25: "PM2.5", pm10: "PM10", o3: "O₃", no2: "NO₂", so
 function wxSectionAir(card, m) {
   const a = m.air;
   if (!a) return "";
-  const color = WX_AQ_COLORS[a.level];
+  const rows = wxLevelRows(
+    [...a.pollutants]
+      .sort((x, y) => y.level - x.level)
+      .map((p) => ({
+        entity: p.entity,
+        level: p.level,
+        icon: p.key.startsWith("pm") ? "mdi:blur" : "mdi:molecule",
+        name: WX_POL_SHORT[p.key],
+        title: `${card._t(`pol_${p.key}`)} · ${card._t(`aq_${p.level}`)}${p.value ? ` · ${p.value}` : ""}`,
+      })),
+  );
   const sub = [card._t(`aq_advice_${a.level}`), a.zone].filter(Boolean).join(" · ");
-  const rows = a.pollutants
-    .sort((x, y) => y.level - x.level)
-    .map(
-      (p, i) =>
-        `<div class="prow" data-more="${wxEsc(p.entity)}" role="button" tabindex="0" style="--k:${WX_AQ_COLORS[p.level]};--d:${(i * 0.05).toFixed(2)}s" title="${wxEsc(
-          `${card._t(`pol_${p.key}`)} · ${card._t(`aq_${p.level}`)}${p.value ? ` · ${p.value}` : ""}`,
-        )}"><ha-icon icon="${p.key.startsWith("pm") ? "mdi:blur" : "mdi:molecule"}"></ha-icon>` +
-        `<span class="pname">${WX_POL_SHORT[p.key]}</span>` +
-        `<span class="dots six">${[1, 2, 3, 4, 5, 6].map((n) => `<i class="${n <= p.level ? "on" : ""}"></i>`).join("")}</span></div>`,
-    )
-    .join("");
   return (
-    `<div class="section s-air">${wxSectionTitle(card, "air")}` +
-    `<div class="uvhead"${a.entity ? ` data-more="${wxEsc(a.entity)}" role="button" tabindex="0"` : ""}><span class="uvval" style="--k:${color}">${a.level}</span>` +
-    `<div class="uvtxt"><b style="color:color-mix(in srgb, ${color} 75%, var(--primary-text-color))">${wxEsc(card._t(`aq_${a.level}`))}</b><span>${wxEsc(sub)}</span></div></div>` +
-    `<div class="aqbar">${[1, 2, 3, 4, 5, 6].map((n) => `<i style="background:${WX_AQ_COLORS[n]}"${n === a.level ? ' class="on"' : ""}></i>`).join("")}</div>` +
-    (rows ? `<div class="pollen">${rows}</div>` : "") +
-    "</div>"
+    `<div class="section s-air">${wxSectionTitle(card, "air")}${wxIndexHead(a.level, card._t(`aq_${a.level}`), sub, a.entity)}` +
+    `${rows ? `<div class="pollen">${rows}</div>` : ""}</div>`
   );
 }
 
@@ -288,24 +316,22 @@ function wxSectionAir(card, m) {
 function wxSectionPollen(card, m) {
   const p = m.pollen;
   if (!p) return "";
-  const risk =
-    p.risk != null
-      ? `<span class="chip tint" style="--k:${WX_LEVEL5[p.risk]}" data-more="${wxEsc(m.ent.pollen_risk)}" role="button" tabindex="0"><ha-icon icon="mdi:flower-pollen"></ha-icon>${wxEsc(card._t(`pl_${p.risk}`))}</span>`
-      : "";
-  const items = p.items.filter((x) => x.level >= 1).slice(0, 8);
-  const rows = items.length
-    ? items
-        .map(
-          (x, i) =>
-            `<div class="prow" data-more="${wxEsc(x.entity)}" role="button" tabindex="0" style="--k:${WX_LEVEL5[x.level]};--d:${(i * 0.05).toFixed(2)}s">` +
-            `<ha-icon icon="${/grass|weed|ragweed|mugwort|plantain|sorrel|nettle/.test(x.species) ? "mdi:grass" : "mdi:tree-outline"}"></ha-icon>` +
-            `<span class="pname">${wxEsc(card._t(`p_${x.species}`))}</span>` +
-            `<span class="dots">${[1, 2, 3, 4, 5].map((n) => `<i class="${n <= x.level ? "on" : ""}"></i>`).join("")}</span>` +
-            `<span class="plabel">${wxEsc(card._t(`pl_${x.level}`))}</span></div>`,
-        )
-        .join("")
-    : `<div class="empty-line"><ha-icon icon="mdi:flower-pollen-outline"></ha-icon>${wxEsc(card._t("pollen_none"))}</div>`;
-  return `<div class="section s-pollen">${wxSectionTitle(card, "pollen", risk)}<div class="pollen">${rows}</div></div>`;
+  const items = p.items.filter((x) => x.level >= 1).slice(0, 10);
+  const main = items[0] ? card._t("pollen_main", { v: card._t(`p_${items[0].species}`).toLowerCase() }) : "";
+  const sub = [card._t(`pollen_advice_${p.level}`), main].filter(Boolean).join(" · ");
+  const rows = wxLevelRows(
+    items.map((x) => ({
+      entity: x.entity,
+      level: x.level,
+      icon: /grass|weed|ragweed|mugwort|plantain|sorrel|nettle/.test(x.species) ? "mdi:grass" : "mdi:tree-outline",
+      name: card._t(`p_${x.species}`),
+      title: `${card._t(`p_${x.species}`)} · ${card._t(`pl_${x.level}`)}`,
+    })),
+  );
+  return (
+    `<div class="section s-pollen">${wxSectionTitle(card, "pollen")}${wxIndexHead(p.level, card._t(`pl_${p.level}`), sub, p.entity)}` +
+    `${rows ? `<div class="pollen">${rows}</div>` : ""}</div>`
+  );
 }
 
 // ── Sun: its course over the day, sunrise and sunset ──
@@ -466,7 +492,6 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .dots { display: inline-flex; gap: 2px; flex: none; }
   .dots i { width: 6px; height: 6px; border-radius: 50%; background: color-mix(in srgb, var(--secondary-text-color) 22%, transparent); }
   .dots i.on { background: var(--k); }
-  .plabel { display: none; }
 
   .sun svg { width: 100%; height: 64px; overflow: visible; }
   .sun .horizon { stroke: var(--divider-color, rgba(128,128,128,.25)); stroke-width: 1; }

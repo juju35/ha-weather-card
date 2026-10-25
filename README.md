@@ -30,7 +30,7 @@ Like the other `ha-*` cards: header with a status pill, illustration next to the
 `custom:weather-plus-card` — A `weather` entity and the sensors of the weather integrations around it.
 
 - **Animated scene** for each condition, by day and by night (from `sun.sun`): the sun's rays turn and its glow breathes, the moon shines among twinkling stars, clouds drift, rain falls (harder when it pours), snow flutters down, hail bounces, lightning flashes over the cloud, fog rolls and the wind blows in gusts; a warning sign for exceptional weather. `animations: false` or the system's *reduce motion* setting keeps it still
-- The temperature in large with today's high and low, the feels-like temperature, and chips for humidity, wind (an arrow turned to its direction, gusts on hover), pressure, UV index and air quality (*Air: fair*, in the colour of its level)
+- The temperature in large with today's high and low, the feels-like temperature, and chips for humidity, wind (an arrow turned to its direction, gusts on hover), pressure, UV index, pollen and air quality (*Pollen: low*, *Air: fair*, in the colour of their level)
 - The **status pill** shows the highest weather warning (*Orange warning*), else lightning nearby (*Lightning 6 km away*), else the condition
 - Every chip, row and reading opens the more-info dialog of its entity
 
@@ -38,13 +38,13 @@ Sections, in the order of `sections` (a section with no data hides itself):
 
 | Section | What it shows | From |
 |---|---|---|
-| `alerts` | Weather warnings by phenomenon (wind, thunderstorms, rain-flood, snow-ice, heat wave…) in their colour, pulsing from orange; drought restrictions with their level and the restricted uses; lightning strikes and their distance; a poor air quality; thunderstorms in the hourly forecast | Météo-France *weather alert*, VigiEau, Blitzortung, the forecast |
+| `alerts` | Weather warnings by phenomenon in plain words with their colour (*High waves · yellow*, *Heavy rain · orange*; the official name in the tooltip), pulsing from orange; drought restrictions with their level and the restricted uses; lightning strikes and their distance; a poor air quality; thunderstorms in the hourly forecast | Météo-France *weather alert*, VigiEau, Blitzortung, the forecast |
 | `rain` | Rain in the next hour as a 5-minute timeline coloured by intensity, with *Heavy rain in 15 min* / *Light rain now, stopping in 10 min*; rain, snow and frost chances | Météo-France *next rain*, *rain / snow / freeze chance* |
 | `hourly` | Icons by day or night, a temperature curve that draws itself, precipitation probability (or amount) bars; scrolls sideways | `weather.get_forecasts` (hourly) |
 | `daily` | One row a day: icon, precipitation probability, low and high on a range bar coloured by temperature against the whole week, the current temperature on today's | `weather.get_forecasts` (daily, or twice daily folded into days) |
 | `air` | The air quality index (1 good … 6 extremely poor) with its advice and zone, then each pollutant — PM2.5, PM10, ozone, NO₂, SO₂ — on the six levels, the most degraded first; a poor air (level 4 and up) also shows in the alerts | Atmo France (index and pollutants), or the concentrations of WAQI, AirVisual, Google Air Quality, Airly, sensor.community… placed on the European EAQI thresholds |
 | `uv` | The UV index on its scale, its level and the advice that goes with it, today's peak | A UV sensor (Météo-France, OpenUV…), else the weather entity's `uv_index` |
-| `pollen` | One row per species, the most present first, with its level on five dots; the overall pollen risk | Pollens (RNSA), Atmo France, Google Pollen, or any pollen sensor |
+| `pollen` | The overall pollen risk (1 very low … 6 extremely high) with its advice and main species, then one row per species on six levels, the most present first; a high risk (4 and up) also shows in the alerts | Pollens (RNSA), Atmo France, Google Pollen, or any pollen sensor |
 | `sun` | The sun's course over the day, sunrise, sunset and the daylight length | `sun.sun` |
 
 ### Mini card

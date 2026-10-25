@@ -279,7 +279,10 @@ class WeatherPlusCard extends WxElement {
       })
       .filter(Boolean)
       .sort((a, b) => b.level - a.level);
-    return items.length || risk != null ? { items, risk } : null;
+    if (!items.length && risk == null) return null;
+    // The overall risk when a sensor gives it, else the most present species.
+    const level = risk ?? Math.max(0, ...items.map((x) => x.level));
+    return { items, level, entity: risk != null ? ent.pollen_risk : items[0]?.entity };
   }
 
   _model() {
@@ -439,6 +442,16 @@ class WeatherPlusCard extends WxElement {
     }
     if (a.pressure != null) out.push(wxChip("mdi:gauge", `${wxFmtNum(m.lang, Number(a.pressure), 0)} ${a.pressure_unit || "hPa"}`, { title: this._t("pressure") }));
     if (m.uv) out.push(wxChip("mdi:sun-wireless-outline", this._t("uv_n", { v: wxFmtNum(m.lang, m.uv.v, 0) }), { color: WX_UV[m.uv.level].color, cls: "tint", more: m.uv.entity, title: this._t(`uv_${m.uv.level}`) }));
+    if (m.pollen?.level >= 1) {
+      out.push(
+        wxChip("mdi:flower-pollen", this._t("pollen_chip", { v: this._t(`pl_${m.pollen.level}`).toLowerCase() }), {
+          color: WX_LEVEL_COLORS[m.pollen.level],
+          cls: "tint",
+          more: m.pollen.entity,
+          title: this._t("pollen_risk"),
+        }),
+      );
+    }
     if (m.air) {
       out.push(
         wxChip("mdi:air-filter", this._t("air_chip", { v: this._t(`aq_${m.air.level}`).toLowerCase() }), {

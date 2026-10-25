@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0
+
+### Changes
+- **Pollen** section laid out like the air quality one: the overall risk in a round badge with its level, advice and main species, the scale, then each species on six levels. Atmo France's top level (*extremely high*, 6) is no longer folded into 5. Without a risk sensor, the most present species gives the risk.
+- Hero chip *Pollen: low* / *Pollens : faible* in the colour of the level; a high risk (4 and up) also shows in the alerts and on the mini card.
+- Weather warnings in plain words with their colour: *Fortes vagues · jaune*, *Fortes pluies · orange*, *Neige et verglas · jaune*… The official name and what it means are in the chip's tooltip (*Vigilance vagues-submersion : fortes vagues, submersion du littoral possible*).
+- Niak Weather's pollen sensor is read as the overall pollen risk when no other one is found.
+
 ## 1.1.0
 
 ### Changes

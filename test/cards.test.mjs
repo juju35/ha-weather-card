@@ -52,7 +52,8 @@ test("discovery: the weather alert is not mistaken for the drought level", () =>
 
 test("scales: pollen, warnings, drought, rain, UV", () => {
   assert.equal(lib.wxPollenLevel("4"), 4);
-  assert.equal(lib.wxPollenLevel("6"), 5);
+  assert.equal(lib.wxPollenLevel("6"), 6);
+  assert.equal(lib.wxPollenLevel("x", { Libellé: "Extrêmement élevé" }), 6);
   assert.equal(lib.wxPollenLevel("Très faible"), 1);
   assert.equal(lib.wxPollenLevel("Faible"), 2);
   assert.equal(lib.wxPollenLevel("Very High"), 5);
@@ -122,8 +123,8 @@ test("card: rain in the next hour, alerts, VigiEau, lightning, pollen, UV and su
   assert.match(out, /class="seg l3" style="flex:10/);
   assert.match(out, /Pluie 60 %/);
   assert.doesNotMatch(out, /Neige 0/);
-  assert.match(out, /Vent violent/);
-  assert.match(out, /Orages/);
+  assert.match(out, /Vent violent · jaune</);
+  assert.match(out, /Orages · jaune</);
   assert.doesNotMatch(out, /Canicule/);
     assert.match(out, /<b>Arrosage<\/b> · Interdit de 9 h à 20 h/);
   assert.match(out, /Foudre à 18 km \(12 impacts\)/);
@@ -132,7 +133,10 @@ test("card: rain in the next hour, alerts, VigiEau, lightning, pollen, UV and su
   const pollen = out.slice(out.indexOf('class="pollen"'));
   assert.ok(pollen.indexOf("Graminées") < pollen.indexOf("Armoise"));
   assert.doesNotMatch(pollen, /Ambroisie/);
-  assert.match(out, /Pollens<\/span><span class="chip tint"[^>]*>.*Moyen/);
+  const pol = out.slice(out.indexOf("s-pollen"));
+  assert.match(pol, /<span class="uvval" style="--k:#f0e641">3<\/span>.*<b[^>]*>Moyen<\/b><span>Allergiques : garder son traitement à portée · surtout graminées/);
+  assert.equal((pol.match(/class="prow"/g) || []).length, 6);
+  assert.match(out, /class="chip tint"[^>]*title="Risque pollinique"><ha-icon icon="mdi:flower-pollen"><\/ha-icon>Pollens : moyen/);
   assert.match(out, /Modéré.*Lunettes et crème solaire/);
   assert.match(out, /class="sun up"/);
   assert.match(out, /10 h 27 de jour/);
@@ -340,8 +344,19 @@ test("Niak Weather: official warning, water restrictions and storm sensor", () =
   const out = html(card({}, h));
   assert.match(out, /Vigilance orange/);
   assert.match(out, /chip tint lvl3 pulse[^>]*>.*Orages/);
-  assert.match(out, /Vagues-submersion/);
+  assert.match(out, /Fortes vagues · jaune</);
+  assert.match(out, /title="Vigilance vagues-submersion : fortes vagues, submersion du littoral possible · Vigilance jaune"/);
   assert.match(out, /Sécheresse : crise/);
   assert.match(out, /<li><b>Arrosage des pelouses<\/b><\/li>/);
   assert.match(out, /Foudre à 11 km \(7 impacts\)/);
+});
+
+test("pollen: Atmo's top level, a high risk in the alerts, the risk from the species without a risk sensor", () => {
+  const high = html(card({}, makeHass("en", { "sensor.pollens_75_risklevel": { state: 4 }, "sensor.pollens_75_graminees": { state: 6 } })));
+  assert.match(high, /chip tint pulse[^>]*>.*Pollen: high/);
+  assert.match(high, /title="Grass · Extremely high"/);
+  const h = makeHass("en");
+  delete h.states["sensor.pollens_75_risklevel"];
+  const out = html(card({}, h));
+  assert.match(out, /s-pollen.*<span class="uvval" style="--k:#ff5050">4<\/span>.*High<\/b><span>Allergy sufferers: air the house early, rinse your hair · mostly grass/);
 });
