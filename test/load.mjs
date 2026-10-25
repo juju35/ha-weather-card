@@ -58,7 +58,22 @@ export const load = (now = null) => {
     customElements: { get: (t) => registry.get(t), define: (t, c) => registry.set(t, c) },
     document: {
       createElement: (t) => (registry.has(t) ? new (registry.get(t))() : fakeNode()),
-      body: { ...fakeNode(), removeChild(el) { this.children = this.children.filter((x) => x !== el); } },
+      body: {
+        ...fakeNode(),
+        appendChild(el) {
+          this.children.push(el);
+          el.isConnected = true;
+          el.remove = () => {
+            this.removeChild(el);
+          };
+        },
+        // Like the browser: removing a node that is not a child throws.
+        removeChild(el) {
+          if (!this.children.includes(el)) throw new Error("NotFoundError");
+          this.children = this.children.filter((x) => x !== el);
+          el.isConnected = false;
+        },
+      },
       listeners: {},
       addEventListener(type, fn) {
         this.listeners[type] = fn;

@@ -466,3 +466,22 @@ test("full screen detail: opens over the page with 24 hours and 10 days, closes 
   assert.equal(lib.window.history.state, null);
   assert.doesNotMatch(html(card({ popup: false })), /data-action="popup"/);
 });
+
+test("full screen detail: opens again after being closed, by its button or Escape", () => {
+  const el = card();
+  const doc = lib.document;
+  const open = () => el._onClick({ composedPath: () => [{ dataset: { action: "popup" } }] });
+  for (let i = 0; i < 3; i++) {
+    open();
+    assert.equal(doc.body.children.length, 1, `open #${i + 1}`);
+    if (i % 2) doc.listeners.keydown({ key: "Escape", composedPath: () => [] });
+    else el._closePopup();
+    assert.equal(doc.body.children.length, 0, `closed #${i + 1}`);
+    assert.equal(el._popup, null);
+  }
+  // Hourly forecast across, alerts and rain beside the weather now, the rest in columns.
+  open();
+  const pop = doc.body.children[0].shadowRoot.innerHTML;
+  assert.match(pop, /<div class="top"><div class="hero">.*<div class="side"><div class="section enter s-alerts">.*s-rain.*<\/div><\/div><div class="section enter s-hourly">.*<div class="flow"><div class="section enter s-daily">/);
+  el._closePopup();
+});

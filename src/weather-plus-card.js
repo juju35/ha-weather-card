@@ -579,8 +579,8 @@ class WeatherPlusCard extends WxElement {
 
   // A section's entry animations (bars growing, the curve drawing itself) play when it first shows in `shown`, not
   // on every update: the forecasts, for one, arrive after the first render.
-  _sections(m, shown) {
-    return (this._config.sections || WX_SECTIONS)
+  _sections(m, shown, names = this._config.sections || WX_SECTIONS) {
+    return names
       .map((s) => {
         const out = WX_SECTION_RENDER[s]?.(this, m) || "";
         if (!out || shown.has(s)) return out;
@@ -601,7 +601,9 @@ class WeatherPlusCard extends WxElement {
   }
 
   _openPopup() {
-    if (this._popup) return;
+    // A popup left behind (its host already gone from the page) does not block a new one.
+    if (this._popup?.isConnected) return;
+    if (this._popup) this._closePopup(true);
     const host = document.createElement("div");
     host.className = "weather-plus-popup";
     const root = host.attachShadow({ mode: "open" });
@@ -633,9 +635,9 @@ class WeatherPlusCard extends WxElement {
   // `fromBack`: the back button already left the history entry the popup added.
   _closePopup(fromBack = false) {
     if (!this._popup) return;
-    this._popup.remove?.();
-    document.body.removeChild?.(this._popup);
+    const host = this._popup;
     this._popup = null;
+    host.remove();
     document.removeEventListener("keydown", this._onPopupKey);
     window.removeEventListener?.("popstate", this._onPopupBack);
     document.body.style.overflow = this._bodyOverflow || "";
@@ -653,6 +655,12 @@ class WeatherPlusCard extends WxElement {
     const close = wxEsc(this._t("popup_close"));
     const feels = m.feels != null ? `<div class="feels">${wxEsc(this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }))}</div>` : "";
     const chips = this._heroChips(m);
+    // Alerts and rain beside the weather now, the hourly forecast across, the other sections in columns; in the
+    // order of `sections`.
+    const names = this._config.sections || WX_SECTIONS;
+    const side = names.filter((n) => n === "alerts" || n === "rain");
+    const across = names.filter((n) => n === "hourly");
+    const rest = names.filter((n) => !side.includes(n) && !across.includes(n));
     this._popup.shadowRoot.innerHTML =
       `<style>${WX_STYLES}${WX_POPUP_STYLES}</style><style>:host{--wx-color:${m.color}}</style>` +
       `<div class="backdrop"><div class="sheet" role="dialog" aria-modal="true" aria-label="${wxEsc(m.name)}">` +
@@ -661,9 +669,11 @@ class WeatherPlusCard extends WxElement {
       `<div class="titles" data-more="${wxEsc(m.ent.weather)}"><div class="name">${wxEsc(m.name)}</div><div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div></div>` +
       `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}"><span class="dot"></span>${wxEsc(m.status.text)}</span>` +
       `<button class="close" data-action="close" title="${close}" aria-label="${close}"><ha-icon icon="mdi:close"></ha-icon></button></div>` +
-      `<div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
+      `<div class="top"><div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
       `<div class="info">${this._bigTemp(m)}${feels}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>` +
-      `<div class="grid">${this._sections(m, this._popupShown)}</div></ha-card></div></div>`;
+      `<div class="side">${this._sections(m, this._popupShown, side)}</div></div>` +
+      this._sections(m, this._popupShown, across) +
+      `<div class="flow">${this._sections(m, this._popupShown, rest)}</div></ha-card></div></div>`;
   }
 
   _miniBody(m) {

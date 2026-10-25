@@ -68,8 +68,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // The full screen detail, on a desktop and on a phone.
   const browser = await launch();
   for (const [file, theme, width, height] of [
-    ["popup", "light", 1280, 860],
-    ["popup-dark", "dark", 1280, 860],
+    ["popup", "light", 1600, 1000],
+    ["popup-dark", "dark", 1600, 1000],
     ["popup-phone", "light", 390, 844],
   ]) {
     const page = await openPage(browser, { theme, width: 360 });

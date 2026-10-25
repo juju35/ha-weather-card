@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.1
+
+### Fixes
+- The full screen detail opened only once: closing it removed it from the page twice, the second removal failed and left it marked as open.
+- Full screen detail on a wide screen, without lost space: the weather now beside the alerts and the rain, the hourly forecast across the whole width, the other sections in balanced columns (two, three from 1200 px). On a phone it stays in one column.
+- The full screen detail stays opaque with a translucent theme: the page behind is blurred and darkened.
+- The hourly forecast fills the width it is given, the temperature curve stretching with it.
+
 ## 1.4.0
 
 ### Changes

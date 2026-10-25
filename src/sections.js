@@ -202,15 +202,19 @@ function wxSectionHourly(card, m) {
     d += `C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p2[0]} ${p2[1].toFixed(1)}`;
   }
   const area = `${d}L${pts.at(-1)[0]} 48L${pts[0][0]} 48Z`;
+  // The curve stretches with the track (the columns share its width), so the dots and the temperatures are laid in
+  // the columns rather than in the SVG, where they would stretch too.
   const labels = pts
     .map((p, i) =>
-      h[i].temperature == null ? "" : `<circle cx="${p[0]}" cy="${p[1].toFixed(1)}" r="2.4"/><text x="${p[0]}" y="${(p[1] - 6).toFixed(1)}">${wxFmtNum(m.lang, h[i].temperature, 0)}°</text>`,
+      h[i].temperature == null
+        ? '<div class="pt"></div>'
+        : `<div class="pt" style="--y:${p[1].toFixed(1)}px"><span>${wxFmtNum(m.lang, h[i].temperature, 0)}°</span><i></i></div>`,
     )
     .join("");
   const curve =
-    `<svg class="curve" width="${W}" height="48" viewBox="0 0 ${W} 48"><defs><linearGradient id="wx-area" x1="0" y1="0" x2="0" y2="1">` +
+    `<div class="curve"><svg viewBox="0 0 ${W} 48" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="wx-area" x1="0" y1="0" x2="0" y2="1">` +
     '<stop offset="0" stop-color="var(--wx-color)" stop-opacity=".28"/><stop offset="1" stop-color="var(--wx-color)" stop-opacity="0"/></linearGradient></defs>' +
-    `<path class="area" d="${area}" fill="url(#wx-area)"/><path class="line" d="${d}" pathLength="100"/><g class="pts">${labels}</g></svg>`;
+    `<path class="area" d="${area}" fill="url(#wx-area)"/><path class="line" d="${d}" pathLength="100"/></svg><div class="hrow pts">${labels}</div></div>`;
   const top = h
     .map(
       (x, i) =>
@@ -249,7 +253,7 @@ function wxSectionHourly(card, m) {
     })
     .join("");
   return (
-    `<div class="section s-hourly">${wxSectionTitle(card, "hourly")}<div class="hscroll"><div class="track" style="width:${W}px">` +
+    `<div class="section s-hourly">${wxSectionTitle(card, "hourly")}<div class="hscroll"><div class="track" style="min-width:${W}px">` +
     `<div class="hrow">${top}</div>${curve}${wet ? `<div class="hrow">${bottom}</div>` : ""}${windy ? `<div class="hrow">${wind}</div>` : ""}</div></div></div>`
   );
 }
@@ -540,24 +544,29 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .ticks { display: flex; justify-content: space-between; font-size: 10px; color: var(--secondary-text-color); margin-top: -4px; }
 
   .hscroll { overflow-x: auto; overflow-y: hidden; margin: 0 -12px; padding: 0 12px; scrollbar-width: thin; }
-  .track { display: flex; flex-direction: column; }
+  .track { display: flex; flex-direction: column; width: 100%; }
   .hrow { display: flex; }
-  .hcol, .pcol { width: ${WX_COL}px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .hcol, .pcol, .pt { flex: 1 1 ${WX_COL}px; min-width: ${WX_COL}px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .hcol .t { font-size: 11px; color: var(--secondary-text-color); white-space: nowrap; }
   .hcol.now .t { color: var(--primary-text-color); font-weight: 500; }
   .hcol ha-icon { --mdc-icon-size: 22px; }
-  .curve { display: block; overflow: visible; }
-  .curve .line { fill: none; stroke: var(--wx-color); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 100; }
+  .curve { position: relative; height: 48px; }
+  .curve svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .curve .line { fill: none; stroke: var(--wx-color); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 100; vector-effect: non-scaling-stroke; }
+  .curve .pts { position: absolute; inset: 0; }
+  .pt { position: relative; }
+  .pt i { position: absolute; left: 50%; top: var(--y); width: 5px; height: 5px; transform: translate(-50%, -50%); border-radius: 50%;
+          background: var(--card-background-color, #fff); border: 1.6px solid var(--wx-color); }
+  .pt span { position: absolute; left: 50%; top: calc(var(--y) - 7px); transform: translate(-50%, -100%); font-size: 11px; font-weight: 500;
+             color: var(--primary-text-color); white-space: nowrap; }
   .enter .curve .line { animation: wx-draw 1.2s ease-out both; }
   .enter .curve .area { animation: wx-fade 1.2s ease-out both; }
-  .curve circle { fill: var(--card-background-color, #fff); stroke: var(--wx-color); stroke-width: 1.6; }
-  .curve text { font-size: 11px; font-weight: 500; text-anchor: middle; fill: var(--primary-text-color); font-family: inherit; }
   .pbar { width: 6px; height: 22px; border-radius: 3px; background: color-mix(in srgb, var(--secondary-text-color) 14%, transparent); display: flex; align-items: flex-end; overflow: hidden; }
   .pbar span { width: 100%; background: #42a5f5; border-radius: 3px; transform-origin: bottom; }
   .enter .pbar span { animation: wx-rise .6s ease-out both; }
   .pv { font-size: 10px; color: #42a5f5; min-height: 12px; font-variant-numeric: tabular-nums; }
 
-  .wcol { width: ${WX_COL}px; flex: none; display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 4px;
+  .wcol { flex: 1 1 ${WX_COL}px; min-width: ${WX_COL}px; display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 4px;
           font-size: 11px; color: var(--secondary-text-color); font-variant-numeric: tabular-nums; }
   .wcol .arrow { display: inline-flex; }
   .wcol ha-icon { --mdc-icon-size: 12px; }
@@ -656,29 +665,40 @@ const WX_STYLES = `${WX_SCENE_STYLES}
 const WX_POPUP_STYLES = `
   :host { all: initial; display: block; font-family: var(--paper-font-body1_-_font-family, var(--ha-font-family-body, Roboto, sans-serif));
           color: var(--primary-text-color); -webkit-font-smoothing: antialiased; }
-  .backdrop { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.5); animation: wx-fade .2s ease-out both; }
-  .sheet { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; background: var(--card-background-color, #fff);
-           animation: wx-sheet .28s cubic-bezier(.2,.8,.2,1) both; }
-  ha-card.popup { --ha-card-border-radius: 0; --ha-card-box-shadow: none; border-radius: 0; box-shadow: none; min-height: 100%; height: auto;
-                  overflow: visible; gap: 20px; box-sizing: border-box; max-width: 1600px; margin: 0 auto;
-                  padding: max(12px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
-  .popup .header { position: sticky; top: 0; z-index: 2; padding: 10px 0; margin: -10px 0 0; background: var(--card-background-color, #fff); }
-  .popup .name { font-size: 20px; }
-  .close { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; margin-left: 4px;
+  /* The theme's card colour may be translucent: a blurred, darkened page behind and a solid colour under it keep it opaque. */
+  .backdrop { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.6); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+              animation: wx-fade .2s ease-out both; }
+  .sheet { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; animation: wx-sheet .28s cubic-bezier(.2,.8,.2,1) both;
+           background: linear-gradient(var(--card-background-color, #fff), var(--card-background-color, #fff)), var(--primary-background-color, #fafafa); }
+  ha-card.popup { --ha-card-border-radius: 0; --ha-card-box-shadow: none; border-radius: 0; box-shadow: none; background: transparent; border: none;
+                  min-height: 100%; height: auto; overflow: visible; gap: 16px; box-sizing: border-box; max-width: 1800px; margin: 0 auto;
+                  padding: 0 max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  .popup .header { position: sticky; top: 0; z-index: 2; padding: max(10px, env(safe-area-inset-top)) 0 10px; margin: 0 -2px;
+                   background: linear-gradient(var(--card-background-color, #fff), var(--card-background-color, #fff)), var(--primary-background-color, #fafafa); }
+  .popup .name { font-size: 18px; }
+  .close { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; margin-left: 4px;
            background: var(--secondary-background-color, rgba(128,128,128,.12)); color: var(--primary-text-color); }
   .close:hover { background: color-mix(in srgb, var(--primary-text-color) 14%, transparent); }
   .close:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 2px; }
-  .popup .hero { gap: 24px; }
-  .popup .scene { width: 220px; height: 176px; border-radius: 24px; }
-  .popup .big .val { font-size: 64px; }
-  .popup .big .val small { font-size: 26px; }
-  .popup .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 28px 40px; align-items: start; }
-  .popup .grid > .s-alerts, .popup .grid > .s-hourly { grid-column: 1 / -1; }
-  .popup .hscroll { margin: 0; padding: 0 0 6px; }
-  @keyframes wx-sheet { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
-  @media (max-width: 600px) {
-    .popup .hero { flex-direction: column; align-items: flex-start; }
-    .popup .scene { width: 100%; height: 130px; }
+  .popup .section { gap: 8px; }
+
+  /* Phone: one column, as in the card. */
+  .popup .top, .popup .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .popup .flow { display: flex; flex-direction: column; gap: 16px; }
+  .popup .hscroll { margin: 0 -16px; padding: 0 16px 4px; }
+
+  /* Wider: the weather now next to the alerts and the rain, the hourly forecast across, the rest in balanced columns. */
+  @media (min-width: 760px) {
+    ha-card.popup { gap: 22px; padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
+    .popup .top { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px 40px; align-items: start; }
+    .popup .scene { width: 160px; height: 128px; border-radius: 20px; }
+    .popup .big .val { font-size: 56px; }
+    .popup .big .val small { font-size: 22px; }
+    .popup .flow { display: block; columns: 2 340px; column-gap: 40px; }
+    .popup .flow > .section { break-inside: avoid; margin-bottom: 24px; }
+    .popup .hscroll { margin: 0; padding: 0 0 4px; }
   }
+  @media (min-width: 1200px) { .popup .flow { columns: 3 340px; } }
+  @keyframes wx-sheet { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) { .backdrop, .sheet { animation: none !important; } }
 `;
