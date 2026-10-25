@@ -23,7 +23,14 @@ test("discovery: every integration's sensors around the weather entity", () => {
   assert.equal(ent.vigieau, "sensor.alert_level_in_paris");
   assert.equal(ent.lightning_counter, "sensor.blitzortung_lightning_counter");
   assert.equal(ent.lightning_distance, "sensor.blitzortung_lightning_distance");
-  assert.equal(ent.aqi, "sensor.paris_air_quality_index");
+  assert.equal(ent.aqi, "sensor.atmo_france_qualite_globale_paris");
+  assert.deepEqual(JSON.parse(JSON.stringify(ent.air)), {
+    no2: "sensor.atmo_france_dioxyde_d_azote_paris",
+    so2: "sensor.atmo_france_dioxyde_de_soufre_paris",
+    o3: "sensor.atmo_france_ozone_paris",
+    pm10: "sensor.atmo_france_pm10_paris",
+    pm25: "sensor.atmo_france_pm25_paris",
+  });
   assert.equal(ent.pollen_risk, "sensor.pollens_75_risklevel");
   assert.equal(ent.pollen.length, 8);
   assert.ok(!ent.pollen.includes("sensor.pollens_75_risklevel"));
@@ -90,7 +97,7 @@ test("card: the weather now, the warning in the status pill, the hero chips", ()
   assert.match(out, /rotate\(45deg\).*18 km\/h SW/);
   assert.match(out, /1014 hPa/);
   assert.match(out, /UV 3/);
-  assert.match(out, /AQI 2/);
+  assert.match(out, /Air: fair/);
 });
 
 test("card: forecasts come from weather/subscribe_forecast", () => {
@@ -284,4 +291,57 @@ test("hourly: no precipitation row when no hour has any", () => {
     x.precipitation = 0;
   }
   assert.doesNotMatch(html(card({}, h)), /class="pcol"/);
+});
+
+test("air quality: the Atmo index, its advice and every pollutant", () => {
+  const out = html(card({}, makeHass("fr")));
+  assert.match(out, /Air : moyen/);
+  const air = out.slice(out.indexOf("s-air"), out.indexOf("s-uv"));
+  assert.match(air, /<span class="uvval" style="--k:#50ccaa">2<\/span>/);
+  assert.match(air, /Pas de précaution particulière · Métropole du Grand Paris/);
+  // The most degraded pollutant first, on six dots.
+  assert.ok(air.indexOf("NO₂") < air.indexOf("PM2.5"));
+  assert.match(air, /title="Dioxyde d&#39;azote · Dégradé"/);
+  assert.equal((air.match(/class="prow"/g) || []).length, 5);
+  assert.doesNotMatch(out, /Air : mauvais/); // the J+1 copy is not today's index
+});
+
+test("air quality: concentrations on the EAQI thresholds, a poor air in the alerts", () => {
+  const h = makeHass("en");
+  for (const id of Object.keys(h.states)) if (id.includes("atmo_france")) delete h.states[id];
+  h.states["sensor.waqi_paris_pm2_5"] = { entity_id: "sensor.waqi_paris_pm2_5", state: "60", attributes: { device_class: "pm25", unit_of_measurement: "µg/m³" } };
+  h.states["sensor.waqi_paris_ozone"] = { entity_id: "sensor.waqi_paris_ozone", state: "70", attributes: { device_class: "ozone", unit_of_measurement: "µg/m³" } };
+  const out = html(card({}, h));
+  assert.match(out, /s-air.*>5<\/span>.*Very poor/);
+  assert.match(out, /chip tint pulse[^>]*>.*Air: very poor/);
+  assert.match(out, /title="Fine particles PM2.5 · Very poor · 60 µg\/m³"/);
+  assert.doesNotMatch(out, /purifier/);
+});
+
+test("Niak Weather: official warning, water restrictions and storm sensor", () => {
+  const h = makeHass("fr");
+  for (const id of ["sensor.75_weather_alert", "sensor.alert_level_in_paris", "sensor.blitzortung_lightning_counter", "sensor.blitzortung_lightning_distance"]) {
+    delete h.states[id];
+  }
+  const add = (id, state, attributes) => (h.states[id] = { entity_id: id, state, attributes });
+  add("sensor.niak_weather_vigilance", "orange", { options: ["verte", "jaune", "orange", "rouge"], phenomenes: { "Vagues-submersion": "jaune", Orages: "orange" } });
+  add("sensor.niak_weather_restrictions_eau", "crise", { niveau: 4, usages: ["Arrosage des pelouses", "Piscines familiales privées"] });
+  add("binary_sensor.niak_weather_orage", "on", { eclairs_20_min: 7, eclair_le_plus_proche_km: 11 });
+  add("sensor.niak_weather_pluie_dans", "unknown", { device_class: "duration", minutes: null });
+  const ent = lib.wxResolve(h, "weather.paris");
+  assert.equal(ent.alert, "sensor.niak_weather_vigilance");
+  assert.equal(ent.vigieau, "sensor.niak_weather_restrictions_eau");
+  assert.equal(ent.lightning_counter, "binary_sensor.niak_weather_orage");
+  assert.equal(ent.next_rain, "sensor.paris_next_rain");
+  // Météo-France names its UV sensor "…_forecast_for_city_…_uv".
+  h.states["sensor.meteo_france_forecast_for_city_paris_uv"] = { entity_id: "x", state: "4", attributes: {} };
+  delete h.states["sensor.paris_uv"];
+  assert.equal(lib.wxResolve(h, "weather.paris").uv, "sensor.meteo_france_forecast_for_city_paris_uv");
+  const out = html(card({}, h));
+  assert.match(out, /Vigilance orange/);
+  assert.match(out, /chip tint lvl3 pulse[^>]*>.*Orages/);
+  assert.match(out, /Vagues-submersion/);
+  assert.match(out, /Sécheresse : crise/);
+  assert.match(out, /<li><b>Arrosage des pelouses<\/b><\/li>/);
+  assert.match(out, /Foudre à 11 km \(7 impacts\)/);
 });

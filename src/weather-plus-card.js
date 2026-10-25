@@ -3,13 +3,6 @@
  * (alerts, rain in the next hour, hourly and daily forecasts, UV, pollen, sun), each from the integration that has it.
  */
 
-// AQI colour: the European / Atmo 1–6 scale, or the US 0–500 one.
-function wxAqiColor(v) {
-  const eu = ["#43a047", "#43a047", "#9ccc65", "#fdd835", "#fb8c00", "#e53935", "#8e24aa"];
-  if (v <= 6) return eu[Math.max(0, Math.round(v))];
-  return v <= 50 ? "#43a047" : v <= 100 ? "#fdd835" : v <= 150 ? "#fb8c00" : v <= 200 ? "#e53935" : "#8e24aa";
-}
-
 const WX_FC_DAILY = 1;
 const WX_FC_HOURLY = 2;
 const WX_FC_TWICE = 4;
@@ -155,7 +148,7 @@ class WeatherPlusCard extends WxElement {
     if (!this._config || !this._hass || !this.shadowRoot) return;
     const ent = this._entities();
     const hass = this._hass;
-    const ids = Object.values(ent).flat().filter(Boolean);
+    const ids = [...Object.values(ent), ...Object.values(ent.air || {})].flat().filter((id) => typeof id === "string");
     const states = ids.map((id) => {
       const s = hass.states[id];
       return s ? [id, s.state, s.attributes] : null;
@@ -223,7 +216,9 @@ class WeatherPlusCard extends WxElement {
     const st = this._st(ent.alert);
     if (wxUnavailable(st)) return null;
     const byKey = new Map();
-    for (const [k, v] of Object.entries(st.attributes)) {
+    // Météo-France: one attribute per phenomenon; Niak Weather: a `phenomenes` map.
+    const ph = st.attributes.phenomenes && typeof st.attributes.phenomenes === "object" ? st.attributes.phenomenes : st.attributes;
+    for (const [k, v] of Object.entries(ph)) {
       const p = wxPhenomenon(k);
       const level = wxAlertLevel(v);
       if (!p || !level) continue;
@@ -248,6 +243,25 @@ class WeatherPlusCard extends WxElement {
       )
       .filter((r) => r.usage);
     return { entity: ent.vigieau, level, restrictions };
+  }
+
+  _airModel(ent) {
+    const pollutants = Object.entries(ent.air || {})
+      .map(([key, id]) => {
+        const st = this._st(id);
+        if (wxUnavailable(st)) return null;
+        const level = wxAirLevel(st, key);
+        if (level == null) return null;
+        const unit = st.attributes.unit_of_measurement;
+        return { key, entity: id, level, value: unit && unit !== "AQI" ? `${wxFmtNum(this._lang(), wxNum(st), 0)} ${unit}` : null };
+      })
+      .filter(Boolean);
+    const st = this._st(ent.aqi);
+    let level = wxUnavailable(st) ? null : wxAirLevel(st);
+    if (level == null && pollutants.length) level = Math.max(...pollutants.map((p) => p.level));
+    if (level == null) return null;
+    const zone = st?.attributes["Nom de la zone"] || st?.attributes.zone || "";
+    return { level, value: wxNum(st), entity: ent.aqi || pollutants[0]?.entity, zone, pollutants };
   }
 
   _pollenModel(ent) {
@@ -303,10 +317,20 @@ class WeatherPlusCard extends WxElement {
     const uvMax = this._num(ent.uv_max) ?? wxNumber(today?.uv_index) ?? (hourlyUv.some((v) => v != null) ? Math.max(...hourlyUv.filter((v) => v != null)) : null);
     const uv = uvV != null ? { v: uvV, level: wxUvLevel(uvV), max: uvMax, entity: uvSensor != null ? ent.uv : ent.weather } : null;
 
-    const lcount = this._num(ent.lightning_counter);
+    const lst = this._st(ent.lightning_counter);
     const ldist = this._st(ent.lightning_distance);
-    const lightning =
-      lcount != null ? { count: lcount, dist: wxNum(ldist), unit: ldist?.attributes.unit_of_measurement || "km", entity: ent.lightning_counter } : null;
+    let lightning = null;
+    if (lst?.attributes.eclairs_20_min != null) {
+      // A storm sensor carrying its own strikes and the nearest one's distance (Niak Weather).
+      lightning = {
+        count: wxNumber(lst.attributes.eclairs_20_min),
+        dist: wxNumber(lst.attributes.eclair_le_plus_proche_km),
+        unit: "km",
+        entity: ent.lightning_counter,
+      };
+    } else if (wxNum(lst) != null) {
+      lightning = { count: wxNum(lst), dist: wxNum(ldist), unit: ldist?.attributes.unit_of_measurement || "km", entity: ent.lightning_counter };
+    }
     const storm = WX_STORM.has(cond) ? null : hourly.find((x, i) => i > 0 && WX_STORM.has(x.condition));
 
     const chances = {};
@@ -331,7 +355,7 @@ class WeatherPlusCard extends WxElement {
       hourly,
       daily,
       uv,
-      aqi: this._num(ent.aqi),
+      air: this._airModel(ent),
       rain: this._rainModel(ent),
       chances,
       alerts: this._alertModel(ent),
@@ -415,7 +439,16 @@ class WeatherPlusCard extends WxElement {
     }
     if (a.pressure != null) out.push(wxChip("mdi:gauge", `${wxFmtNum(m.lang, Number(a.pressure), 0)} ${a.pressure_unit || "hPa"}`, { title: this._t("pressure") }));
     if (m.uv) out.push(wxChip("mdi:sun-wireless-outline", this._t("uv_n", { v: wxFmtNum(m.lang, m.uv.v, 0) }), { color: WX_UV[m.uv.level].color, cls: "tint", more: m.uv.entity, title: this._t(`uv_${m.uv.level}`) }));
-    if (m.aqi != null) out.push(wxChip("mdi:air-filter", this._t("aqi_n", { v: wxFmtNum(m.lang, m.aqi, 0) }), { color: wxAqiColor(m.aqi), cls: "tint", more: m.ent.aqi, title: this._t("aqi") }));
+    if (m.air) {
+      out.push(
+        wxChip("mdi:air-filter", this._t("air_chip", { v: this._t(`aq_${m.air.level}`).toLowerCase() }), {
+          color: WX_AQ_COLORS[m.air.level],
+          cls: "tint",
+          more: m.air.entity,
+          title: this._t("air_index"),
+        }),
+      );
+    }
     return out;
   }
 

@@ -92,6 +92,15 @@ function wxAlertChips(card, m, { onlyActive = false } = {}) {
       }),
     );
   }
+  if (m.air?.level >= 4) {
+    out.push(
+      wxChip("mdi:air-filter", card._t("air_chip", { v: card._t(`aq_${m.air.level}`).toLowerCase() }), {
+        color: WX_AQ_COLORS[m.air.level],
+        cls: "tint pulse",
+        more: m.air.entity,
+      }),
+    );
+  }
   if (m.storm) out.push(wxChip("mdi:weather-lightning", card._t("storm_at", { t: m.storm }), { color: "#7e57c2", cls: "tint" }));
   return out;
 }
@@ -245,6 +254,36 @@ function wxSectionUv(card, m) {
   );
 }
 
+// Short pollutant names for the rows; the full name is in the row's tooltip.
+const WX_POL_SHORT = { pm25: "PM2.5", pm10: "PM10", o3: "O₃", no2: "NO₂", so2: "SO₂" };
+
+// ── Air quality: the index with its advice, then each pollutant on the six levels of the index ──
+function wxSectionAir(card, m) {
+  const a = m.air;
+  if (!a) return "";
+  const color = WX_AQ_COLORS[a.level];
+  const sub = [card._t(`aq_advice_${a.level}`), a.zone].filter(Boolean).join(" · ");
+  const rows = a.pollutants
+    .sort((x, y) => y.level - x.level)
+    .map(
+      (p, i) =>
+        `<div class="prow" data-more="${wxEsc(p.entity)}" role="button" tabindex="0" style="--k:${WX_AQ_COLORS[p.level]};--d:${(i * 0.05).toFixed(2)}s" title="${wxEsc(
+          `${card._t(`pol_${p.key}`)} · ${card._t(`aq_${p.level}`)}${p.value ? ` · ${p.value}` : ""}`,
+        )}"><ha-icon icon="${p.key.startsWith("pm") ? "mdi:blur" : "mdi:molecule"}"></ha-icon>` +
+        `<span class="pname">${WX_POL_SHORT[p.key]}</span>` +
+        `<span class="dots six">${[1, 2, 3, 4, 5, 6].map((n) => `<i class="${n <= p.level ? "on" : ""}"></i>`).join("")}</span></div>`,
+    )
+    .join("");
+  return (
+    `<div class="section s-air">${wxSectionTitle(card, "air")}` +
+    `<div class="uvhead"${a.entity ? ` data-more="${wxEsc(a.entity)}" role="button" tabindex="0"` : ""}><span class="uvval" style="--k:${color}">${a.level}</span>` +
+    `<div class="uvtxt"><b style="color:color-mix(in srgb, ${color} 75%, var(--primary-text-color))">${wxEsc(card._t(`aq_${a.level}`))}</b><span>${wxEsc(sub)}</span></div></div>` +
+    `<div class="aqbar">${[1, 2, 3, 4, 5, 6].map((n) => `<i style="background:${WX_AQ_COLORS[n]}"${n === a.level ? ' class="on"' : ""}></i>`).join("")}</div>` +
+    (rows ? `<div class="pollen">${rows}</div>` : "") +
+    "</div>"
+  );
+}
+
 // ── Pollen: one row per species, the most present first ──
 function wxSectionPollen(card, m) {
   const p = m.pollen;
@@ -302,6 +341,7 @@ const WX_SECTION_RENDER = {
   rain: wxSectionRain,
   hourly: wxSectionHourly,
   daily: wxSectionDaily,
+  air: wxSectionAir,
   uv: wxSectionUv,
   pollen: wxSectionPollen,
   sun: wxSectionSun,
@@ -415,6 +455,10 @@ const WX_STYLES = `${WX_SCENE_STYLES}
                  border: 2px solid var(--k); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
   .enter .uvbar .mark { animation: wx-pop .6s ease-out both; }
 
+  .aqbar { display: flex; align-items: center; gap: 3px; height: 10px; margin: 2px 4px; }
+  .aqbar i { flex: 1; height: 6px; border-radius: 3px; opacity: .3; }
+  .aqbar i.on { height: 10px; border-radius: 5px; opacity: 1; }
+  .enter .aqbar i.on { animation: wx-pop .6s ease-out both; }
   .pollen { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
   .prow { display: flex; align-items: center; gap: 6px; font-size: 13px; min-width: 0; }
   .prow ha-icon { --mdc-icon-size: 16px; color: var(--k); flex: none; }

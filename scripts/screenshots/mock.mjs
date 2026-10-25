@@ -155,7 +155,17 @@ export const mockHass = (lang = "en", changes = {}, now = new Date()) => {
       },
     ],
     "sensor.pollens_75_risklevel": [3, { friendly_name: L({ en: "Pollens 75 Risk level", fr: "Pollens 75 Niveau de risque" }) }],
-    "sensor.paris_air_quality_index": [2, { device_class: "aqi", friendly_name: L({ en: "Paris Air quality index", fr: "Paris Indice qualité de l'air" }) }],
+    // Atmo France: the index and each pollutant on the 1–6 scale, plus the day-ahead copies the card leaves out.
+    "sensor.atmo_france_qualite_globale_paris": [2, { Libellé: "Moyen", "Nom de la zone": "Métropole du Grand Paris", friendly_name: "Atmo France Qualité globale-Paris" }],
+    "sensor.atmo_france_qualite_globale_paris_j_1": [4, { Libellé: "Mauvais", friendly_name: "Atmo France Qualité globale-Paris-J+1" }],
+    "sensor.atmo_france_pm25_paris": [2, { device_class: "aqi", Libellé: "Moyen", friendly_name: "Atmo France PM25-Paris" }],
+    "sensor.atmo_france_pm10_paris": [1, { device_class: "aqi", Libellé: "Bon", friendly_name: "Atmo France PM10-Paris" }],
+    "sensor.atmo_france_ozone_paris": [2, { device_class: "aqi", Libellé: "Moyen", friendly_name: "Atmo France Ozone-Paris" }],
+    "sensor.atmo_france_dioxyde_d_azote_paris": [3, { device_class: "aqi", Libellé: "Dégradé", friendly_name: "Atmo France Dioxyde d'azote-Paris" }],
+    "sensor.atmo_france_dioxyde_de_soufre_paris": [1, { device_class: "aqi", Libellé: "Bon", friendly_name: "Atmo France Dioxyde de soufre-Paris" }],
+    "sensor.atmo_france_pm25_paris_j_1": [5, { device_class: "aqi", friendly_name: "Atmo France PM25-Paris-J+1" }],
+    // An indoor air purifier's PM2.5: not outdoor air.
+    "sensor.living_room_purifier_pm2_5": [3, { device_class: "pm25", unit_of_measurement: "µg/m³", friendly_name: "Living room purifier PM2.5" }],
   };
   for (const [slug, names, level] of POLLEN) states[`sensor.pollens_75_${slug}`] = [level, { friendly_name: `Pollens 75 ${L(names)}` }];
 

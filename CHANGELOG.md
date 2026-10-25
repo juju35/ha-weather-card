@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0
+
+### Changes
+- New **air quality** section (`air`, in the default sections): the index with its level, advice and zone, then PM2.5, PM10, ozone, NO₂ and SO₂ on the six levels of the index, the most degraded first. Atmo France levels are read as they are; WAQI, AirVisual, Google Air Quality, Airly or sensor.community concentrations are placed on the European EAQI thresholds. Override them with `entities: { air: { pm25: …, o3: … } }`.
+- The hero chip reads *Air: fair* / *Air : moyen* in the colour of the level, instead of *AQI 2*; a poor air (level 4 and up) also shows in the alerts and on the mini card.
+- Niak Weather: its official warning (`phenomenes`), water restrictions (with the restricted uses) and storm sensor (strikes and nearest distance) are read.
+
+### Fixes
+- Météo-France's UV sensor (`…_forecast_for_city_…_uv`) was not detected.
+- The rain in the next hour could pick another integration's "rain in" duration sensor and stay empty: only a sensor with the minute-by-minute forecast is taken now.
+- Atmo France's pollen concentration and day-ahead (*-J+1*) sensors are no longer taken for today's levels; an indoor air purifier's PM2.5 is never taken for outdoor air.
+
 ## 1.0.1
 
 ### Fixes

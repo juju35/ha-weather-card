@@ -52,6 +52,26 @@ const WX_I18N = {
     uv_advice_4: "Stay inside around midday",
     aqi: "Air quality",
     aqi_n: "AQI {v}",
+    air_chip: "Air: {v}",
+    air_index: "Air quality index",
+    aq_1: "Good",
+    aq_2: "Fair",
+    aq_3: "Moderate",
+    aq_4: "Poor",
+    aq_5: "Very poor",
+    aq_6: "Extremely poor",
+    aq_advice_1: "Enjoy the outdoors",
+    aq_advice_2: "No particular precaution",
+    aq_advice_3: "Sensitive people: limit intense outdoor effort",
+    aq_advice_4: "Limit intense outdoor activities",
+    aq_advice_5: "Avoid outdoor effort, keep windows closed at peaks",
+    aq_advice_6: "Stay inside as much as possible",
+    pol_pm25: "Fine particles PM2.5",
+    pol_pm10: "Particles PM10",
+    pol_o3: "Ozone",
+    pol_no2: "Nitrogen dioxide",
+    pol_so2: "Sulphur dioxide",
+    s_air: "Air quality",
     // Sections
     s_alerts: "Alerts",
     s_rain: "Rain in the next hour",
@@ -207,6 +227,26 @@ const WX_I18N = {
     uv_advice_4: "Rester à l'intérieur vers midi",
     aqi: "Qualité de l'air",
     aqi_n: "IQA {v}",
+    air_chip: "Air : {v}",
+    air_index: "Indice de qualité de l'air",
+    aq_1: "Bon",
+    aq_2: "Moyen",
+    aq_3: "Dégradé",
+    aq_4: "Mauvais",
+    aq_5: "Très mauvais",
+    aq_6: "Extrêmement mauvais",
+    aq_advice_1: "Profitez du plein air",
+    aq_advice_2: "Pas de précaution particulière",
+    aq_advice_3: "Personnes sensibles : limiter les efforts intenses dehors",
+    aq_advice_4: "Limiter les activités physiques intenses dehors",
+    aq_advice_5: "Éviter les efforts dehors, aérer hors des pics",
+    aq_advice_6: "Rester à l'intérieur autant que possible",
+    pol_pm25: "Particules fines PM2.5",
+    pol_pm10: "Particules PM10",
+    pol_o3: "Ozone",
+    pol_no2: "Dioxyde d'azote",
+    pol_so2: "Dioxyde de soufre",
+    s_air: "Qualité de l'air",
     s_alerts: "Alertes",
     s_rain: "Pluie dans l'heure",
     s_hourly: "Heure par heure",
@@ -466,6 +506,48 @@ function wxDroughtLevel(v) {
   return null;
 }
 
+// Air quality on the European / Atmo index: 1 good … 6 extremely poor. An index sensor gives it directly (Atmo 1–6,
+// or a US AQI 0–500 mapped onto it); a concentration in µg/m³ is placed on the EAQI thresholds of its pollutant.
+const WX_AQ_COLORS = ["", "#50f0e6", "#50ccaa", "#f0e641", "#ff5050", "#960032", "#872181"];
+const WX_EAQI = { pm25: [10, 20, 25, 50, 75], pm10: [20, 40, 50, 100, 150], o3: [50, 100, 130, 240, 380], no2: [40, 90, 120, 230, 340], so2: [100, 200, 350, 500, 750] };
+const wxStep = (v, limits) => 1 + limits.filter((l) => v > l).length;
+function wxAirLevel(st, pollutant) {
+  const v = wxNum(st);
+  if (v == null) return null;
+  const a = st.attributes;
+  const index = a.device_class === "aqi" || a.Libellé != null || a.libelle != null || !a.unit_of_measurement;
+  if (index) return v <= 6 ? wxClamp(Math.round(v), 1, 6) : wxStep(v, [50, 100, 150, 200, 300]);
+  return pollutant && WX_EAQI[pollutant] ? wxStep(v, WX_EAQI[pollutant]) : null;
+}
+
+// Outdoor pollutants, by entity id or device class; indoor sensors (an air purifier's PM2.5) are left out by requiring an
+// air quality integration (Atmo France, WAQI, AirVisual, Google Air Quality, Airly, sensor.community…).
+const WX_POLLUTANTS = [
+  ["pm25", /(^|_)(pm_?2_?5|pm25)(_|$)/, "pm25"],
+  ["pm10", /(^|_)pm_?10(_|$)/, "pm10"],
+  ["o3", /(^|_)(ozone|o3)(_|$)/, "ozone"],
+  ["no2", /(^|_)(dioxyde_d_azote|no2|nitrogen_dioxide)(_|$)/, "nitrogen_dioxide"],
+  ["so2", /(^|_)(dioxyde_de_soufre|so2|sulphur_dioxide|sulfur_dioxide)(_|$)/, "sulphur_dioxide"],
+];
+const WX_AIR_SOURCE = /atmo|waqi|airvisual|air_quality|airparif|airly|openaq|google_air|qualite_de_l_air|luftdaten|sensor_community|nam_/;
+const WX_AIR_PLATFORMS = /atmo|waqi|airvisual$|google_air|airly|openaq|luftdaten|nam$|accuweather|openweathermap|pirateweather/;
+
+function wxFindPollutants(hass, sensors) {
+  const out = new Map();
+  for (const id of sensors) {
+    if (!id.startsWith("sensor.")) continue;
+    const st = hass.states[id];
+    const oid = wxNorm(id.split(".")[1]);
+    if (/pollen|concentration_(ambroisie|armoise|aulne|bouleau|gramin|olivier)/.test(oid)) continue;
+    const outdoor = WX_AIR_SOURCE.test(oid) || WX_AIR_PLATFORMS.test(hass.entities?.[id]?.platform || "");
+    if (!outdoor) continue;
+    const dc = st.attributes.device_class;
+    const hit = WX_POLLUTANTS.find(([, re, d]) => re.test(oid) || dc === d);
+    if (hit && !out.has(hit[0])) out.set(hit[0], id);
+  }
+  return Object.fromEntries(out);
+}
+
 // Météo-France "rain in the next hour" words, and other providers' intensities.
 const WX_RAIN_COLORS = ["transparent", "#90caf9", "#42a5f5", "#1565c0"];
 function wxRainLevel(v) {
@@ -509,22 +591,36 @@ const WX_POLLEN_SPECIES = [
 const WX_POLLEN_RISK = /risk_?level|niveau_de_risque|risque_pollinique|pollen_?(index|risk|global|risque)|qualite_globale_pollen/;
 
 const WX_ROLES = {
-  uv: { keys: ["uv", "uv_index", "current_uv_index"], id: /(^|_)uv(_index|_indice)?$|indice_uv|current_uv_index/, not: /uv_max|max_uv|forecast/ },
+  uv: { keys: ["uv", "uv_index", "current_uv_index"], id: /(^|_)uv(_index|_indice)?$|indice_uv|current_uv_index/, not: /uv_max|max_uv|uv_forecast|forecast_uv/ },
   uv_max: { keys: ["max_uv_index"], id: /(max_uv|uv_max)/ },
-  next_rain: { keys: ["next_rain"], id: /next_rain|prochaine_pluie/, test: (st) => st.attributes["1_hour_forecast"] != null },
+  // Only a sensor with the minute-by-minute forecast: other integrations name a plain "rain in" duration next_rain too.
+  next_rain: { id: /next_rain|prochaine_pluie/, need: (st) => st.attributes["1_hour_forecast"] != null, test: (st) => st.attributes["1_hour_forecast"] != null },
   rain_chance: { keys: ["rain_chance"], id: /rain_chance|risque_de_pluie|precipitation_probability|probabilite_de_pluie/ },
   snow_chance: { keys: ["snow_chance"], id: /snow_chance|risque_de_neige/ },
   freeze_chance: { keys: ["freeze_chance"], id: /freeze_chance|risque_de_gel/ },
   alert: {
     keys: ["weather_alert"],
-    id: /weather_alert|vigilance_meteo|alerte_meteo/,
-    not: /vigieau|secheresse|drought|water/,
-    test: (st) => wxNumber(st.state) == null && wxAlertLevel(st.state) != null && Object.keys(st.attributes).some((k) => wxPhenomenon(k)),
+    id: /weather_alert|vigilance_meteo|alerte_meteo|(^|_)vigilance($|_officielle)/,
+    not: /vigieau|secheresse|drought|water|eau/,
+    test: (st) =>
+      wxNumber(st.state) == null &&
+      wxAlertLevel(st.state) != null &&
+      (typeof st.attributes.phenomenes === "object" || Object.keys(st.attributes).some((k) => wxPhenomenon(k))),
   },
-  vigieau: { keys: ["alert_level"], id: /vigieau|secheresse|drought|restriction_eau|water_restriction|alert_level_in/ },
-  lightning_counter: { keys: ["lightning_counter"], id: /lightning_(counter|count|strikes)|nombre_d_eclairs|impacts_de_foudre/ },
+  vigieau: { keys: ["alert_level"], id: /vigieau|secheresse|drought|restrictions?_(d_)?eau|water_restriction|alert_level_in/, not: /numerique|numeric/ },
+  // Blitzortung's counter, or a storm sensor carrying its strikes (Niak Weather: eclairs_20_min).
+  lightning_counter: {
+    keys: ["lightning_counter"],
+    id: /lightning_(counter|count|strikes)|nombre_d_eclairs|impacts_de_foudre/,
+    test: (st) => st.attributes.eclairs_20_min != null,
+  },
   lightning_distance: { keys: ["lightning_distance"], id: /lightning_distance|distance_(de_la_)?foudre|distance_eclair/ },
-  aqi: { keys: ["aqi"], id: /(^|_)aqi$|air_quality_index|qualite_globale|indice_atmo/, not: /pollen/, test: (st) => st.attributes.device_class === "aqi" },
+  aqi: {
+    keys: ["aqi"],
+    id: /(^|_)aqi$|air_quality_index|qualite_globale|indice_atmo/,
+    not: /pollen|(^|_)(pm|ozone|o3|no2|so2|dioxyde)/,
+    test: (st) => st.attributes.device_class === "aqi",
+  },
 };
 
 // Registry entries grouped by device, built once per `hass.entities` object (it only changes with the registry).
@@ -544,16 +640,19 @@ function wxByDevice(reg) {
 }
 
 // Sensor ids of the instance, without the hidden or disabled ones.
+// Day-ahead copies (Atmo's "-J+1", "_tomorrow") are forecasts, not the current reading.
+const WX_AHEAD = /(_j_?\d|_demain|_tomorrow|_day_?\d)$/;
 function wxSensors(hass) {
   return Object.keys(hass?.states || {})
     .filter((id) => id.startsWith("sensor.") || id.startsWith("binary_sensor."))
+    .filter((id) => !WX_AHEAD.test(id))
     .filter((id) => !hass.entities?.[id]?.hidden)
     .sort();
 }
 
 function wxFindRole(hass, role, sensors, near) {
   const m = WX_ROLES[role];
-  const ok = (id) => !m.not?.test(id);
+  const ok = (id) => !m.not?.test(id) && (!m.need || (hass.states[id] && m.need(hass.states[id])));
   const pick = (list) => list.find((id) => near.has(id)) || list[0];
   const tk = m.keys ? sensors.filter((id) => ok(id) && m.keys.includes(hass.entities?.[id]?.translation_key)) : [];
   if (tk.length) return pick(tk);
@@ -578,6 +677,7 @@ function wxFindPollen(hass, sensors) {
       risk ||= id;
       continue;
     }
+    if (/concentration/.test(oid)) continue;
     const pollenish = /pollen|allerg|rnsa|atmo|niveau_/.test(text) || hass.entities?.[id]?.platform?.match?.(/pollen/);
     const species = wxSpecies(oid) || (pollenish ? wxSpecies(text) : undefined);
     if (!species || !pollenish) continue;
@@ -613,8 +713,12 @@ function wxResolve(hass, weatherId, over = {}) {
   const ent = { weather: weatherId, sun: hass.states["sun.sun"] ? "sun.sun" : undefined };
   for (const role of Object.keys(WX_ROLES)) ent[role] = wxFindRole(hass, role, sensors, near);
   Object.assign(ent, wxFindPollen(hass, sensors));
+  ent.air = wxFindPollutants(hass, sensors);
   for (const [k, v] of Object.entries(over || {})) {
-    if (v != null && v !== "") ent[k] = k === "pollen" ? [].concat(v) : v;
+    if (v == null || v === "") continue;
+    if (k === "pollen") ent[k] = [].concat(v);
+    else if (k === "air" && typeof v === "object") ent.air = { ...ent.air, ...v };
+    else ent[k] = v;
   }
   return ent;
 }
@@ -694,7 +798,7 @@ const wxMini = (Base) =>
   };
 
 // ── Editor (built on Home Assistant's ha-form) ───────────────────────────────
-const WX_SECTIONS = ["alerts", "rain", "hourly", "daily", "uv", "pollen", "sun"];
+const WX_SECTIONS = ["alerts", "rain", "hourly", "daily", "air", "uv", "pollen", "sun"];
 const WX_DEFAULTS = { sections: WX_SECTIONS, hours: 12, days: 5, animations: true };
 
 class WxCardEditor extends HTMLElement {

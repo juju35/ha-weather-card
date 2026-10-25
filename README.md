@@ -6,7 +6,7 @@
 [![Release](https://img.shields.io/github/v/release/juju35/ha-weather-card)](https://github.com/juju35/ha-weather-card/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-An animated weather card for Home Assistant that brings together everything the weather integrations of your instance know: the weather now and its forecasts, **rain in the next hour**, **weather warnings**, **thunderstorms and lightning nearby**, **UV index**, **pollen**, **air quality** and **VigiEau drought restrictions**, with a mini card. Add it, it finds the weather entity and the sensors around it by itself. The sky comes alive: the sun turns, clouds drift, rain and snow fall, lightning flashes.
+An animated weather card for Home Assistant that brings together everything the weather integrations of your instance know: the weather now and its forecasts, **rain in the next hour**, **weather warnings**, **thunderstorms and lightning nearby**, **air quality and pollutants**, **UV index**, **pollen** and **VigiEau drought restrictions**, with a mini card. Add it, it finds the weather entity and the sensors around it by itself. The sky comes alive: the sun turns, clouds drift, rain and snow fall, lightning flashes.
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-weather-card&category=plugin)
 
@@ -14,7 +14,7 @@ An animated weather card for Home Assistant that brings together everything the 
 
 | Card | Type | What it shows |
 |---|---|---|
-| [Weather](#weather-card) | `custom:weather-plus-card` | The weather now in an animated scene, then alerts, rain in the next hour, hourly and daily forecasts, UV, pollen and sun. |
+| [Weather](#weather-card) | `custom:weather-plus-card` | The weather now in an animated scene, then alerts, rain in the next hour, hourly and daily forecasts, air quality, UV, pollen and sun. |
 | [Weather mini](#mini-card) | `custom:weather-plus-mini-card` | The same weather on two lines, with a zoom to the full card. |
 
 | Weather | Storm | Mini |
@@ -30,7 +30,7 @@ Like the other `ha-*` cards: header with a status pill, illustration next to the
 `custom:weather-plus-card` — A `weather` entity and the sensors of the weather integrations around it.
 
 - **Animated scene** for each condition, by day and by night (from `sun.sun`): the sun's rays turn and its glow breathes, the moon shines among twinkling stars, clouds drift, rain falls (harder when it pours), snow flutters down, hail bounces, lightning flashes over the cloud, fog rolls and the wind blows in gusts; a warning sign for exceptional weather. `animations: false` or the system's *reduce motion* setting keeps it still
-- The temperature in large with today's high and low, the feels-like temperature, and chips for humidity, wind (an arrow turned to its direction, gusts on hover), pressure, UV index and air quality
+- The temperature in large with today's high and low, the feels-like temperature, and chips for humidity, wind (an arrow turned to its direction, gusts on hover), pressure, UV index and air quality (*Air: fair*, in the colour of its level)
 - The **status pill** shows the highest weather warning (*Orange warning*), else lightning nearby (*Lightning 6 km away*), else the condition
 - Every chip, row and reading opens the more-info dialog of its entity
 
@@ -38,10 +38,11 @@ Sections, in the order of `sections` (a section with no data hides itself):
 
 | Section | What it shows | From |
 |---|---|---|
-| `alerts` | Weather warnings by phenomenon (wind, thunderstorms, rain-flood, snow-ice, heat wave…) in their colour, pulsing from orange; drought restrictions with their level and the restricted uses; lightning strikes and their distance; thunderstorms in the hourly forecast | Météo-France *weather alert*, VigiEau, Blitzortung, the forecast |
+| `alerts` | Weather warnings by phenomenon (wind, thunderstorms, rain-flood, snow-ice, heat wave…) in their colour, pulsing from orange; drought restrictions with their level and the restricted uses; lightning strikes and their distance; a poor air quality; thunderstorms in the hourly forecast | Météo-France *weather alert*, VigiEau, Blitzortung, the forecast |
 | `rain` | Rain in the next hour as a 5-minute timeline coloured by intensity, with *Heavy rain in 15 min* / *Light rain now, stopping in 10 min*; rain, snow and frost chances | Météo-France *next rain*, *rain / snow / freeze chance* |
 | `hourly` | Icons by day or night, a temperature curve that draws itself, precipitation probability (or amount) bars; scrolls sideways | `weather.get_forecasts` (hourly) |
 | `daily` | One row a day: icon, precipitation probability, low and high on a range bar coloured by temperature against the whole week, the current temperature on today's | `weather.get_forecasts` (daily, or twice daily folded into days) |
+| `air` | The air quality index (1 good … 6 extremely poor) with its advice and zone, then each pollutant — PM2.5, PM10, ozone, NO₂, SO₂ — on the six levels, the most degraded first; a poor air (level 4 and up) also shows in the alerts | Atmo France (index and pollutants), or the concentrations of WAQI, AirVisual, Google Air Quality, Airly, sensor.community… placed on the European EAQI thresholds |
 | `uv` | The UV index on its scale, its level and the advice that goes with it, today's peak | A UV sensor (Météo-France, OpenUV…), else the weather entity's `uv_index` |
 | `pollen` | One row per species, the most present first, with its level on five dots; the overall pollen risk | Pollens (RNSA), Atmo France, Google Pollen, or any pollen sensor |
 | `sun` | The sun's course over the day, sunrise, sunset and the daylight length | `sun.sun` |
@@ -67,12 +68,13 @@ The other sections read the sensors of these integrations, found by their transl
 |---|---|---|
 | Rain in the next hour | [Météo-France](https://www.home-assistant.io/integrations/meteo_france/) (`sensor.*_next_rain`) | `next_rain` |
 | Rain, snow, frost chances | Météo-France | `rain_chance`, `snow_chance`, `freeze_chance` |
-| Weather warnings | Météo-France (`sensor.*_weather_alert`), or any sensor with a green / yellow / orange / red level per phenomenon | `alert` |
-| Thunderstorms | [Blitzortung](https://github.com/mrk-its/homeassistant-blitzortung) (`lightning_counter`, `lightning_distance`), and the forecast | `lightning_counter`, `lightning_distance` |
-| Drought restrictions | VigiEau, or any sensor with a *vigilance / alerte / alerte renforcée / crise* level | `vigieau` |
+| Weather warnings | Météo-France (`sensor.*_weather_alert`), Niak Weather (*Vigilance officielle*), or any sensor with a green / yellow / orange / red level per phenomenon | `alert` |
+| Thunderstorms | [Blitzortung](https://github.com/mrk-its/homeassistant-blitzortung) (`lightning_counter`, `lightning_distance`), Niak Weather (*Orage proche*), and the forecast | `lightning_counter`, `lightning_distance` |
+| Drought restrictions | VigiEau, Niak Weather (*Restrictions d'eau*, with the restricted uses), or any sensor with a *vigilance / alerte / alerte renforcée / crise* level | `vigieau` |
 | UV index | Météo-France, [OpenUV](https://www.home-assistant.io/integrations/openuv/), OpenWeatherMap, Pirate Weather…, else the weather entity | `uv`, `uv_max` |
 | Pollen | Pollens (RNSA), Atmo France, Google Pollen, any sensor named after a pollen species (levels 0–5 or 0–6, or words in French or English) | `pollen` (a list), `pollen_risk` |
-| Air quality | Any `aqi` sensor (Atmo France, WAQI, AirVisual…) | `aqi` |
+| Air quality index | Atmo France *qualité globale*, or any outdoor `aqi` sensor (WAQI, AirVisual…); else the worst pollutant | `aqi` |
+| Pollutants | Atmo France, WAQI, AirVisual, Google Air Quality, Airly, sensor.community… (an indoor purifier's PM2.5 is left out; Atmo's day-ahead *-J+1* copies too) | `air` (a map: `pm25`, `pm10`, `o3`, `no2`, `so2`) |
 | Sun | `sun.sun` | `sun` |
 
 ## Installation
@@ -103,7 +105,7 @@ type: custom:weather-plus-card
 type: custom:weather-plus-card
 entity: weather.paris
 name: Home
-sections: [alerts, rain, hourly, daily, pollen]
+sections: [alerts, rain, hourly, daily, air, pollen]
 hours: 18
 days: 7
 entities:
@@ -123,7 +125,7 @@ entity: weather.paris
 |---|---|---|---|
 | `entity` | string | first `weather.*` | The weather entity |
 | `name` | string | its name | Card title |
-| `sections` | list | `[alerts, rain, hourly, daily, uv, pollen, sun]` | Sections shown, in this order |
+| `sections` | list | `[alerts, rain, hourly, daily, air, uv, pollen, sun]` | Sections shown, in this order |
 | `hours` | number | `12` | Hours of the hourly forecast |
 | `days` | number | `5` | Days of the daily forecast |
 | `animations` | boolean | `true` | Animate the scene and the sections |
