@@ -29,7 +29,7 @@ Like the other `ha-*` cards: header with a status pill, illustration next to the
 
 `custom:weather-plus-card` — A `weather` entity and the sensors of the weather integrations around it.
 
-- **Animated scene** for each condition, by day and by night (from `sun.sun`): the sun's rays turn and its glow breathes, the moon shines in its real phase among twinkling stars, clouds drift, rain falls (harder when it pours), snow flutters down, hail bounces, lightning flashes over the cloud, fog rolls and the wind blows in gusts; a warning sign for exceptional weather. `animations: false` or the system's *reduce motion* setting keeps it still
+- **Animated scene** for each condition, by day and by night (from `sun.sun`): the sun's rays turn and its glow breathes, at night the moon, in its real phase, shines among twinkling stars or peeks above the rain and storm clouds, tinted for the night, clouds drift, rain falls (harder when it pours), snow flutters down, hail bounces, lightning flashes over the cloud, fog rolls and the wind blows in gusts; a warning sign for exceptional weather. `animations: false` or the system's *reduce motion* setting keeps it still
 - The temperature in large with today's high and low, the feels-like temperature, and chips for humidity, wind (an arrow turned to its direction, gusts on hover), pressure (with its 3-hour trend from the history: rising, falling or steady), cloud cover, UV index, pollen and air quality (*Pollen: low*, *Air: fair*, in the colour of their level)
 - The **status pill** shows the highest weather warning (*Orange warning*), else lightning nearby (*Lightning 6 km away*), else the condition
 - Every chip, row and reading opens the more-info dialog of its entity

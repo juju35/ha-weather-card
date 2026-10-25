@@ -15,6 +15,9 @@ const SCENES = [
   ["lightning-rainy", 21, DAY],
   ["snowy", -1, DAY],
   ["windy", 14, DAY],
+  ["clear-night", 11, NIGHT],
+  ["rainy", 10, NIGHT],
+  ["lightning-rainy", 14, NIGHT],
 ];
 const FPS = 20;
 const SECONDS = 4.2; // one lightning cycle

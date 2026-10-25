@@ -104,6 +104,10 @@ const WX_DEFS =
   '<linearGradient id="wx-cl" gradientUnits="userSpaceOnUse" x1="0" y1="4" x2="0" y2="32"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d3dbe4"/></linearGradient>' +
   '<linearGradient id="wx-cb" gradientUnits="userSpaceOnUse" x1="0" y1="4" x2="0" y2="32"><stop offset="0" stop-color="#e6ebf0"/><stop offset="1" stop-color="#b2bfcc"/></linearGradient>' +
   '<linearGradient id="wx-cd" gradientUnits="userSpaceOnUse" x1="0" y1="4" x2="0" y2="32"><stop offset="0" stop-color="#a9b4c0"/><stop offset="1" stop-color="#5c6875"/></linearGradient>' +
+  // Night clouds: blue-grey, lit from above by the moon.
+  '<linearGradient id="wx-cn" gradientUnits="userSpaceOnUse" x1="0" y1="4" x2="0" y2="32"><stop offset="0" stop-color="#dfe3f3"/><stop offset="1" stop-color="#8e99bd"/></linearGradient>' +
+  '<linearGradient id="wx-cm" gradientUnits="userSpaceOnUse" x1="0" y1="4" x2="0" y2="32"><stop offset="0" stop-color="#b3bbd6"/><stop offset="1" stop-color="#5f6a8c"/></linearGradient>' +
+  '<linearGradient id="wx-ck" gradientUnits="userSpaceOnUse" x1="0" y1="4" x2="0" y2="32"><stop offset="0" stop-color="#7c86a6"/><stop offset="1" stop-color="#363e57"/></linearGradient>' +
   '<linearGradient id="wx-bolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff59d"/><stop offset="1" stop-color="#ffb300"/></linearGradient>' +
   '<linearGradient id="wx-warn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ef5350"/><stop offset="1" stop-color="#c62828"/></linearGradient>' +
   "</defs>";
@@ -112,16 +116,21 @@ const WX_DEFS =
 const WX_RAIN_X = [30, 40, 50, 60, 70, 35, 55, 65];
 const WX_POUR_X = [28, 34, 40, 46, 52, 58, 64, 70, 76, 31, 43, 55, 67];
 // `moon`: { age, flip } of the night scenes' moon, today's phase by default.
+// At night every scene keeps the moon, in today's phase, peeking above its clouds, and the clouds take night tones.
+const WX_NIGHT_TONES = { l: "n", b: "m", d: "k" };
 function wxSceneSvg(cond, night, moon = {}) {
   const body = night ? wxStars() + wxMoon(50, 38, 15, moon) : wxSun(50, 40, 16);
   const smallBody = night ? wxStars(4) + wxMoon(36, 28, 11, moon) : wxSun(36, 28, 12);
-  const top = (tone, cls) => wxCloud(22, 8, 1.05, tone, cls);
+  const tone = (t) => (night ? WX_NIGHT_TONES[t] : t);
+  // The moon behind the top cloud: its upper half shows above the cloud's left lobe.
+  const peek = night ? wxStars(3) + wxMoon(31, 15, 10, moon) : "";
+  const top = (t, cls) => peek + wxCloud(22, 8, 1.05, tone(t), cls);
   const parts = {
     sunny: body,
     "clear-night": wxStars() + wxMoon(50, 38, 15, moon),
-    partlycloudy: smallBody + wxCloud(30, 30, 1.05, "l", "front"),
-    cloudy: wxCloud(10, 14, 0.85, "b", "back") + wxCloud(30, 30, 1.05, "l", "front"),
-    fog: wxCloud(22, 6, 1, "b", "back") + wxFog([48, 56, 64, 72]),
+    partlycloudy: smallBody + wxCloud(30, 30, 1.05, tone("l"), "front"),
+    cloudy: (night ? wxStars(3) + wxMoon(66, 20, 11, moon) : "") + wxCloud(10, 14, 0.85, tone("b"), "back") + wxCloud(30, 30, 1.05, tone("l"), "front"),
+    fog: (night ? wxMoon(30, 14, 10, moon) : "") + wxCloud(22, 6, 1, tone("b"), "back") + wxFog([48, 56, 64, 72]),
     rainy: top("b") + wxDrops(WX_RAIN_X.slice(0, 6), 46, "rain"),
     pouring: top("d") + wxDrops(WX_POUR_X, 45, "rain heavy"),
     lightning: WX_FLASH + top("d") + WX_BOLT,
@@ -129,11 +138,11 @@ function wxSceneSvg(cond, night, moon = {}) {
     snowy: top("l") + wxFlakes([30, 40, 50, 60, 70, 35, 55, 65], 46),
     "snowy-rainy": top("b") + wxDrops([32, 48, 64], 46, "rain") + wxFlakes([40, 56, 72, 36, 60], 46),
     hail: top("d") + wxHail([32, 42, 52, 62, 70, 37, 57], 46),
-    windy: WX_WIND,
-    "windy-variant": wxCloud(30, 4, 0.95, "b", "back") + WX_WIND,
+    windy: (night ? wxStars(3) + wxMoon(76, 14, 9, moon) : "") + WX_WIND,
+    "windy-variant": (night ? wxMoon(26, 14, 9, moon) : "") + wxCloud(30, 4, 0.95, tone("b"), "back") + WX_WIND,
     exceptional: WX_EXCEPTIONAL,
   };
-  return `<svg viewBox="0 0 100 80" aria-hidden="true">${WX_DEFS}${parts[cond] ?? wxCloud(22, 20, 1.05, "b", "front")}</svg>`;
+  return `<svg viewBox="0 0 100 80" aria-hidden="true">${WX_DEFS}${parts[cond] ?? wxCloud(22, 20, 1.05, tone("b"), "front")}</svg>`;
 }
 
 // The scene in its frame; `still` turns the animations off.
@@ -145,6 +154,7 @@ function wxScene(cond, night, still, moon) {
 const WX_SCENE_STYLES = `
   .scene { position: relative; flex-shrink: 0; width: 120px; height: 96px; border-radius: 16px;
            background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--wx-color) 22%, transparent), transparent 70%); }
+  .scene.night { background: radial-gradient(circle at 50% 40%, color-mix(in srgb, #3949ab 34%, transparent), transparent 72%); }
   .scene svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 3px 5px rgba(0,0,0,.16)); }
   .scene .rays { stroke: #ffb300; stroke-width: 2.6; stroke-linecap: round; transform-box: fill-box; transform-origin: center;
                  animation: wx-spin 30s linear infinite; }

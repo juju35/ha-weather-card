@@ -35,6 +35,8 @@ const CONDITIONS = [
   ["windy", 14, DAY],
   ["clear-night", 11, NIGHT],
   ["partlycloudy", 12, NIGHT],
+  ["rainy", 10, NIGHT],
+  ["lightning-rainy", 14, NIGHT],
 ];
 const QUIET = {
   "sensor.75_weather_alert": { state: "Vert", "Vent violent": "Vert", Orages: "Vert" },

@@ -485,3 +485,17 @@ test("full screen detail: opens again after being closed, by its button or Escap
   assert.match(pop, /<div class="top"><div class="hero">.*<div class="side"><div class="section enter s-alerts">.*s-rain.*<\/div><\/div><div class="section enter s-hourly">.*<div class="flow"><div class="section enter s-daily">/);
   el._closePopup();
 });
+
+test("night scenes: the moon with every condition, night-toned clouds", () => {
+  for (const cond of ["rainy", "pouring", "lightning-rainy", "snowy", "hail", "cloudy", "fog", "windy", "windy-variant"]) {
+    const night = lib.wxSceneSvg(cond, true, { age: 10 });
+    assert.match(night, /class="moon"/, cond);
+    assert.doesNotMatch(lib.wxSceneSvg(cond, false), /class="moon"/, cond);
+  }
+  // Rain at night: the moon behind the top cloud, drawn before it, and the cloud in a night tone.
+  const rain = lib.wxSceneSvg("rainy", true, { age: 10 });
+  assert.ok(rain.indexOf('class="moon"') < rain.indexOf('class="cloud'));
+  assert.match(rain, /fill="url\(#wx-cm\)"/);
+  assert.match(lib.wxSceneSvg("lightning-rainy", true), /fill="url\(#wx-ck\)"/);
+  assert.doesNotMatch(lib.wxSceneSvg("rainy", false), /#wx-c[nmk]\)/);
+});

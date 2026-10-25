@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0
+
+### Changes
+- Night scenes for every condition: the moon, in today's phase, peeks above the clouds of rain, showers, storms, snow and hail, sits beside the clouds when cloudy and above the fog or the wind; the clouds take blue-grey night tones and the sky a night-blue halo. Still animated: the moon floats and its halo breathes, stars twinkle, clouds drift past it, rain and snow fall, lightning flashes.
+
 ## 1.4.1
 
 ### Fixes
