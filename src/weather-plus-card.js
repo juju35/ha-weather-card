@@ -594,9 +594,9 @@ class WeatherPlusCard extends WxElement {
   // A layer over the whole window, appended to the page's body so that no card container clips it: the card's header,
   // a larger scene, then the sections side by side as the width allows, with 24 hours and 10 days of forecast.
   // It closes with its button, Escape, or the browser's back button on a phone.
-  // Not on the compact mini card, whose only button is the detail one: the zoomed mini card shows it like the full card.
+  // Shown on every layout, including the compact mini card (beside its detail button), so full screen is one click away.
   _popupButton() {
-    if (this._config.popup === false || this._compact()) return "";
+    if (this._config.popup === false) return "";
     const label = wxEsc(this._t("popup_open"));
     return `<button class="zoom" data-action="popup" title="${label}" aria-label="${label}"><ha-icon icon="mdi:fullscreen"></ha-icon></button>`;
   }
