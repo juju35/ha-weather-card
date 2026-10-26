@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.0 - 2026-10-26
+
+### Changes
+- **Mini card**: the full-screen button now shows directly on the compact mini card, beside the detail button — no need to expand it first.
+
 ## 1.6.0
 ### Changes
 - Header icon sized like the other ha-* cards: 24px in the 40px round badge (card and full screen detail), 20px in the mini card's 32px badge.
