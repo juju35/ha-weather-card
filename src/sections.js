@@ -485,7 +485,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .header { display: flex; align-items: center; gap: 10px; }
   .badge { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
            background: color-mix(in srgb, var(--wx-color) 16%, transparent); color: var(--wx-color); transition: background .4s, color .4s; }
-  .badge ha-icon { --mdc-icon-size: 22px; }
+  .badge ha-icon { --mdc-icon-size: 24px; }
   .titles { flex: 1; min-width: 0; cursor: pointer; }
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -638,7 +638,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .mnext b { font-weight: 500; color: var(--primary-text-color); }
   ha-card.mini { gap: 8px; }
   ha-card.mini .badge { width: 32px; height: 32px; }
-  ha-card.mini .badge ha-icon { --mdc-icon-size: 18px; }
+  ha-card.mini .badge ha-icon { --mdc-icon-size: 20px; }
   ha-card.mini .name { font-size: 14px; }
   .content { display: flex; align-items: center; gap: 12px; }
   ha-card.mini .scene { width: 88px; height: 70px; border-radius: 12px; }
