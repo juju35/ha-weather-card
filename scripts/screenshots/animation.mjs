@@ -35,13 +35,18 @@ for (let i = 0; i < frames; i++) {
       a.currentTime = t;
     }
   }, 5000 + (i * 1000) / FPS);
-  await page.locator("#root").screenshot({ path: join(dir, `f${String(i).padStart(3, "0")}.png`) });
+  // The cards on the theme background, with the body's 16px padding around them, like the still shots.
+  const box = await page.locator("#root").boundingBox();
+  await page.screenshot({
+    path: join(dir, `f${String(i).padStart(3, "0")}.png`),
+    clip: { x: 0, y: 0, width: 900 + 32, height: Math.ceil(box.height) + 32 },
+  });
 }
 await browser.close();
 const out = `${root}screenshots/scenes.gif`;
 execFileSync("ffmpeg", [
   "-y", "-loglevel", "error", "-framerate", String(FPS), "-i", join(dir, "f%03d.png"),
-  "-vf", "scale=900:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=4",
+  "-vf", "scale=932:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=4",
   "-loop", "0", out,
 ]);
 rmSync(dir, { recursive: true });

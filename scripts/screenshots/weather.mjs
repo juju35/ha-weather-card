@@ -2,7 +2,7 @@
 // Usage: npm install && npm run build && node scripts/screenshots/weather.mjs
 // (CHROMIUM_PATH=/path/to/chromium to use a browser of your own)
 import { fileURLToPath } from "node:url";
-import { addCards, DAY, launch, NIGHT, openPage, pair, root, shoot } from "./harness.mjs";
+import { addCards, DAY, launch, NIGHT, openPage, pair, root, saveFramed, shoot } from "./harness.mjs";
 import { mockHass } from "./mock.mjs";
 
 // The screenshots are still: the scene drawn without its animations, rain and snow in place.
@@ -63,11 +63,12 @@ const SETUPS = {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   await shoot({
-    shots: [...pair("card"), ...pair("mini"), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 })],
+    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 })],
     setup: (s, lang) => SETUPS[s.file.replace(/-dark$/, "")](lang),
   });
 
-  // The full screen detail, on a desktop and on a phone.
+  // The full screen detail, on a desktop and on a phone: captured at the screen's size (its layout follows the
+  // viewport), then framed like the other shots.
   const browser = await launch();
   for (const [file, theme, width, height] of [
     ["popup", "light", 1600, 1000],
@@ -76,10 +77,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   ]) {
     const page = await openPage(browser, { theme, width: 360 });
     await page.setViewportSize({ width, height });
-    const lang = theme === "dark" ? "fr" : "en";
+    const lang = "en";
     await addCards(page, [{ tag: "weather-plus-card", config, hass: mockHass(lang, {}, DAY), open: '[data-action="popup"]' }]);
     await page.waitForTimeout(500);
-    await page.screenshot({ path: `${root}screenshots/${file}.png`, animations: "disabled" });
+    const png = await page.screenshot({ animations: "disabled" });
+    await saveFramed(browser, { theme, png, width, height, path: `${root}screenshots/${file}.png` });
     console.log(`screenshots/${file}.png`);
     await page.close();
   }

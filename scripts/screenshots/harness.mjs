@@ -24,7 +24,7 @@ const iconsFor = (extra) => {
 
 const THEMES = {
   light: {
-    "--primary-background-color": "#f4f4f4", "--secondary-background-color": "#efefef", "--card-background-color": "#ffffff",
+    "--primary-background-color": "#e8eaed", "--secondary-background-color": "#ececec", "--card-background-color": "#ffffff",
     "--primary-text-color": "#212121", "--secondary-text-color": "#727272", "--divider-color": "rgba(0,0,0,.12)",
   },
   dark: {
@@ -43,8 +43,8 @@ customElements.define("ha-card", class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" }).innerHTML =
-      "<style>:host{display:block;background:var(--ha-card-background,var(--card-background-color));border-radius:12px;" +
-      "box-shadow:var(--ha-card-box-shadow,0 1px 4px rgba(0,0,0,.08));color:var(--primary-text-color);overflow:hidden}</style><slot></slot>";
+      "<style>:host{display:block;background:var(--card-background-color);border-radius:12px;" +
+      "border:1px solid var(--divider-color);color:var(--primary-text-color);overflow:hidden}</style><slot></slot>";
   }
 });
 customElements.define("ha-icon", class extends HTMLElement {
@@ -70,7 +70,7 @@ export const launch = () =>
   chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH, args: ["--no-sandbox", "--disable-gpu"] } : {});
 
 // A page with the theme, the stand-ins and the card script, its clock set to `now`.
-export const openPage = async (browser, { theme = "light", width = 428, now = DAY, icons = [] } = {}) => {
+export const openPage = async (browser, { theme = "light", width = 460, now = DAY, icons = [] } = {}) => {
   const page = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: width + 32, height: 2400 } });
   page.on("pageerror", (err) => console.error(`pageerror: ${err.message}`));
   await page.clock.setFixedTime(now);
@@ -78,6 +78,25 @@ export const openPage = async (browser, { theme = "light", width = 428, now = DA
   await page.addScriptTag({ content: haElements(iconsFor(icons)) });
   await page.addScriptTag({ content: cardJs });
   return page;
+};
+
+// Saves `png` (a full-viewport capture, `width` × `height` CSS pixels) framed like the card shots: on the theme
+// background with a 16px margin, in a card-like box (12px radius, divider border).
+export const saveFramed = async (browser, { theme, png, width, height, path }) => {
+  const page = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: width + 34, height: height + 34 } });
+  await page.setContent(pageHtml(theme, width + 2));
+  await page.evaluate(
+    ({ src, width, height }) => {
+      const box = document.createElement("div");
+      box.style.cssText = "border:1px solid var(--divider-color);border-radius:12px;overflow:hidden;line-height:0";
+      box.innerHTML = `<img src="${src}" style="width:${width}px;height:${height}px;display:block">`;
+      document.getElementById("root").appendChild(box);
+      return box.querySelector("img").decode();
+    },
+    { src: `data:image/png;base64,${png.toString("base64")}`, width, height },
+  );
+  await page.screenshot({ path, clip: { x: 0, y: 0, width: width + 34, height: height + 34 } });
+  await page.close();
 };
 
 // Adds cards to the page: [{ tag, config, hass }]; the forecasts of each mock are served by a subscription stand-in.
@@ -108,25 +127,33 @@ export const addCards = (page, cards, cols = 1) =>
     { cards, cols },
   );
 
-// A light shot (English) and its dark twin (French): pair("card", { ... }).
+// A light shot and its dark twin, both in English: pair("card", { ... }).
 export const pair = (file, extra = {}) => [
   { file, theme: "light", ...extra },
   { file: `${file}-dark`, theme: "dark", ...extra },
 ];
 
 // Renders each shot of `shots` ({ file, theme, now?, ... }) into screenshots/<file>.png.
-// `setup(shot, lang)` returns { cards: [{ tag, config, hass }], cols? }; light shots are in English, dark ones in French.
-export const shoot = async ({ shots, setup, width = 428 }) => {
+// `setup(shot, lang)` returns { cards: [{ tag, config, hass }], cols? }; every shot is in English.
+// Widths: 460px for the full card, 380px for the mini card (`width` on the shot).
+export const shoot = async ({ shots, setup, width = 460 }) => {
   const browser = await launch();
   for (const s of shots) {
     // A new page per shot: the card's script declares top-level names, which cannot be evaluated twice in one page.
-    const page = await openPage(browser, { theme: s.theme, width: s.width || width, now: s.now || DAY });
-    const lang = s.theme === "dark" ? "fr" : "en";
+    const w = s.width || width;
+    const page = await openPage(browser, { theme: s.theme, width: w, now: s.now || DAY });
+    const lang = "en";
     const { cards, cols = 1 } = setup(s, lang);
     await addCards(page, cards, cols);
     await page.waitForTimeout(300);
     const out = `screenshots/${s.file}.png`;
-    await page.locator("#root").screenshot({ path: `${root}${out}`, animations: "disabled" });
+    // The cards on the theme background, with the body's 16px padding around them.
+    const box = await page.locator("#root").boundingBox();
+    await page.screenshot({
+      path: `${root}${out}`,
+      clip: { x: 0, y: 0, width: w + 32, height: Math.ceil(box.height) + 32 },
+      animations: "disabled",
+    });
     console.log(out);
     await page.close();
   }

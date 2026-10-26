@@ -143,7 +143,7 @@ entity: weather.paris
 
 ## Screenshots
 
-| | Light | Dark (French) |
+| | Light | Dark |
 |---|---|---|
 | Weather card | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card-dark.png) |
 | Storm, orange warning | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm-dark.png) |
