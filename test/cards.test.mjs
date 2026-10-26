@@ -245,9 +245,9 @@ test("mini card: compact, unfolds into the full card", () => {
   assert.match(out, /<ha-card class="mini">/);
   assert.match(out, /Heavy rain in 15 min/);
   assert.match(out, /data-action="zoom"/);
-  // One button on the compact card: the detail one, the full screen detail waits for the zoomed view.
-  assert.equal((out.match(/<button /g) || []).length, 1);
-  assert.doesNotMatch(out, /data-action="popup"/);
+  // Two buttons on the compact card: the full screen one and the detail one.
+  assert.equal((out.match(/<button /g) || []).length, 2);
+  assert.match(out, /data-action="popup"/);
   assert.match(out, /Strong wind/);
   assert.doesNotMatch(out, /s-daily/);
   el._onClick({ detail: 1, composedPath: () => [{ dataset: { action: "zoom" } }] });
