@@ -54,7 +54,7 @@ Sections, in the order of `sections` (a section with no data hides itself):
 `custom:weather-plus-mini-card` — The weather on two lines, for a compact dashboard.
 
 - The animated scene, the temperature with today's high and low, the rain to come in the hour (or the condition and feels-like temperature), and the active warnings
-- The **detail** button (top right) unfolds the full card, and back, as does a click anywhere else (`zoom: false` removes it)
+- The **detail** button (top right) unfolds the full card, and back, as does a click anywhere else (`zoom: false` removes it); the unfolded card has the **Full screen** button
 
 | Conditions | Night |
 |---|---|
@@ -143,7 +143,7 @@ entity: weather.paris
 
 ## Screenshots
 
-| | Light | Dark (French) |
+| | Light | Dark |
 |---|---|---|
 | Weather card | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card-dark.png) |
 | Storm, orange warning | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm-dark.png) |
