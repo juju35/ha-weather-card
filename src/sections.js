@@ -43,8 +43,21 @@ function wxTempColor(c) {
 }
 const wxToC = (t, unit) => (/F/.test(unit || "") ? ((t - 32) * 5) / 9 : t);
 
+// The icon in front of each section heading.
+const WX_SECTION_ICONS = {
+  alerts: "mdi:alert-outline",
+  rain: "mdi:weather-rainy",
+  hourly: "mdi:clock-outline",
+  daily: "mdi:calendar-range",
+  uv: "mdi:sun-wireless-outline",
+  air: "mdi:air-filter",
+  pollen: "mdi:flower-pollen",
+  sun: "mdi:weather-sunset",
+  moon: "mdi:moon-waning-crescent",
+};
+
 const wxSectionTitle = (card, key, extra = "") =>
-  `<div class="section-title"><span>${wxEsc(card._t(`s_${key}`))}</span>${extra}</div>`;
+  `<div class="section-title"><ha-icon icon="${WX_SECTION_ICONS[key]}"></ha-icon><span>${wxEsc(card._t(`s_${key}`))}</span>${extra}</div>`;
 
 const wxChip = (icon, text, { color, cls = "", more, title, style } = {}) =>
   `<span class="chip ${cls}"${color ? ` style="--k:${color}${style ? `;${style}` : ""}"` : style ? ` style="${style}"` : ""}${
@@ -482,7 +495,9 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   ha-card { height: 100%; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
   ha-card > *, .section, .info, .hero > div { min-width: 0; }
   .empty { display: flex; align-items: center; gap: 10px; color: var(--secondary-text-color); }
-  .header { display: flex; align-items: center; gap: 10px; }
+  /* The body starts 8px under the header, like the other ha-* cards (the card's gap is 12px, 8px on the mini card). */
+  .header { display: flex; align-items: center; gap: 10px; margin-bottom: -4px; }
+  ha-card.mini .header { margin-bottom: 0; }
   .badge { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
            background: color-mix(in srgb, var(--wx-color) 16%, transparent); color: var(--wx-color); transition: background .4s, color .4s; }
   .badge ha-icon { --mdc-icon-size: 24px; }
@@ -506,8 +521,8 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .hero { display: flex; align-items: center; gap: 14px; }
   .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
   .big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; cursor: pointer; }
-  .big .val { font-size: 40px; font-weight: 300; line-height: 1; color: var(--primary-text-color); white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .big .val small { font-size: 18px; color: var(--secondary-text-color); font-weight: 400; }
+  .big .val { font-size: 30px; font-weight: 400; line-height: 1; color: var(--primary-text-color); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .big .val small { font-size: 14px; color: var(--secondary-text-color); font-weight: 400; }
   .big .hilo { font-size: 13px; color: var(--secondary-text-color); white-space: nowrap; }
   .big .hilo b { font-weight: 500; color: var(--primary-text-color); }
   .feels { font-size: 12px; color: var(--secondary-text-color); }
@@ -522,9 +537,10 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .chip .arrow { display: inline-flex; transition: transform .6s; }
 
   .section { display: flex; flex-direction: column; gap: 8px; }
-  .section-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 500;
-                   color: var(--secondary-text-color); text-transform: uppercase; letter-spacing: .04em; }
-  .section-title .chip { text-transform: none; letter-spacing: 0; }
+  .section-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; text-transform: uppercase;
+                   letter-spacing: .04em; color: var(--secondary-text-color); }
+  .section-title > ha-icon { --mdc-icon-size: 16px; flex-shrink: 0; }
+  .section-title .chip { margin-left: auto; text-transform: none; letter-spacing: 0; }
   .empty-line { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--secondary-text-color); }
   .empty-line ha-icon { --mdc-icon-size: 16px; }
 
@@ -641,7 +657,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   ha-card.mini .badge ha-icon { --mdc-icon-size: 20px; }
   .content { display: flex; align-items: center; gap: 12px; }
   ha-card.mini .scene { width: 88px; height: 70px; border-radius: 12px; }
-  ha-card.mini .big .val { font-size: 30px; }
+  ha-card.mini .big .val { font-size: 24px; }
   .line { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary-text-color); min-width: 0; }
   .line ha-icon { --mdc-icon-size: 14px; flex-shrink: 0; }
   .line span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -675,6 +691,9 @@ const WX_POPUP_STYLES = `
   .popup .header { position: sticky; top: 0; z-index: 2; padding: max(10px, env(safe-area-inset-top)) 0 10px; margin: 0 -2px;
                    background: linear-gradient(var(--card-background-color, #fff), var(--card-background-color, #fff)), var(--primary-background-color, #fafafa); }
   .popup .name { font-size: 18px; }
+  /* The full screen detail keeps its larger, lighter temperature. */
+  .popup .big .val { font-size: 40px; font-weight: 300; }
+  .popup .big .val small { font-size: 18px; }
   .close { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; margin-left: 4px;
            background: var(--secondary-background-color, rgba(128,128,128,.12)); color: var(--primary-text-color); }
   .close:hover { background: color-mix(in srgb, var(--primary-text-color) 14%, transparent); }

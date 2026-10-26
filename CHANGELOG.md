@@ -5,6 +5,9 @@
 ### Changes
 - Header icon sized like the other ha-* cards: 24px in the 40px round badge (card and full screen detail), 20px in the mini card's 32px badge.
 - Mini card: the title is 16px like the full card's (it was 14px), and the compact view has a single button at the top right, the detail one. The **Full screen** button shows once the card is unfolded, like on the full card, and a click in the full screen detail no longer folds the card behind it.
+- Section headings get the shared look of the ha-* cards: a 16px icon in front (alerts, rain, hourly, forecast, air quality, UV, pollen, sun, moon), the *tomorrow* chip staying on the right.
+- The temperature is 30px / 400 with a 14px unit like the main value of the other ha-* cards (it was 40px / 300 with an 18px unit), 24px on the mini card (it was 30px). The full screen detail keeps its larger temperature.
+- The body starts 8px under the header (it was 12px), like the other ha-* cards.
 
 ## 1.5.0
 
