@@ -861,7 +861,7 @@ class WxElement extends HTMLElement {
 
 // ── Mini card ────────────────────────────────────────────────────────────────
 // Like the ha-climate-air-card mini cards: the detail button (top right, `zoom: false` removes it) switches the mini
-// card to the full card and back, and a click anywhere else on the page folds it again.
+// card to the full card and back, and a click anywhere else on the page (but in its full screen detail) folds it again.
 const wxInDialog = (ev) => ev.composedPath().some((n) => ["ha-more-info-dialog", "ha-dialog", "dialog"].includes(n.localName));
 
 const wxMini = (Base) =>
@@ -873,7 +873,8 @@ const wxMini = (Base) =>
     constructor() {
       super();
       this._onUnzoom = (ev) => {
-        if (this._zoomed && !ev.composedPath().includes(this) && !wxInDialog(ev)) this._setZoom(false);
+        const path = ev.composedPath();
+        if (this._zoomed && !path.includes(this) && !(this._popup && path.includes(this._popup)) && !wxInDialog(ev)) this._setZoom(false);
       };
     }
 

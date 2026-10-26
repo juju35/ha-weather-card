@@ -4,6 +4,7 @@
 
 ### Changes
 - Header icon sized like the other ha-* cards: 24px in the 40px round badge (card and full screen detail), 20px in the mini card's 32px badge.
+- Mini card: the title is 16px like the full card's (it was 14px), and the compact view has a single button at the top right, the detail one. The **Full screen** button shows once the card is unfolded, like on the full card, and a click in the full screen detail no longer folds the card behind it.
 
 ## 1.5.0
 
