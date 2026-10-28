@@ -251,6 +251,8 @@ function wxSectionHourly(card, m) {
   // The wind of each hour: an arrow pointing where it blows, its speed, the gusts on hover.
   const windy = h.some((x) => x.wind_speed != null);
   const wunit = m.a.wind_speed_unit || "km/h";
+  // "Strong wind" at about 50 km/h, whatever unit the provider speaks.
+  const strongAt = { "km/h": 50, mph: 31, "m/s": 14, kn: 27, "ft/s": 45 }[wunit] ?? 50;
   const wind = windy
     ? h
         .map((x) => {
@@ -259,7 +261,7 @@ function wxSectionHourly(card, m) {
           const title = [b?.label, x.wind_speed != null ? `${wxFmtNum(m.lang, x.wind_speed, 0)} ${wunit}` : "", gust ? card._t("gusts", { v: `${wxFmtNum(m.lang, gust, 0)} ${wunit}` }) : ""]
             .filter(Boolean)
             .join(" · ");
-          const strong = (gust ?? x.wind_speed ?? 0) >= 50;
+          const strong = (gust ?? x.wind_speed ?? 0) >= strongAt;
           return (
             `<div class="wcol${strong ? " strong" : ""}" title="${wxEsc(title)}">${b ? `<span class="arrow" style="transform:rotate(${(b.deg + 180) % 360}deg)"><ha-icon icon="mdi:navigation"></ha-icon></span>` : ""}` +
             `<span>${x.wind_speed != null ? wxFmtNum(m.lang, x.wind_speed, 0) : ""}</span></div>`
