@@ -530,13 +530,31 @@ class WeatherPlusCard extends WxElement {
     const head =
       `<style>${WX_STYLES}</style><style>:host{--wx-color:${m.color}}</style>` +
       `<ha-card class="${[this._compact() ? "mini" : "", still ? "still" : ""].filter(Boolean).join(" ")}">` +
-      `<div class="header"><div class="badge" data-more="${wxEsc(ent.weather)}"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon></div>` +
-      `<div class="titles" data-more="${wxEsc(ent.weather)}"><div class="name">${wxEsc(m.name)}</div>${
-        m.status.alert && !this._compact() ? `<div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div>` : ""
-      }</div>` +
-      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}"><span class="dot"></span>${wxEsc(m.status.text)}</span>${this._popupButton()}${this._zoomButton()}</div>`;
+      this._header(m, { sub: m.status.alert && !this._compact(), buttons: `${this._popupButton()}${this._zoomButton()}` });
     this.shadowRoot.innerHTML = `${head}${this._compact() ? this._miniBody(m) : this._fullBody(m)}</ha-card>`;
     if (this._popup) this._renderPopup();
+  }
+
+  // The header shared by the card and its full screen detail: badge, titles (the condition as a subtitle when
+  // `sub`), the status pill, then the caller's buttons (popup/zoom, or close).
+  _header(m, { sub = false, buttons = "" } = {}) {
+    return (
+      `<div class="header"><div class="badge" data-more="${wxEsc(m.ent.weather)}"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon></div>` +
+      `<div class="titles" data-more="${wxEsc(m.ent.weather)}"><div class="name">${wxEsc(m.name)}</div>${sub ? `<div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div>` : ""}</div>` +
+      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}"><span class="dot"></span>${wxEsc(m.status.text)}</span>${buttons}</div>`
+    );
+  }
+
+  // The hero shared by the card and its full screen detail: the scene, the big temperature, the feels-like
+  // (always in the detail; only when it differs on the card) and the chips.
+  _hero(m, { feelsAlways = false } = {}) {
+    const show = m.feels != null && (feelsAlways || Math.round(m.feels) !== Math.round(m.temp ?? m.feels));
+    const feels = show ? `<div class="feels">${wxEsc(this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }))}</div>` : "";
+    const chips = this._heroChips(m);
+    return (
+      `<div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
+      `<div class="info">${this._bigTemp(m)}${feels}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>`
+    );
   }
 
   _bigTemp(m) {
@@ -601,13 +619,8 @@ class WeatherPlusCard extends WxElement {
   }
 
   _fullBody(m) {
-    const feels = m.feels != null && Math.round(m.feels) !== Math.round(m.temp ?? m.feels) ? `<div class="feels">${wxEsc(this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }))}</div>` : "";
-    const chips = this._heroChips(m);
-    const hero =
-      `<div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
-      `<div class="info">${this._bigTemp(m)}${feels}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>`;
     this._shown ||= new Set();
-    return hero + this._sections(m, this._shown);
+    return this._hero(m) + this._sections(m, this._shown);
   }
 
   // A section's entry animations (bars growing, the curve drawing itself) play when it first shows in `shown`, not
@@ -687,8 +700,6 @@ class WeatherPlusCard extends WxElement {
     m.status = this._status(m);
     m.still = this._config.animations === false;
     const close = wxEsc(this._t("popup_close"));
-    const feels = m.feels != null ? `<div class="feels">${wxEsc(this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }))}</div>` : "";
-    const chips = this._heroChips(m);
     // Alerts and rain beside the weather now, the hourly forecast across, the other sections in columns; in the
     // order of `sections`.
     const names = this._config.sections || WX_SECTIONS;
@@ -698,13 +709,9 @@ class WeatherPlusCard extends WxElement {
     this._popup.shadowRoot.innerHTML =
       `<style>${WX_STYLES}${WX_POPUP_STYLES}</style><style>:host{--wx-color:${m.color}}</style>` +
       `<div class="backdrop"><div class="sheet" role="dialog" aria-modal="true" aria-label="${wxEsc(m.name)}">` +
-      `<ha-card class="popup${m.still ? " still" : ""}"><div class="header">` +
-      `<div class="badge" data-more="${wxEsc(m.ent.weather)}"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon></div>` +
-      `<div class="titles" data-more="${wxEsc(m.ent.weather)}"><div class="name">${wxEsc(m.name)}</div><div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div></div>` +
-      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}"><span class="dot"></span>${wxEsc(m.status.text)}</span>` +
-      `<button class="close" data-action="close" title="${close}" aria-label="${close}"><ha-icon icon="mdi:close"></ha-icon></button></div>` +
-      `<div class="top"><div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
-      `<div class="info">${this._bigTemp(m)}${feels}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>` +
+      `<ha-card class="popup${m.still ? " still" : ""}">` +
+      this._header(m, { sub: true, buttons: `<button class="close" data-action="close" title="${close}" aria-label="${close}"><ha-icon icon="mdi:close"></ha-icon></button>` }) +
+      `<div class="top">${this._hero(m, { feelsAlways: true })}` +
       `<div class="side">${this._sections(m, this._popupShown, side)}</div></div>` +
       this._sections(m, this._popupShown, across) +
       `<div class="flow">${this._sections(m, this._popupShown, rest)}</div></ha-card></div></div>`;
