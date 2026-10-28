@@ -152,6 +152,18 @@ entity: weather.paris
 | Mini card | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini-dark.png) |
 | Conditions | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions-dark.png) |
 
+### Animated scenes
+
+Each animation has its own GIF, recorded from the mini card:
+
+| | |
+|---|---|
+| ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-sunny.gif) Sunny: the sun turns and its rays pulse. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-windy.gif) Windy: clouds hurry across the sky. |
+| ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-pouring.gif) Pouring: heavy rain streams under the cloud. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-snowy.gif) Snowy: snowflakes drift down and sway. |
+| ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy.gif) Stormy rain: lightning flashes through the rain. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy-night.gif) Stormy rain at night: the same storm under the stars. |
+| ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-clear-night.gif) Clear night: the moon shines and the stars twinkle. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-partlycloudy-night.gif) Partly cloudy night: clouds drift past the moon. |
+| ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-rainy-night.gif) Rainy night: rain falls through the moonlight. | |
+
 ## Development
 
 ```bash
@@ -159,7 +171,7 @@ npm install
 npm run build        # bundles src/*.js into dist/ha-weather-card.js and stamps the version of package.json
 npm run check        # builds and checks the bundle (run in CI)
 npm test             # unit tests, no browser
-npm run screenshots  # renders the cards with mock data into screenshots/, and the animated scenes.gif (needs ffmpeg)
+npm run screenshots  # renders the cards with mock data into screenshots/, and the animated GIFs (needs ffmpeg)
 ```
 
 `src/shared.js` holds the i18n, the entity discovery, the mini card and the editor, `src/scene.js` the animated scenes, `src/sections.js` the sections and the styles, and `src/weather-plus-card.js` the cards; the build concatenates them into the single HACS file. `dist/` is not committed: `npm run build` creates it locally, CI builds it on every push, and the release workflow attaches the built file to the release, which is where HACS downloads it from.

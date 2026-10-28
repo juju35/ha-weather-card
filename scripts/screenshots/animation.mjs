@@ -1,6 +1,7 @@
-// Records the animated scenes into screenshots/scenes.gif (needs ffmpeg).
+// Records the animated scenes into screenshots/scenes.gif, and each scene into its own
+// screenshots/scene-<condition>[-night].gif, cropped from the same frames (needs ffmpeg).
 // Usage: npm install && npm run build && node scripts/screenshots/animation.mjs
-// The animations are paused and stepped frame by frame, so the GIF loops cleanly whatever the machine's speed.
+// The animations are paused and stepped frame by frame, so the GIFs loop cleanly whatever the machine's speed.
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -42,12 +43,25 @@ for (let i = 0; i < frames; i++) {
     clip: { x: 0, y: 0, width: 900 + 32, height: Math.ceil(box.height) + 32 },
   });
 }
+// Each card's box in the grid, to crop its own GIF out of the same frames (the page renders at 2x).
+const boxes = [];
+for (const card of await page.locator("#root > *").all()) boxes.push(await card.boundingBox());
 await browser.close();
-const out = `${root}screenshots/scenes.gif`;
-execFileSync("ffmpeg", [
-  "-y", "-loglevel", "error", "-framerate", String(FPS), "-i", join(dir, "f%03d.png"),
-  "-vf", "scale=932:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=4",
-  "-loop", "0", out,
-]);
+
+const gif = (out, filter) => {
+  execFileSync("ffmpeg", [
+    "-y", "-loglevel", "error", "-framerate", String(FPS), "-i", join(dir, "f%03d.png"),
+    "-vf", `${filter},split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=4`,
+    "-loop", "0", out,
+  ]);
+  console.log(out.slice(root.length));
+};
+
+gif(`${root}screenshots/scenes.gif`, "scale=932:-1:flags=lanczos");
+// One GIF per scene: the card alone, at its CSS size.
+SCENES.forEach(([cond, , now], i) => {
+  const b = boxes[i];
+  const name = now === NIGHT && cond !== "clear-night" ? `${cond}-night` : cond;
+  gif(`${root}screenshots/scene-${name}.gif`, `crop=${b.width * 2}:${b.height * 2}:${b.x * 2}:${b.y * 2},scale=${Math.round(b.width)}:-1:flags=lanczos`);
+});
 rmSync(dir, { recursive: true });
-console.log("screenshots/scenes.gif");
