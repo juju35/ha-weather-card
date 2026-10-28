@@ -521,6 +521,8 @@ const WX_STYLES = `${WX_SCENE_STYLES}
         white-space: nowrap; background: color-mix(in srgb, var(--st-color, var(--wx-color)) 18%, transparent);
         color: color-mix(in srgb, var(--st-color, var(--wx-color)) 72%, var(--primary-text-color)); }
   .st .dot { background: var(--st-color, var(--wx-color)); }
+  /* With a subtitle the titles span two lines: the pill stays on the title's line, not centred over both. */
+  .header:has(.sub) .st { align-self: flex-start; margin-top: 4px; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   .st.alert .dot { animation: wx-blink 1.4s ease-in-out infinite; }
   button { font: inherit; cursor: pointer; border: none; }
