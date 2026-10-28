@@ -555,3 +555,22 @@ test("discovery: invalidated when a tracked entity disappears, even with the sta
   el.hass = h2;
   assert.notEqual(el._entities().uv, "sensor.paris_uv");
 });
+
+test("i18n parity: every language has exactly the keys and placeholders of en", () => {
+  const en = lib.WX_I18N.en;
+  const vars = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+  for (const lang of ["fr", "de", "es"]) {
+    const t = lib.WX_I18N[lang];
+    assert.ok(t, lang);
+    assert.deepEqual(Object.keys(t).sort(), Object.keys(en).sort(), lang);
+    for (const k of Object.keys(en)) assert.deepEqual(vars(t[k]), vars(en[k]), `${lang}.${k}`);
+    assert.equal(lib.WX_CARDINALS[lang].length, 16, `${lang} cardinals`);
+  }
+});
+
+test("i18n: German and Spanish are picked from the Home Assistant language", () => {
+  assert.match(html(card({}, makeHass("de"))), /Vorhersage|Wetter/);
+  assert.match(html(card({}, makeHass("es"))), /Previsión|Tiempo/);
+  assert.equal(lib.wxBearing("de", 90).label, "O");
+  assert.equal(lib.wxBearing("es", 270).label, "O");
+});
