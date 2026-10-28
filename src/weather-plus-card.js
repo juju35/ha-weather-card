@@ -341,13 +341,15 @@ class WeatherPlusCard extends WxElement {
         .reduce((acc, x) => acc + (wxNumber(x.precipitation) || 0), 0);
     const hasAmounts = hourly.some((x) => x.precipitation != null);
     const today = this._num(ent.daily_precipitation);
+    // A forecast sum of 0 is no rain: null, so the chips and this gate agree on hiding it.
+    const next = (h) => (hasAmounts ? sum(h) || null : null);
     const out = {
       unit: this._st(ent.daily_precipitation)?.attributes.unit_of_measurement || unit,
       today,
-      next6: hasAmounts ? sum(6) : null,
-      next24: hasAmounts ? sum(24) : null,
+      next6: next(6),
+      next24: next(24),
     };
-    return out.today != null || out.next6 || out.next24 ? out : null;
+    return out.today != null || out.next6 != null || out.next24 != null ? out : null;
   }
 
   _airModel(ent) {
