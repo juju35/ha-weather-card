@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.0 - 2026-10-28
+
+### Changes
+- German and Spanish translations: every label of the card, the mini card, the full screen detail and the visual editor, picked from the Home Assistant language or the `language` option (`de`, `es`), with the compass points of the wind in each language.
+
 ## 1.7.1 - 2026-10-28
 
 ### Fixes
