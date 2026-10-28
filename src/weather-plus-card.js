@@ -28,6 +28,18 @@ function wxFoldTwiceDaily(list) {
   return days;
 }
 
+// The number of entities of a `hass.states` object, counted once per object (every state change replaces it):
+// the hass setter runs on each update, and Object.keys() over a large instance allocates a lot for nothing.
+const WX_STATE_COUNTS = new WeakMap();
+function wxStatesCount(states) {
+  let n = WX_STATE_COUNTS.get(states);
+  if (n === undefined) {
+    n = Object.keys(states).length;
+    WX_STATE_COUNTS.set(states, n);
+  }
+  return n;
+}
+
 class WeatherPlusCard extends WxElement {
   static get defaults() {
     return WX_DEFAULTS;
@@ -69,7 +81,7 @@ class WeatherPlusCard extends WxElement {
     // (one entity added, another removed in the same update) shows as a tracked id disappearing.
     const gone = () =>
       this._ent && [...Object.values(this._ent), ...Object.values(this._ent.air || {})].flat().some((id) => typeof id === "string" && !(id in hass.states));
-    if (!prev || prev.entities !== hass.entities || Object.keys(prev.states).length !== Object.keys(hass.states).length || gone()) this._ent = null;
+    if (!prev || prev.entities !== hass.entities || wxStatesCount(prev.states) !== wxStatesCount(hass.states) || gone()) this._ent = null;
     this._subscribe();
     this._update();
   }
@@ -329,13 +341,15 @@ class WeatherPlusCard extends WxElement {
         .reduce((acc, x) => acc + (wxNumber(x.precipitation) || 0), 0);
     const hasAmounts = hourly.some((x) => x.precipitation != null);
     const today = this._num(ent.daily_precipitation);
+    // A forecast sum of 0 is no rain: null, so the chips and this gate agree on hiding it.
+    const next = (h) => (hasAmounts ? sum(h) || null : null);
     const out = {
       unit: this._st(ent.daily_precipitation)?.attributes.unit_of_measurement || unit,
       today,
-      next6: hasAmounts ? sum(6) : null,
-      next24: hasAmounts ? sum(24) : null,
+      next6: next(6),
+      next24: next(24),
     };
-    return out.today != null || out.next6 || out.next24 ? out : null;
+    return out.today != null || out.next6 != null || out.next24 != null ? out : null;
   }
 
   _airModel(ent) {
@@ -402,10 +416,14 @@ class WeatherPlusCard extends WxElement {
       .slice(0, Math.max(0, Number(this._config.hours) || 0, wide ? 24 : 0))
       .map((x) => ({ ...x, night: x.is_daytime != null ? !x.is_daytime : isNight(new Date(x.datetime)) }));
     const dailyAll = fc.daily || (fc.twice_daily ? wxFoldTwiceDaily(fc.twice_daily) : a.forecast || []);
+    // From today's local midnight: a provider serving yesterday's entry (a legacy `forecast` attribute, for one)
+    // must not show it next to "Today".
+    const dayStart = new Date();
+    dayStart.setHours(0, 0, 0, 0);
     const daily = dailyAll
       .filter((x) => {
         const d = new Date(x.datetime);
-        return d.getTime() > now - 864e5 || wxSameDay(d, new Date());
+        return d.getTime() >= dayStart.getTime() || wxSameDay(d, new Date());
       })
       .slice(0, Math.max(0, Number(this._config.days) || 0, wide ? 10 : 0));
     const today = dailyAll.find((x) => wxSameDay(new Date(x.datetime), new Date()));
@@ -476,7 +494,7 @@ class WeatherPlusCard extends WxElement {
     const top = Math.max(0, ...(m.alerts?.phenomena || []).map((p) => p.level));
     if (top >= 2) return { text: this._t("vigilance_level", { v: this._t(`lvl_${top}`) }), color: WX_ALERT_COLORS[top], alert: true };
     if (m.lightning?.count > 0 && m.lightning.dist != null) {
-      return { text: this._t("lightning_near", { d: `${wxFmtNum(m.lang, m.lightning.dist, 0)} ${m.lightning.unit}` }), color: "#7e57c2", alert: true };
+      return { text: this._t("lightning_near", { d: `${wxFmtNum(m.lang, m.lightning.dist, 0)} ${m.lightning.unit}` }), color: WX_BOLT_COLOR, alert: true };
     }
     return { text: wxCondLabel(m.lang, m.cond), color: m.color, alert: false };
   }
@@ -512,13 +530,31 @@ class WeatherPlusCard extends WxElement {
     const head =
       `<style>${WX_STYLES}</style><style>:host{--wx-color:${m.color}}</style>` +
       `<ha-card class="${[this._compact() ? "mini" : "", still ? "still" : ""].filter(Boolean).join(" ")}">` +
-      `<div class="header"><div class="badge" data-more="${wxEsc(ent.weather)}"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon></div>` +
-      `<div class="titles" data-more="${wxEsc(ent.weather)}"><div class="name">${wxEsc(m.name)}</div>${
-        m.status.alert && !this._compact() ? `<div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div>` : ""
-      }</div>` +
-      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}"><span class="dot"></span>${wxEsc(m.status.text)}</span>${this._popupButton()}${this._zoomButton()}</div>`;
+      this._header(m, { sub: m.status.alert && !this._compact(), buttons: `${this._popupButton()}${this._zoomButton()}` });
     this.shadowRoot.innerHTML = `${head}${this._compact() ? this._miniBody(m) : this._fullBody(m)}</ha-card>`;
     if (this._popup) this._renderPopup();
+  }
+
+  // The header shared by the card and its full screen detail: badge, titles (the condition as a subtitle when
+  // `sub`), the status pill, then the caller's buttons (popup/zoom, or close).
+  _header(m, { sub = false, buttons = "" } = {}) {
+    return (
+      `<div class="header"><div class="badge" data-more="${wxEsc(m.ent.weather)}"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon></div>` +
+      `<div class="titles" data-more="${wxEsc(m.ent.weather)}"><div class="name">${wxEsc(m.name)}</div>${sub ? `<div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div>` : ""}</div>` +
+      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}"><span class="dot"></span>${wxEsc(m.status.text)}</span>${buttons}</div>`
+    );
+  }
+
+  // The hero shared by the card and its full screen detail: the scene, the big temperature, the feels-like
+  // (always in the detail; only when it differs on the card) and the chips.
+  _hero(m, { feelsAlways = false } = {}) {
+    const show = m.feels != null && (feelsAlways || Math.round(m.feels) !== Math.round(m.temp ?? m.feels));
+    const feels = show ? `<div class="feels">${wxEsc(this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }))}</div>` : "";
+    const chips = this._heroChips(m);
+    return (
+      `<div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
+      `<div class="info">${this._bigTemp(m)}${feels}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>`
+    );
   }
 
   _bigTemp(m) {
@@ -583,13 +619,8 @@ class WeatherPlusCard extends WxElement {
   }
 
   _fullBody(m) {
-    const feels = m.feels != null && Math.round(m.feels) !== Math.round(m.temp ?? m.feels) ? `<div class="feels">${wxEsc(this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }))}</div>` : "";
-    const chips = this._heroChips(m);
-    const hero =
-      `<div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
-      `<div class="info">${this._bigTemp(m)}${feels}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>`;
     this._shown ||= new Set();
-    return hero + this._sections(m, this._shown);
+    return this._hero(m) + this._sections(m, this._shown);
   }
 
   // A section's entry animations (bars growing, the curve drawing itself) play when it first shows in `shown`, not
@@ -669,8 +700,6 @@ class WeatherPlusCard extends WxElement {
     m.status = this._status(m);
     m.still = this._config.animations === false;
     const close = wxEsc(this._t("popup_close"));
-    const feels = m.feels != null ? `<div class="feels">${wxEsc(this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }))}</div>` : "";
-    const chips = this._heroChips(m);
     // Alerts and rain beside the weather now, the hourly forecast across, the other sections in columns; in the
     // order of `sections`.
     const names = this._config.sections || WX_SECTIONS;
@@ -680,13 +709,9 @@ class WeatherPlusCard extends WxElement {
     this._popup.shadowRoot.innerHTML =
       `<style>${WX_STYLES}${WX_POPUP_STYLES}</style><style>:host{--wx-color:${m.color}}</style>` +
       `<div class="backdrop"><div class="sheet" role="dialog" aria-modal="true" aria-label="${wxEsc(m.name)}">` +
-      `<ha-card class="popup${m.still ? " still" : ""}"><div class="header">` +
-      `<div class="badge" data-more="${wxEsc(m.ent.weather)}"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon></div>` +
-      `<div class="titles" data-more="${wxEsc(m.ent.weather)}"><div class="name">${wxEsc(m.name)}</div><div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div></div>` +
-      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}"><span class="dot"></span>${wxEsc(m.status.text)}</span>` +
-      `<button class="close" data-action="close" title="${close}" aria-label="${close}"><ha-icon icon="mdi:close"></ha-icon></button></div>` +
-      `<div class="top"><div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
-      `<div class="info">${this._bigTemp(m)}${feels}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>` +
+      `<ha-card class="popup${m.still ? " still" : ""}">` +
+      this._header(m, { sub: true, buttons: `<button class="close" data-action="close" title="${close}" aria-label="${close}"><ha-icon icon="mdi:close"></ha-icon></button>` }) +
+      `<div class="top">${this._hero(m, { feelsAlways: true })}` +
       `<div class="side">${this._sections(m, this._popupShown, side)}</div></div>` +
       this._sections(m, this._popupShown, across) +
       `<div class="flow">${this._sections(m, this._popupShown, rest)}</div></ha-card></div></div>`;

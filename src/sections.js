@@ -99,7 +99,7 @@ function wxAlertChips(card, m, { onlyActive = false } = {}) {
     const d = lt.dist != null ? `${wxFmtNum(m.lang, lt.dist, 0)} ${lt.unit}` : "";
     out.push(
       wxChip("mdi:flash", card._t(d ? "lightning_n" : "lightning_count", { d, s: wxStrikes(card, lt.count) }), {
-        color: "#7e57c2",
+        color: WX_BOLT_COLOR,
         cls: "tint pulse bolt",
         more: lt.entity,
       }),
@@ -134,7 +134,7 @@ function wxAlertChips(card, m, { onlyActive = false } = {}) {
       }),
     );
   }
-  if (m.storm) out.push(wxChip("mdi:weather-lightning", card._t("storm_at", { t: m.storm }), { color: "#7e57c2", cls: "tint" }));
+  if (m.storm) out.push(wxChip("mdi:weather-lightning", card._t("storm_at", { t: m.storm }), { color: WX_BOLT_COLOR, cls: "tint" }));
   return out;
 }
 
@@ -202,7 +202,18 @@ function wxSectionHourly(card, m) {
   const hi = Math.max(...temps);
   const W = h.length * WX_COL;
   const y = (t) => (hi === lo ? 30 : 40 - ((t - lo) / (hi - lo)) * 20);
-  const pts = h.map((x, i) => [i * WX_COL + WX_COL / 2, y(x.temperature ?? lo)]);
+  // An hour without a temperature takes the value interpolated between its known neighbours (the nearest one at the
+  // edges), so the curve passes through instead of diving to the minimum; its dot and label stay hidden.
+  const t = h.map((x) => x.temperature);
+  const known = t.map((v, i) => (v == null ? null : i)).filter((i) => i != null);
+  const fill = (i) => {
+    const p = known.findLast((k) => k < i);
+    const n = known.find((k) => k > i);
+    if (p == null) return t[n];
+    if (n == null) return t[p];
+    return t[p] + ((t[n] - t[p]) * (i - p)) / (n - p);
+  };
+  const pts = h.map((x, i) => [i * WX_COL + WX_COL / 2, y(t[i] ?? fill(i))]);
   // A smooth curve through the points (Catmull-Rom as cubic Béziers).
   let d = `M${pts[0][0]} ${pts[0][1].toFixed(1)}`;
   for (let i = 1; i < pts.length; i++) {
@@ -240,6 +251,8 @@ function wxSectionHourly(card, m) {
   // The wind of each hour: an arrow pointing where it blows, its speed, the gusts on hover.
   const windy = h.some((x) => x.wind_speed != null);
   const wunit = m.a.wind_speed_unit || "km/h";
+  // "Strong wind" at about 50 km/h, whatever unit the provider speaks.
+  const strongAt = { "km/h": 50, mph: 31, "m/s": 14, kn: 27, "ft/s": 45 }[wunit] ?? 50;
   const wind = windy
     ? h
         .map((x) => {
@@ -248,7 +261,7 @@ function wxSectionHourly(card, m) {
           const title = [b?.label, x.wind_speed != null ? `${wxFmtNum(m.lang, x.wind_speed, 0)} ${wunit}` : "", gust ? card._t("gusts", { v: `${wxFmtNum(m.lang, gust, 0)} ${wunit}` }) : ""]
             .filter(Boolean)
             .join(" · ");
-          const strong = (gust ?? x.wind_speed ?? 0) >= 50;
+          const strong = (gust ?? x.wind_speed ?? 0) >= strongAt;
           return (
             `<div class="wcol${strong ? " strong" : ""}" title="${wxEsc(title)}">${b ? `<span class="arrow" style="transform:rotate(${(b.deg + 180) % 360}deg)"><ha-icon icon="mdi:navigation"></ha-icon></span>` : ""}` +
             `<span>${x.wind_speed != null ? wxFmtNum(m.lang, x.wind_speed, 0) : ""}</span></div>`
@@ -508,6 +521,8 @@ const WX_STYLES = `${WX_SCENE_STYLES}
         white-space: nowrap; background: color-mix(in srgb, var(--st-color, var(--wx-color)) 18%, transparent);
         color: color-mix(in srgb, var(--st-color, var(--wx-color)) 72%, var(--primary-text-color)); }
   .st .dot { background: var(--st-color, var(--wx-color)); }
+  /* With a subtitle the titles span two lines: the pill stays on the title's line, not centred over both. */
+  .header:has(.sub) .st { align-self: flex-start; margin-top: 4px; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   .st.alert .dot { animation: wx-blink 1.4s ease-in-out infinite; }
   button { font: inherit; cursor: pointer; border: none; }
