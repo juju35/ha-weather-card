@@ -3,6 +3,7 @@
 [![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![HACS Validation](https://github.com/juju35/ha-weather-card/actions/workflows/hacs.yml/badge.svg)](https://github.com/juju35/ha-weather-card/actions/workflows/hacs.yml)
 [![Validate](https://github.com/juju35/ha-weather-card/actions/workflows/validate.yml/badge.svg)](https://github.com/juju35/ha-weather-card/actions/workflows/validate.yml)
+[![Lint](https://github.com/juju35/ha-weather-card/actions/workflows/lint.yml/badge.svg)](https://github.com/juju35/ha-weather-card/actions/workflows/lint.yml)
 [![Release](https://img.shields.io/github/v/release/juju35/ha-weather-card)](https://github.com/juju35/ha-weather-card/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -88,7 +89,7 @@ The other sections read the sensors of these integrations, found by their transl
 
 ### HACS (recommended)
 
-1. Open HACS → **Frontend**
+1. Open HACS → **Dashboard**
 2. Menu (⋮) → **Custom repositories**
 3. Add `https://github.com/juju35/ha-weather-card` with category **Dashboard**
 4. Search for **Weather Plus Card** and install it
