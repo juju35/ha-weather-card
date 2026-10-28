@@ -202,7 +202,18 @@ function wxSectionHourly(card, m) {
   const hi = Math.max(...temps);
   const W = h.length * WX_COL;
   const y = (t) => (hi === lo ? 30 : 40 - ((t - lo) / (hi - lo)) * 20);
-  const pts = h.map((x, i) => [i * WX_COL + WX_COL / 2, y(x.temperature ?? lo)]);
+  // An hour without a temperature takes the value interpolated between its known neighbours (the nearest one at the
+  // edges), so the curve passes through instead of diving to the minimum; its dot and label stay hidden.
+  const t = h.map((x) => x.temperature);
+  const known = t.map((v, i) => (v == null ? null : i)).filter((i) => i != null);
+  const fill = (i) => {
+    const p = known.findLast((k) => k < i);
+    const n = known.find((k) => k > i);
+    if (p == null) return t[n];
+    if (n == null) return t[p];
+    return t[p] + ((t[n] - t[p]) * (i - p)) / (n - p);
+  };
+  const pts = h.map((x, i) => [i * WX_COL + WX_COL / 2, y(t[i] ?? fill(i))]);
   // A smooth curve through the points (Catmull-Rom as cubic Béziers).
   let d = `M${pts[0][0]} ${pts[0][1].toFixed(1)}`;
   for (let i = 1; i < pts.length; i++) {
