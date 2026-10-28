@@ -187,7 +187,19 @@ class WeatherPlusCard extends WxElement {
       return s ? [id, s.state, s.attributes] : null;
     });
     this._fetchTrend(ent.pressure || ent.weather);
-    const sig = JSON.stringify([this._lang(), this._zoomed, !!this._popup, this._fcv, Math.floor(Date.now() / 60000), states]);
+    // The clock only enters the signature through what it changes on screen — the hourly/daily rollover (and the
+    // astro day) on the hour, the sun's position on its arc in 1% steps — so the minute tick does not rebuild the
+    // shadow root (restarting every animation) when nothing displayed has moved.
+    const sun = this._sunModel(ent);
+    const sig = JSON.stringify([
+      this._lang(),
+      this._zoomed,
+      !!this._popup,
+      this._fcv,
+      Math.floor(Date.now() / 3600000),
+      sun ? Math.round(wxClamp(sun.frac, 0, 1) * 100) : null,
+      states,
+    ]);
     if (sig === this._sig) return;
     this._sig = sig;
     this._render();
