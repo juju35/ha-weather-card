@@ -414,10 +414,14 @@ class WeatherPlusCard extends WxElement {
       .slice(0, Math.max(0, Number(this._config.hours) || 0, wide ? 24 : 0))
       .map((x) => ({ ...x, night: x.is_daytime != null ? !x.is_daytime : isNight(new Date(x.datetime)) }));
     const dailyAll = fc.daily || (fc.twice_daily ? wxFoldTwiceDaily(fc.twice_daily) : a.forecast || []);
+    // From today's local midnight: a provider serving yesterday's entry (a legacy `forecast` attribute, for one)
+    // must not show it next to "Today".
+    const dayStart = new Date();
+    dayStart.setHours(0, 0, 0, 0);
     const daily = dailyAll
       .filter((x) => {
         const d = new Date(x.datetime);
-        return d.getTime() > now - 864e5 || wxSameDay(d, new Date());
+        return d.getTime() >= dayStart.getTime() || wxSameDay(d, new Date());
       })
       .slice(0, Math.max(0, Number(this._config.days) || 0, wide ? 10 : 0));
     const today = dailyAll.find((x) => wxSameDay(new Date(x.datetime), new Date()));
