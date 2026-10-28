@@ -98,7 +98,7 @@ export const load = (now = null) => {
   const tags = ["weather-plus-card", "weather-plus-mini-card"];
   return vm.runInContext(
     `${code}
-    ({ wxResolve, wxFindWeather, wxPollenLevel, wxAlertLevel, wxDroughtLevel, wxRainLevel, wxUvLevel, wxBearing, wxCleanConfig,
+    ({ WX_I18N, WX_CARDINALS, wxResolve, wxFindWeather, wxPollenLevel, wxAlertLevel, wxDroughtLevel, wxRainLevel, wxUvLevel, wxBearing, wxCleanConfig,
        wxSceneSvg, wxTempColor, document, wxSunTimes, wxMoonTimes, wxAltitude, wxMoonAge, wxMoonPhase, wxMoonLight, wxMoonLit, wxWeatherName, WX_CONDITIONS, customElements, window,
        cards: Object.fromEntries(${JSON.stringify(tags)}.map((t) => [t, customElements.get(t)])) })`,
     ctx,
