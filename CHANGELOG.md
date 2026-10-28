@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.1 - 2026-10-28
+
+### Fixes
+- Scene animations no longer restart every minute: the card stopped rebuilding itself on each minute tick, which also dropped open tooltips.
+- An entity replaced by another in the same update (one removed, one added) is detected again instead of the card reading an entity that no longer exists.
+- The daily forecast no longer shows yesterday next to Today with providers that still serve the previous day.
+- Zero rain totals are hidden consistently (*Next 6 h: 0 mm* showed only when a today total existed).
+- An hour without a temperature no longer makes the hourly curve dive to the minimum: its point is interpolated between its neighbours.
+- The strong-wind highlight of the hourly forecast follows the wind unit (about 50 km/h whatever the unit, instead of 50 in the raw unit).
+- Lighter updates on large instances: the states are counted once per change.
+
 ## 1.7.0 - 2026-10-26
 
 ### Changes
