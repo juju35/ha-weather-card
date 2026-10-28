@@ -99,7 +99,7 @@ function wxAlertChips(card, m, { onlyActive = false } = {}) {
     const d = lt.dist != null ? `${wxFmtNum(m.lang, lt.dist, 0)} ${lt.unit}` : "";
     out.push(
       wxChip("mdi:flash", card._t(d ? "lightning_n" : "lightning_count", { d, s: wxStrikes(card, lt.count) }), {
-        color: "#7e57c2",
+        color: WX_BOLT_COLOR,
         cls: "tint pulse bolt",
         more: lt.entity,
       }),
@@ -134,7 +134,7 @@ function wxAlertChips(card, m, { onlyActive = false } = {}) {
       }),
     );
   }
-  if (m.storm) out.push(wxChip("mdi:weather-lightning", card._t("storm_at", { t: m.storm }), { color: "#7e57c2", cls: "tint" }));
+  if (m.storm) out.push(wxChip("mdi:weather-lightning", card._t("storm_at", { t: m.storm }), { color: WX_BOLT_COLOR, cls: "tint" }));
   return out;
 }
 

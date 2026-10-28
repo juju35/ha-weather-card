@@ -544,6 +544,9 @@ const wxCondColor = (cond, night) => (night && (cond === "sunny" || cond === "pa
 
 const WX_STORM = new Set(["lightning", "lightning-rainy"]);
 
+// The lightning tint everywhere (status pill, lightning and storm chips): the condition's own color.
+const WX_BOLT_COLOR = WX_CONDITIONS.lightning.color;
+
 // ── Scales: UV, pollen, warnings, drought, rain ──────────────────────────────
 const WX_UV = [
   { max: 2, color: "#43a047" },

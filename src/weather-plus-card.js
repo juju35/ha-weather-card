@@ -494,7 +494,7 @@ class WeatherPlusCard extends WxElement {
     const top = Math.max(0, ...(m.alerts?.phenomena || []).map((p) => p.level));
     if (top >= 2) return { text: this._t("vigilance_level", { v: this._t(`lvl_${top}`) }), color: WX_ALERT_COLORS[top], alert: true };
     if (m.lightning?.count > 0 && m.lightning.dist != null) {
-      return { text: this._t("lightning_near", { d: `${wxFmtNum(m.lang, m.lightning.dist, 0)} ${m.lightning.unit}` }), color: "#7e57c2", alert: true };
+      return { text: this._t("lightning_near", { d: `${wxFmtNum(m.lang, m.lightning.dist, 0)} ${m.lightning.unit}` }), color: WX_BOLT_COLOR, alert: true };
     }
     return { text: wxCondLabel(m.lang, m.cond), color: m.color, alert: false };
   }
