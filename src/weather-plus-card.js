@@ -65,8 +65,11 @@ class WeatherPlusCard extends WxElement {
   set hass(hass) {
     const prev = this._hass;
     this._hass = hass;
-    // The detected entities only change with the registry or the set of states.
-    if (!prev || prev.entities !== hass.entities || Object.keys(prev.states).length !== Object.keys(hass.states).length) this._ent = null;
+    // The detected entities only change with the registry or the set of states; a swap that keeps the count
+    // (one entity added, another removed in the same update) shows as a tracked id disappearing.
+    const gone = () =>
+      this._ent && [...Object.values(this._ent), ...Object.values(this._ent.air || {})].flat().some((id) => typeof id === "string" && !(id in hass.states));
+    if (!prev || prev.entities !== hass.entities || Object.keys(prev.states).length !== Object.keys(hass.states).length || gone()) this._ent = null;
     this._subscribe();
     this._update();
   }
@@ -187,7 +190,19 @@ class WeatherPlusCard extends WxElement {
       return s ? [id, s.state, s.attributes] : null;
     });
     this._fetchTrend(ent.pressure || ent.weather);
-    const sig = JSON.stringify([this._lang(), this._zoomed, !!this._popup, this._fcv, Math.floor(Date.now() / 60000), states]);
+    // The clock only enters the signature through what it changes on screen — the hourly/daily rollover (and the
+    // astro day) on the hour, the sun's position on its arc in 1% steps — so the minute tick does not rebuild the
+    // shadow root (restarting every animation) when nothing displayed has moved.
+    const sun = this._sunModel(ent);
+    const sig = JSON.stringify([
+      this._lang(),
+      this._zoomed,
+      !!this._popup,
+      this._fcv,
+      Math.floor(Date.now() / 3600000),
+      sun ? Math.round(wxClamp(sun.frac, 0, 1) * 100) : null,
+      states,
+    ]);
     if (sig === this._sig) return;
     this._sig = sig;
     this._render();

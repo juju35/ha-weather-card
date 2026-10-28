@@ -510,3 +510,48 @@ test("night scenes: the moon with every condition, night-toned clouds", () => {
   assert.match(lib.wxSceneSvg("lightning-rainy", true), /fill="url\(#wx-ck\)"/);
   assert.doesNotMatch(lib.wxSceneSvg("rainy", false), /#wx-c[nmk]\)/);
 });
+
+test("minute tick: a rebuild only when something displayed moved, not sixty times an hour", () => {
+  const D = lib.window.Date;
+  const shift = (ms) => {
+    const T = NOON.getTime() + ms;
+    lib.window.Date = class extends D {
+      constructor(...a) {
+        super(...(a.length ? a : [T]));
+      }
+      static now() {
+        return T;
+      }
+    };
+  };
+  try {
+    const el = card();
+    let renders = 0;
+    const render = el._render.bind(el);
+    el._render = () => {
+      renders++;
+      render();
+    };
+    // An hour of ticks: the sun's 1% arc steps and the hour rollover re-render, the other minutes do not.
+    for (let min = 1; min <= 60; min++) {
+      shift(min * 60000);
+      el._update();
+    }
+    assert.ok(renders >= 1, "the hour rollover re-renders");
+    assert.ok(renders < 15, `rebuilt ${renders} times in an hour`);
+  } finally {
+    lib.window.Date = D;
+  }
+});
+
+test("discovery: invalidated when a tracked entity disappears, even with the state count unchanged", () => {
+  const h = makeHass();
+  const el = card({}, h);
+  assert.equal(el._entities().uv, "sensor.paris_uv");
+  // One entity removed, another added in the same update: same count, same registry object.
+  const h2 = { ...h, states: { ...h.states } };
+  delete h2.states["sensor.paris_uv"];
+  h2.states["sensor.somewhere_else"] = { entity_id: "sensor.somewhere_else", state: "1", attributes: {} };
+  el.hass = h2;
+  assert.notEqual(el._entities().uv, "sensor.paris_uv");
+});
