@@ -543,3 +543,15 @@ test("minute tick: a rebuild only when something displayed moved, not sixty time
     lib.window.Date = D;
   }
 });
+
+test("discovery: invalidated when a tracked entity disappears, even with the state count unchanged", () => {
+  const h = makeHass();
+  const el = card({}, h);
+  assert.equal(el._entities().uv, "sensor.paris_uv");
+  // One entity removed, another added in the same update: same count, same registry object.
+  const h2 = { ...h, states: { ...h.states } };
+  delete h2.states["sensor.paris_uv"];
+  h2.states["sensor.somewhere_else"] = { entity_id: "sensor.somewhere_else", state: "1", attributes: {} };
+  el.hass = h2;
+  assert.notEqual(el._entities().uv, "sensor.paris_uv");
+});

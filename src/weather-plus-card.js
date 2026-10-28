@@ -65,8 +65,11 @@ class WeatherPlusCard extends WxElement {
   set hass(hass) {
     const prev = this._hass;
     this._hass = hass;
-    // The detected entities only change with the registry or the set of states.
-    if (!prev || prev.entities !== hass.entities || Object.keys(prev.states).length !== Object.keys(hass.states).length) this._ent = null;
+    // The detected entities only change with the registry or the set of states; a swap that keeps the count
+    // (one entity added, another removed in the same update) shows as a tracked id disappearing.
+    const gone = () =>
+      this._ent && [...Object.values(this._ent), ...Object.values(this._ent.air || {})].flat().some((id) => typeof id === "string" && !(id in hass.states));
+    if (!prev || prev.entities !== hass.entities || Object.keys(prev.states).length !== Object.keys(hass.states).length || gone()) this._ent = null;
     this._subscribe();
     this._update();
   }
