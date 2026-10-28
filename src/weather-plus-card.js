@@ -28,6 +28,18 @@ function wxFoldTwiceDaily(list) {
   return days;
 }
 
+// The number of entities of a `hass.states` object, counted once per object (every state change replaces it):
+// the hass setter runs on each update, and Object.keys() over a large instance allocates a lot for nothing.
+const WX_STATE_COUNTS = new WeakMap();
+function wxStatesCount(states) {
+  let n = WX_STATE_COUNTS.get(states);
+  if (n === undefined) {
+    n = Object.keys(states).length;
+    WX_STATE_COUNTS.set(states, n);
+  }
+  return n;
+}
+
 class WeatherPlusCard extends WxElement {
   static get defaults() {
     return WX_DEFAULTS;
@@ -69,7 +81,7 @@ class WeatherPlusCard extends WxElement {
     // (one entity added, another removed in the same update) shows as a tracked id disappearing.
     const gone = () =>
       this._ent && [...Object.values(this._ent), ...Object.values(this._ent.air || {})].flat().some((id) => typeof id === "string" && !(id in hass.states));
-    if (!prev || prev.entities !== hass.entities || Object.keys(prev.states).length !== Object.keys(hass.states).length || gone()) this._ent = null;
+    if (!prev || prev.entities !== hass.entities || wxStatesCount(prev.states) !== wxStatesCount(hass.states) || gone()) this._ent = null;
     this._subscribe();
     this._update();
   }
