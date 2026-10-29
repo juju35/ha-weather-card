@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.3 - 2026-10-29
+
+### Fixes
+- An entity opened from the full screen detail (a chip, a section or the title) now shows its details over the dashboard: the full screen closes first, so the details are no longer hidden behind it on older Home Assistant releases, and the back button no longer needs an extra press once they are closed.
+- Closing any Home Assistant dialog opened over the full screen detail no longer closes the full screen too; the back button still does.
+
 ## 1.8.2 - 2026-10-29
 
 ### Fixes

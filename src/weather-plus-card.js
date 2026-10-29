@@ -716,7 +716,11 @@ class WeatherPlusCard extends WxElement {
       if (ev.key === "Escape") this._closePopup();
       else if ((ev.key === "Enter" || ev.key === " ") && ev.composedPath?.()[0]?.dataset?.more) this._onClick(ev);
     };
-    this._onPopupBack = () => this._closePopup(true);
+    // A popstate that lands back on its own entry comes from a dialog opened over it and closed (Home Assistant's
+    // dialogs go back on close): the popup stays.
+    this._onPopupBack = (ev) => {
+      if (!ev?.state?.weatherPlusPopup) this._closePopup(true);
+    };
     document.addEventListener("keydown", this._onPopupKey);
     window.addEventListener?.("popstate", this._onPopupBack);
     window.history?.pushState?.({ weatherPlusPopup: true }, "");
@@ -813,7 +817,29 @@ class WeatherPlusCard extends WxElement {
       this._openPopup();
       return;
     }
-    if (el.dataset.more) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: el.dataset.more }, bubbles: true, composed: true }));
+    if (el.dataset.more) this._moreInfo(el.dataset.more);
+  }
+
+  // From the full screen, the popup closes first: it would cover Home Assistant's more-info on versions where that is
+  // not a top-layer dialog, and the more-info's history entry must not sit on top of the popup's. It opens once the
+  // back() of the close has left the popup's entry, so that it goes back to the dashboard when closed.
+  _moreInfo(entityId) {
+    const fire = () => this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
+    if (!this._popup) {
+      fire();
+      return;
+    }
+    const goesBack = !!window.history?.state?.weatherPlusPopup;
+    this._closePopup();
+    if (!goesBack) {
+      fire();
+      return;
+    }
+    const once = () => {
+      window.removeEventListener("popstate", once);
+      fire();
+    };
+    window.addEventListener("popstate", once);
   }
 }
 

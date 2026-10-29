@@ -474,6 +474,7 @@ test("full screen detail: opens over the page with 24 hours and 10 days, closes 
   doc.listeners.keydown({ key: "Escape", composedPath: () => [] });
   assert.equal(doc.body.children.length, 0);
   assert.equal(doc.body.style.overflow, "");
+  lib.window.history.flush();
   assert.equal(lib.window.history.state, null);
   assert.doesNotMatch(html(card({ popup: false })), /data-action="popup"/);
 });
@@ -495,6 +496,96 @@ test("full screen detail: opens again after being closed, by its button or Escap
   const pop = doc.body.children[0].shadowRoot.innerHTML;
   assert.match(pop, /<div class="top"><div class="hero">.*<div class="side"><div class="section enter s-alerts">.*s-rain.*<\/div><\/div><div class="section enter s-hourly">.*<div class="flow"><div class="section enter s-daily">/);
   el._closePopup();
+});
+
+// Home Assistant's dialog manager (make-dialog-manager / url-sync-mixin): opening a dialog marks the current entry and
+// pushes one; closing it goes back, and the popstate back on the marked entry closes the dialog.
+const haDialog = (history) => ({
+  open() {
+    history.replaceState({ ...history.state, opensDialog: true }, "");
+    history.pushState({ dialog: "ha-more-info-dialog" }, "");
+  },
+  close() {
+    history.back();
+    history.flush();
+  },
+});
+const morePath = (id) => [{ dataset: { more: id } }, { classList: { contains: (c) => c === "sheet" } }];
+
+test("full screen detail: an entity opens its more-info over the dashboard, after the full screen is closed", () => {
+  const el = card();
+  const doc = lib.document;
+  const history = lib.window.history;
+  history.flush();
+  const start = history.index;
+  el._onClick({ composedPath: () => [{ dataset: { action: "popup" } }] });
+  const before = el.events.length;
+  // A click on a chip in the sheet: the full screen closes first, the more-info waits for its history entry to go.
+  el._onClick({ composedPath: () => morePath("sensor.paris_uv") });
+  assert.equal(doc.body.children.length, 0);
+  assert.equal(el.events.length, before);
+  history.flush();
+  const ev = el.events.at(-1);
+  assert.equal(el.events.length, before + 1);
+  assert.equal(ev.type, "hass-more-info");
+  assert.equal(ev.detail.entityId, "sensor.paris_uv");
+  // The more-info opens on the dashboard's entry, closing it lands back on the dashboard with nothing left behind.
+  assert.equal(history.index, start);
+  const ha = haDialog(history);
+  ha.open();
+  ha.close();
+  assert.equal(history.index, start);
+  assert.equal(history.state?.weatherPlusPopup, undefined);
+  assert.equal(el._popup, null);
+  // Only once: a later back does not open it again.
+  el._onClick({ composedPath: () => [{ dataset: { action: "popup" } }] });
+  history.back();
+  history.flush();
+  assert.equal(el.events.length, before + 1);
+  assert.equal(doc.body.children.length, 0);
+});
+
+test("full screen detail: the keyboard opens an entity the same way; without the popup's history entry, at once", () => {
+  const el = card();
+  const doc = lib.document;
+  const history = lib.window.history;
+  history.flush();
+  el._onClick({ composedPath: () => [{ dataset: { action: "popup" } }] });
+  const before = el.events.length;
+  doc.listeners.keydown({ key: "Enter", composedPath: () => morePath("weather.paris") });
+  assert.equal(doc.body.children.length, 0);
+  history.flush();
+  assert.equal(el.events.at(-1).detail.entityId, "weather.paris");
+  assert.equal(el.events.length, before + 1);
+  // Its entry replaced by something else: no back to wait for, the more-info opens straight away.
+  el._onClick({ composedPath: () => [{ dataset: { action: "popup" } }] });
+  history.replaceState({ other: true }, "");
+  el._onClick({ composedPath: () => morePath("sensor.paris_uv") });
+  assert.equal(doc.body.children.length, 0);
+  assert.equal(el.events.length, before + 2);
+  assert.equal(el.events.at(-1).detail.entityId, "sensor.paris_uv");
+  history.back();
+  history.flush();
+  assert.equal(el.events.length, before + 2);
+});
+
+test("full screen detail: a dialog opened over it and closed leaves it open; the back button still closes it", () => {
+  const el = card();
+  const doc = lib.document;
+  const history = lib.window.history;
+  history.flush();
+  el._onClick({ composedPath: () => [{ dataset: { action: "popup" } }] });
+  // Any Home Assistant dialog over the full screen (a shortcut, another card): closing it comes back to its entry.
+  const ha = haDialog(history);
+  ha.open();
+  ha.close();
+  assert.equal(doc.body.children.length, 1);
+  assert.equal(history.state.weatherPlusPopup, true);
+  // The back button leaves its entry: it closes.
+  history.back();
+  history.flush();
+  assert.equal(doc.body.children.length, 0);
+  assert.equal(el._popup, null);
 });
 
 test("night scenes: the moon with every condition, night-toned clouds", () => {
