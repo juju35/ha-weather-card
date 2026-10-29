@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.2 - 2026-10-29
+
+### Fixes
+- The card no longer rebuilds itself — restarting its animations and rewriting the open full screen detail — every 15 minutes when the pressure history is refreshed: it only updates when the pressure trend actually changed.
+
 ## 1.8.1 - 2026-10-29
 
 ### Fixes
