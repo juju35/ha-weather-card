@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.8.1 - 2026-10-29
+
+### Fixes
+- The full screen detail no longer jumps back to the top (nor replays its opening animation or loses the focus) when a sensor updates; the hourly forecast keeps its horizontal scroll, on the card too.
+- The card no longer rebuilds itself — restarting its animations — every few minutes as the sun moves: the sun's dot slides along its arc in place.
+- A configured entity that does not exist no longer makes the card search the whole instance again on every update.
+- On a narrow card, a long status (German or Spanish labels, lightning distance) is shortened with an ellipsis instead of hiding the title and pushing the buttons out of the card.
+- Wind in Beaufort: strong hours are highlighted from force 7.
+- A forecast day without temperatures shows no broken range bar.
+- Forecasts arriving late from a previous weather entity no longer mix into the current one.
+- Spanish: *Sensación térmica* for the feels-like temperature; German: *Stabil seit 3 h* for a steady pressure.
+
 ## 1.8.0 - 2026-10-28
 
 ### Changes
@@ -21,7 +33,7 @@
 ### Changes
 - **Mini card**: the full-screen button now shows directly on the compact mini card, beside the detail button — no need to expand it first.
 
-## 1.6.0
+## 1.6.0 - 2026-10-26
 ### Changes
 - Header icon sized like the other ha-* cards: 24px in the 40px round badge (card and full screen detail), 20px in the mini card's 32px badge.
 - Mini card: the title is 16px like the full card's (it was 14px), and the compact view has a single button at the top right, the detail one. The **Full screen** button shows once the card is unfolded, like on the full card, and a click in the full screen detail no longer folds the card behind it.
@@ -29,12 +41,12 @@
 - The temperature is 30px / 400 with a 14px unit like the main value of the other ha-* cards (it was 40px / 300 with an 18px unit), 24px on the mini card (it was 30px). The full screen detail keeps its larger temperature.
 - The body starts 8px under the header (it was 12px), like the other ha-* cards.
 
-## 1.5.0
+## 1.5.0 - 2026-10-25
 
 ### Changes
 - Night scenes for every condition: the moon, in today's phase, peeks above the clouds of rain, showers, storms, snow and hail, sits beside the clouds when cloudy and above the fog or the wind; the clouds take blue-grey night tones and the sky a night-blue halo. Still animated: the moon floats and its halo breathes, stars twinkle, clouds drift past it, rain and snow fall, lightning flashes.
 
-## 1.4.1
+## 1.4.1 - 2026-10-25
 
 ### Fixes
 - The full screen detail opened only once: closing it removed it from the page twice, the second removal failed and left it marked as open.
@@ -42,7 +54,7 @@
 - The full screen detail stays opaque with a translucent theme: the page behind is blurred and darkened.
 - The hourly forecast fills the width it is given, the temperature curve stretching with it.
 
-## 1.4.0
+## 1.4.0 - 2026-10-25
 
 ### Changes
 - **Full screen detail**: a button at the top right of the card and the mini card opens the detail over the whole screen and its width — a larger scene, the sections side by side as the width allows, 24 hours and 10 days of forecast. It closes with its button, Escape, a click outside, or the back button on a phone. `popup: false` removes the button.
@@ -55,13 +67,13 @@
 ### Fixes
 - The status pill stays readable in a light theme (a yellow warning was yellow on pale yellow).
 
-## 1.3.0
+## 1.3.0 - 2026-10-25
 
 ### Changes
 - New **moon** section (`moon`, in the default sections): today's moon drawn in its real phase, its name (*Gibbeuse croissante*), how much of it is lit and its day in the cycle, and the dates of the next full and new moons. The phase is computed from the date, so no integration is needed; the Moon integration's `sensor.moon_phase` names it when it is there. Mirrored in the southern hemisphere.
 - The night scenes draw the moon in today's phase, with its unlit part faintly visible and a halo as bright as the moon is full.
 
-## 1.2.0
+## 1.2.0 - 2026-10-25
 
 ### Changes
 - **Pollen** section laid out like the air quality one: the overall risk in a round badge with its level, advice and main species, the scale, then each species on six levels. Atmo France's top level (*extremely high*, 6) is no longer folded into 5. Without a risk sensor, the most present species gives the risk.
@@ -69,7 +81,7 @@
 - Weather warnings in plain words with their colour: *Fortes vagues · jaune*, *Fortes pluies · orange*, *Neige et verglas · jaune*… The official name and what it means are in the chip's tooltip (*Vigilance vagues-submersion : fortes vagues, submersion du littoral possible*).
 - Niak Weather's pollen sensor is read as the overall pollen risk when no other one is found.
 
-## 1.1.0
+## 1.1.0 - 2026-10-25
 
 ### Changes
 - New **air quality** section (`air`, in the default sections): the index with its level, advice and zone, then PM2.5, PM10, ozone, NO₂ and SO₂ on the six levels of the index, the most degraded first. Atmo France levels are read as they are; WAQI, AirVisual, Google Air Quality, Airly or sensor.community concentrations are placed on the European EAQI thresholds. Override them with `entities: { air: { pm25: …, o3: … } }`.
@@ -81,7 +93,7 @@
 - The rain in the next hour could pick another integration's "rain in" duration sensor and stay empty: only a sensor with the minute-by-minute forecast is taken now.
 - Atmo France's pollen concentration and day-ahead (*-J+1*) sensors are no longer taken for today's levels; an indoor air purifier's PM2.5 is never taken for outdoor air.
 
-## 1.0.1
+## 1.0.1 - 2026-10-25
 
 ### Fixes
 - Clearer alert labels: *Lightning 18 km away (12 strikes)* / *Foudre à 18 km (12 impacts)*, *Drought: alert* / *Sécheresse : alerte*, *No water restriction*.
@@ -90,7 +102,7 @@
 - The card title leaves out the provider's boilerplate: *Météo-France forecast for city Rennes* shows as *Rennes*.
 - The hourly precipitation bars only show when an hour has some precipitation.
 
-## 1.0.0
+## 1.0.0 - 2026-10-25
 
 ### Changes
 - First release: `custom:weather-plus-card` and `custom:weather-plus-mini-card`.

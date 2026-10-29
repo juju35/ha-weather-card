@@ -40,6 +40,29 @@ function wxStatesCount(states) {
   return n;
 }
 
+// Every entity id the card tracks.
+const wxEntIds = (ent) => [...Object.values(ent), ...Object.values(ent.air || {})].flat().filter((id) => typeof id === "string");
+
+// Runs `write` (which replaces the markup under `scope`) keeping what the viewer was doing: the scroll of `scope`, of
+// the hourly strips, and the focused control (found again by its action or entity).
+function wxKeepView(root, scope, write) {
+  const top = scope.scrollTop;
+  const strips = [...(root.querySelectorAll?.(".hscroll") || [])].map((el) => el.scrollLeft);
+  const a = root.activeElement;
+  const key = a?.dataset && (a.dataset.action || a.dataset.more) ? [a.localName, a.className, a.dataset.action, a.dataset.more] : null;
+  write();
+  if (top) scope.scrollTop = top;
+  [...(root.querySelectorAll?.(".hscroll") || [])].forEach((el, i) => {
+    if (strips[i]) el.scrollLeft = strips[i];
+  });
+  if (key && !(root.activeElement?.isConnected ?? false)) {
+    const el = [...(root.querySelectorAll?.("[data-action], [data-more]") || [])].find(
+      (n) => n.localName === key[0] && n.className === key[1] && n.dataset.action === key[2] && n.dataset.more === key[3],
+    );
+    el?.focus?.({ preventScroll: true });
+  }
+}
+
 class WeatherPlusCard extends WxElement {
   static get defaults() {
     return WX_DEFAULTS;
@@ -78,9 +101,10 @@ class WeatherPlusCard extends WxElement {
     const prev = this._hass;
     this._hass = hass;
     // The detected entities only change with the registry or the set of states; a swap that keeps the count
-    // (one entity added, another removed in the same update) shows as a tracked id disappearing.
-    const gone = () =>
-      this._ent && [...Object.values(this._ent), ...Object.values(this._ent.air || {})].flat().some((id) => typeof id === "string" && !(id in hass.states));
+    // (one entity added, another removed in the same update) shows as a tracked id disappearing. Only the ids that
+    // existed when they were resolved count: a configured entity that does not exist must not re-run the discovery
+    // on every update.
+    const gone = () => this._ent && (this._entPresent || []).some((id) => !(id in hass.states));
     if (!prev || prev.entities !== hass.entities || wxStatesCount(prev.states) !== wxStatesCount(hass.states) || gone()) this._ent = null;
     this._subscribe();
     this._update();
@@ -119,7 +143,10 @@ class WeatherPlusCard extends WxElement {
   }
 
   _entities() {
-    if (!this._ent || this._ent.weather !== this._weatherId()) this._ent = wxResolve(this._hass, this._weatherId(), this._config.entities);
+    if (!this._ent || this._ent.weather !== this._weatherId()) {
+      this._ent = wxResolve(this._hass, this._weatherId(), this._config.entities);
+      this._entPresent = wxEntIds(this._ent).filter((id) => id in this._hass.states);
+    }
     return this._ent;
   }
 
@@ -134,7 +161,10 @@ class WeatherPlusCard extends WxElement {
     if (this._subKey === key) return;
     this._unsubscribe();
     this._subKey = key;
-    this._fc = {};
+    // Each subscription writes to its own object: a late event of the previous one (unsubscribing is asynchronous)
+    // cannot land in the forecasts of the new entity.
+    const fc = {};
+    this._fc = fc;
     const types = [];
     if (f & WX_FC_HOURLY) types.push("hourly");
     if (f & WX_FC_DAILY) types.push("daily");
@@ -143,7 +173,8 @@ class WeatherPlusCard extends WxElement {
       Promise.resolve(
         hass.connection.subscribeMessage(
           (ev) => {
-            this._fc[type] = ev?.forecast || [];
+            if (this._fc !== fc) return;
+            fc[type] = ev?.forecast || [];
             this._fcv = (this._fcv || 0) + 1;
             this._update();
           },
@@ -196,28 +227,39 @@ class WeatherPlusCard extends WxElement {
     if (!this._config || !this._hass || !this.shadowRoot) return;
     const ent = this._entities();
     const hass = this._hass;
-    const ids = [...Object.values(ent), ...Object.values(ent.air || {})].flat().filter((id) => typeof id === "string");
-    const states = ids.map((id) => {
+    // sun.sun: only what the card shows of it. Its elevation and azimuth change every few minutes and would rebuild
+    // the card (restarting every animation) for nothing.
+    const states = wxEntIds(ent).map((id) => {
       const s = hass.states[id];
-      return s ? [id, s.state, s.attributes] : null;
+      if (!s) return null;
+      if (id === ent.sun) return [id, s.state, s.attributes.next_rising, s.attributes.next_setting];
+      return [id, s.state, s.attributes];
     });
     this._fetchTrend(ent.pressure || ent.weather);
-    // The clock only enters the signature through what it changes on screen — the hourly/daily rollover (and the
-    // astro day) on the hour, the sun's position on its arc in 1% steps — so the minute tick does not rebuild the
-    // shadow root (restarting every animation) when nothing displayed has moved.
-    const sun = this._sunModel(ent);
-    const sig = JSON.stringify([
-      this._lang(),
-      this._zoomed,
-      !!this._popup,
-      this._fcv,
-      Math.floor(Date.now() / 3600000),
-      sun ? Math.round(wxClamp(sun.frac, 0, 1) * 100) : null,
-      states,
-    ]);
-    if (sig === this._sig) return;
+    // The clock only enters the signature through the hourly/daily rollover (and the astro day) on the hour, so the
+    // minute tick does not rebuild the shadow root (restarting every animation); the sun moves along its arc in place.
+    const sig = JSON.stringify([this._lang(), this._zoomed, !!this._popup, this._fcv, Math.floor(Date.now() / 3600000), states]);
+    if (sig === this._sig) {
+      this._patchSun(this._sunModel(ent));
+      return;
+    }
     this._sig = sig;
     this._render();
+  }
+
+  // Moves the sun's dot and the course done on the sun section of the card and of the full screen detail.
+  _patchSun(sun) {
+    if (!sun?.up) return;
+    const { x, y, d } = wxSunPoint(sun.frac);
+    for (const root of [this.shadowRoot, this._popup?.shadowRoot]) {
+      const svg = root?.querySelector?.(".sun svg");
+      if (!svg) continue;
+      svg.querySelector(".done")?.setAttribute("d", d);
+      for (const c of svg.querySelectorAll("circle")) {
+        c.setAttribute("cx", x);
+        c.setAttribute("cy", y);
+      }
+    }
   }
 
   _st(id) {
@@ -519,7 +561,7 @@ class WeatherPlusCard extends WxElement {
       this.shadowRoot.innerHTML =
         `<style>${WX_STYLES}</style><style>:host{--wx-color:${WX_IDLE}}</style><ha-card><div class="header"><div class="badge"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon></div>` +
         `<div class="titles" data-more="${wxEsc(ent.weather)}"><div class="name">${wxEsc(c.name || wxWeatherName(st) || this._t("title"))}</div></div>` +
-        `<span class="st"><span class="dot"></span>${wxEsc(this._t("unavailable"))}</span>${this._zoomButton()}</div></ha-card>`;
+        `<span class="st"><span class="dot"></span><span class="stt">${wxEsc(this._t("unavailable"))}</span></span>${this._zoomButton()}</div></ha-card>`;
       this._closePopup();
       return;
     }
@@ -531,7 +573,10 @@ class WeatherPlusCard extends WxElement {
       `<style>${WX_STYLES}</style><style>:host{--wx-color:${m.color}}</style>` +
       `<ha-card class="${[this._compact() ? "mini" : "", still ? "still" : ""].filter(Boolean).join(" ")}">` +
       this._header(m, { sub: m.status.alert && !this._compact(), buttons: `${this._popupButton()}${this._zoomButton()}` });
-    this.shadowRoot.innerHTML = `${head}${this._compact() ? this._miniBody(m) : this._fullBody(m)}</ha-card>`;
+    const body = `${head}${this._compact() ? this._miniBody(m) : this._fullBody(m)}</ha-card>`;
+    wxKeepView(this.shadowRoot, this.shadowRoot, () => {
+      this.shadowRoot.innerHTML = body;
+    });
     if (this._popup) this._renderPopup();
   }
 
@@ -541,7 +586,7 @@ class WeatherPlusCard extends WxElement {
     return (
       `<div class="header"><div class="badge" data-more="${wxEsc(m.ent.weather)}"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon></div>` +
       `<div class="titles" data-more="${wxEsc(m.ent.weather)}"><div class="name">${wxEsc(m.name)}</div>${sub ? `<div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div>` : ""}</div>` +
-      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}"><span class="dot"></span>${wxEsc(m.status.text)}</span>${buttons}</div>`
+      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}" title="${wxEsc(m.status.text)}"><span class="dot"></span><span class="stt">${wxEsc(m.status.text)}</span></span>${buttons}</div>`
     );
   }
 
@@ -675,6 +720,7 @@ class WeatherPlusCard extends WxElement {
     document.body.appendChild(host);
     this._popup = host;
     this._popupShown = new Set();
+    this._popupParts = null;
     this._renderPopup();
     root.querySelector?.(".close")?.focus?.();
   }
@@ -684,6 +730,7 @@ class WeatherPlusCard extends WxElement {
     if (!this._popup) return;
     const host = this._popup;
     this._popup = null;
+    this._popupParts = null;
     host.remove();
     document.removeEventListener("keydown", this._onPopupKey);
     window.removeEventListener?.("popstate", this._onPopupBack);
@@ -706,15 +753,33 @@ class WeatherPlusCard extends WxElement {
     const side = names.filter((n) => n === "alerts" || n === "rain");
     const across = names.filter((n) => n === "hourly");
     const rest = names.filter((n) => !side.includes(n) && !across.includes(n));
-    this._popup.shadowRoot.innerHTML =
-      `<style>${WX_STYLES}${WX_POPUP_STYLES}</style><style>:host{--wx-color:${m.color}}</style>` +
-      `<div class="backdrop"><div class="sheet" role="dialog" aria-modal="true" aria-label="${wxEsc(m.name)}">` +
-      `<ha-card class="popup${m.still ? " still" : ""}">` +
+    const color = `:host{--wx-color:${m.color}}`;
+    const cls = `popup${m.still ? " still" : ""}`;
+    const content =
       this._header(m, { sub: true, buttons: `<button class="close" data-action="close" title="${close}" aria-label="${close}"><ha-icon icon="mdi:close"></ha-icon></button>` }) +
       `<div class="top">${this._hero(m, { feelsAlways: true })}` +
       `<div class="side">${this._sections(m, this._popupShown, side)}</div></div>` +
       this._sections(m, this._popupShown, across) +
-      `<div class="flow">${this._sections(m, this._popupShown, rest)}</div></ha-card></div></div>`;
+      `<div class="flow">${this._sections(m, this._popupShown, rest)}</div>`;
+    const root = this._popup.shadowRoot;
+    const p = this._popupParts;
+    if (p) {
+      // Updates rewrite the card inside the sheet only: the sheet keeps its scroll position and does not replay its
+      // entry animation, the hourly strip keeps its scroll, the focused control gets its focus back.
+      p.color.textContent = color;
+      p.sheet.setAttribute("aria-label", m.name);
+      p.card.className = cls;
+      wxKeepView(root, p.sheet, () => {
+        p.card.innerHTML = content;
+      });
+      return;
+    }
+    root.innerHTML =
+      `<style>${WX_STYLES}${WX_POPUP_STYLES}</style><style class="wx-color">${color}</style>` +
+      `<div class="backdrop"><div class="sheet" role="dialog" aria-modal="true" aria-label="${wxEsc(m.name)}">` +
+      `<ha-card class="${cls}">${content}</ha-card></div></div>`;
+    const parts = { color: root.querySelector?.("style.wx-color"), sheet: root.querySelector?.(".sheet"), card: root.querySelector?.("ha-card.popup") };
+    this._popupParts = parts.color && parts.sheet && parts.card ? parts : null;
   }
 
   _miniBody(m) {

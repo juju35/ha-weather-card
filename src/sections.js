@@ -160,6 +160,8 @@ function wxSectionRain(card, m) {
     ["snow_chance", "mdi:snowflake"],
     ["freeze_chance", "mdi:snowflake-alert"],
   ]
+    // The rain chance is always shown, even at 0 %: "Rain 0 %" answers the question this section is about.
+    // Snow and frost chances only show up when above 0: at 0 they are noise for most of the year.
     .filter(([k]) => m.chances?.[k] != null && (k === "rain_chance" || m.chances[k] > 0))
     .map(([k, icon]) => wxChip(icon, card._t(k, { v: `${wxFmtNum(m.lang, m.chances[k], 0)} %` }), { more: m.ent[k] }));
   const t = m.totals;
@@ -215,7 +217,7 @@ function wxSectionHourly(card, m) {
     if (n == null) return t[p];
     return t[p] + ((t[n] - t[p]) * (i - p)) / (n - p);
   };
-  const pts = h.map((x, i) => [i * WX_COL + WX_COL / 2, y(t[i] ?? fill(i))]);
+  const pts = h.map((_, i) => [i * WX_COL + WX_COL / 2, y(t[i] ?? fill(i))]);
   // A smooth curve through the points (Catmull-Rom as cubic Béziers).
   let d = `M${pts[0][0]} ${pts[0][1].toFixed(1)}`;
   for (let i = 1; i < pts.length; i++) {
@@ -254,7 +256,7 @@ function wxSectionHourly(card, m) {
   const windy = h.some((x) => x.wind_speed != null);
   const wunit = m.a.wind_speed_unit || "km/h";
   // "Strong wind" at about 50 km/h, whatever unit the provider speaks.
-  const strongAt = { "km/h": 50, mph: 31, "m/s": 14, kn: 27, "ft/s": 45 }[wunit] ?? 50;
+  const strongAt = { "km/h": 50, mph: 31, "m/s": 14, kn: 27, "ft/s": 45, Beaufort: 7 }[wunit] ?? 50;
   const wind = windy
     ? h
         .map((x) => {
@@ -301,9 +303,11 @@ function wxSectionDaily(card, m) {
     .map((d, i) => {
       const lo = d.templow ?? d.temperature;
       const hi = d.temperature;
-      const left = ((lo - min) / span) * 100;
-      const width = Math.max(4, ((hi - lo) / span) * 100);
-      const grad = `linear-gradient(90deg, ${wxTempColor(wxToC(lo, unit))}, ${wxTempColor(wxToC(hi, unit))})`;
+      // A day without a high (or a low) gets no bar rather than one at NaN %.
+      const bar = lo != null && hi != null;
+      const left = bar ? ((lo - min) / span) * 100 : 0;
+      const width = bar ? Math.max(4, ((hi - lo) / span) * 100) : 0;
+      const grad = bar ? `linear-gradient(90deg, ${wxTempColor(wxToC(lo, unit))}, ${wxTempColor(wxToC(hi, unit))})` : "";
       const today = i === 0 && wxSameDay(new Date(d.datetime), new Date());
       const now = today && m.temp != null ? `<span class="nowdot" style="left:${(((m.temp - min) / span) * 100).toFixed(1)}%"></span>` : "";
       const p = d.precipitation_probability;
@@ -312,7 +316,7 @@ function wxSectionDaily(card, m) {
         `<ha-icon icon="${wxCondIcon(d.condition, false)}" style="color:${wxCondColor(d.condition, false)}"></ha-icon>` +
         `<span class="pp">${p ? `${wxFmtNum(m.lang, p, 0)} %` : ""}</span>` +
         `<span class="lo">${wxFmtNum(m.lang, lo, 0)}°</span>` +
-        `<span class="range"><span class="fill" style="left:${left.toFixed(1)}%;width:${width.toFixed(1)}%;background:${grad}"></span>${now}</span>` +
+        `<span class="range">${bar ? `<span class="fill" style="left:${left.toFixed(1)}%;width:${width.toFixed(1)}%;background:${grad}"></span>` : ""}${now}</span>` +
         `<span class="hi">${wxFmtNum(m.lang, hi, 0)}°</span></div>`
       );
     })
@@ -416,22 +420,30 @@ function wxSectionPollen(card, m) {
 }
 
 // ── Sun: its course over the day, sunrise and sunset ──
+const WX_SUN_ARC = { P0: [24, 56], C: [200, -20], P2: [376, 56] };
+
+// The sun's point on its arc at `frac` of the day, and the path of the course done: the card moves them in place as
+// the clock turns (see _patchSun) instead of rebuilding.
+function wxSunPoint(frac) {
+  const { P0, C, P2 } = WX_SUN_ARC;
+  const t = wxClamp(frac, 0, 1);
+  const x = ((1 - t) ** 2 * P0[0] + 2 * (1 - t) * t * C[0] + t * t * P2[0]).toFixed(1);
+  const y = ((1 - t) ** 2 * P0[1] + 2 * (1 - t) * t * C[1] + t * t * P2[1]).toFixed(1);
+  const mid = [(1 - t) * P0[0] + t * C[0], (1 - t) * P0[1] + t * C[1]];
+  return { x, y, d: `M${P0[0]} ${P0[1]}Q${mid[0].toFixed(1)} ${mid[1].toFixed(1)} ${x} ${y}` };
+}
+
 function wxSectionSun(card, m) {
   const s = m.sun;
   if (!s) return "";
-  const P0 = [24, 56];
-  const C = [200, -20];
-  const P2 = [376, 56];
-  const at = (t) => [(1 - t) ** 2 * P0[0] + 2 * (1 - t) * t * C[0] + t * t * P2[0], (1 - t) ** 2 * P0[1] + 2 * (1 - t) * t * C[1] + t * t * P2[1]];
+  const { P0, C, P2 } = WX_SUN_ARC;
   const arc = `M${P0[0]} ${P0[1]}Q${C[0]} ${C[1]} ${P2[0]} ${P2[1]}`;
   let done = "";
   let dot = "";
   if (s.up) {
-    const t = wxClamp(s.frac, 0, 1);
-    const mid = [(1 - t) * P0[0] + t * C[0], (1 - t) * P0[1] + t * C[1]];
-    const [x, y] = at(t);
-    done = `<path class="done" d="M${P0[0]} ${P0[1]}Q${mid[0].toFixed(1)} ${mid[1].toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)}"/>`;
-    dot = `<circle class="sunglow" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9"/><circle class="sundot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5"/>`;
+    const { x, y, d } = wxSunPoint(s.frac);
+    done = `<path class="done" d="${d}"/>`;
+    dot = `<circle class="sunglow" cx="${x}" cy="${y}" r="9"/><circle class="sundot" cx="${x}" cy="${y}" r="5"/>`;
   }
   const dl = Math.max(0, Math.round((s.set - s.rise) / 60000));
   return (
@@ -519,10 +531,12 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .titles { flex: 1; min-width: 0; cursor: pointer; }
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .st { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; padding: 1px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;
-        white-space: nowrap; background: color-mix(in srgb, var(--st-color, var(--wx-color)) 18%, transparent);
+  /* The pill gives way to the title on a narrow card: it shrinks down to its dot and ellipsizes its text. */
+  .st { display: inline-flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 0; max-width: 50%; overflow: hidden; padding: 1px 8px;
+        border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap; background: color-mix(in srgb, var(--st-color, var(--wx-color)) 18%, transparent);
         color: color-mix(in srgb, var(--st-color, var(--wx-color)) 72%, var(--primary-text-color)); }
-  .st .dot { background: var(--st-color, var(--wx-color)); }
+  .st .dot { flex: none; background: var(--st-color, var(--wx-color)); }
+  .st .stt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   /* With a subtitle the titles span two lines: the pill stays on the title's line, not centred over both. */
   .header:has(.sub) .st { align-self: flex-start; margin-top: 4px; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
