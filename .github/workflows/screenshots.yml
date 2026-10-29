@@ -24,6 +24,10 @@ jobs:
   screenshots:
     name: Render screenshots
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # Lets the job re-run the PR checks on the screenshot commit it pushes (workflow_dispatch).
+      actions: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -70,9 +74,10 @@ jobs:
             echo "::error::screenshots failed: $(tail -c 1200 /tmp/screenshots.log | tr -d '\r' | tr '\n' ' ')"
             exit 1
           }
-      # Pushed with GITHUB_TOKEN, this commit does not trigger the other workflows on the new head: main requires
-      # no status check, so the PR is not blocked; re-run the checks by hand (or push again) if they are wanted on it.
+      # A push made with GITHUB_TOKEN does not trigger pull_request workflows, so the next step re-runs the PR
+      # checks on this commit through workflow_dispatch (which GITHUB_TOKEN can trigger).
       - name: Commit refreshed screenshots
+        id: commit
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         run: |
           if [ -z "$(git status --porcelain screenshots)" ]; then
@@ -84,6 +89,15 @@ jobs:
           git add screenshots
           git commit -m "chore: refresh screenshots"
           git push
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+      - name: Re-run checks on the screenshot commit
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for wf in lint.yml validate.yml hacs.yml; do
+            [ -f ".github/workflows/$wf" ] && gh workflow run "$wf" --ref "${{ github.head_ref }}"
+          done
       - name: Upload screenshots (manual run)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0

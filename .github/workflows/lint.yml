@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Also started by the Screenshots workflow on the commit it pushes to a PR branch.
+  workflow_dispatch:
 
 permissions:
   contents: read
