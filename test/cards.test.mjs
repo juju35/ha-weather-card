@@ -588,6 +588,37 @@ test("full screen detail: a dialog opened over it and closed leaves it open; the
   assert.equal(el._popup, null);
 });
 
+test("full screen detail: stays open when the dashboard moves the card (masonry columns), closes once it is gone", () => {
+  const el = card();
+  const doc = lib.document;
+  const history = lib.window.history;
+  history.flush();
+  el.isConnected = true;
+  el._onClick({ composedPath: () => [{ dataset: { action: "popup" } }] });
+  // The masonry view detaches every card and attaches it again when its column count changes (rotation, resize).
+  el.isConnected = false;
+  el.disconnectedCallback();
+  el.isConnected = true;
+  el.connectedCallback();
+  lib.timers.run();
+  history.flush();
+  assert.equal(doc.body.children.length, 1);
+  assert.equal(history.state.weatherPlusPopup, true);
+  // Attached again later than a first detach: a second detach still closes it once the card stays away.
+  el.isConnected = false;
+  el.disconnectedCallback();
+  assert.equal(doc.body.children.length, 1);
+  lib.timers.run();
+  assert.equal(doc.body.children.length, 0);
+  assert.equal(el._popup, null);
+  history.flush();
+  assert.equal(history.state?.weatherPlusPopup, undefined);
+  // Removed for good while closed: nothing left to do.
+  el.disconnectedCallback();
+  lib.timers.run();
+  assert.equal(doc.body.children.length, 0);
+});
+
 test("night scenes: the moon with every condition, night-toned clouds", () => {
   for (const cond of ["rainy", "pouring", "lightning-rainy", "snowy", "hail", "cloudy", "fog", "windy", "windy-variant"]) {
     const night = lib.wxSceneSvg(cond, true, { age: 10 });

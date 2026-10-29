@@ -111,6 +111,24 @@ export const load = (now = null) => {
     },
     setInterval: () => 0,
     clearInterval: () => {},
+    // Timeouts wait for the test: timers.run() fires the pending ones, in order.
+    timers: {
+      queue: new Map(),
+      next: 1,
+      run() {
+        const due = [...this.queue.values()];
+        this.queue.clear();
+        for (const fn of due) fn();
+      },
+    },
+    setTimeout(fn) {
+      const id = sandbox.timers.next++;
+      sandbox.timers.queue.set(id, fn);
+      return id;
+    },
+    clearTimeout(id) {
+      sandbox.timers.queue.delete(id);
+    },
   };
   sandbox.window = sandbox;
   sandbox.addEventListener = (type, fn) => (winListeners[type] ||= new Set()).add(fn);
@@ -125,7 +143,7 @@ export const load = (now = null) => {
   return vm.runInContext(
     `${code}
     ({ WX_I18N, WX_CARDINALS, wxResolve, wxFindWeather, wxPollenLevel, wxAlertLevel, wxDroughtLevel, wxRainLevel, wxUvLevel, wxBearing, wxCleanConfig,
-       wxSceneSvg, wxTempColor, document, wxSunTimes, wxMoonTimes, wxAltitude, wxMoonAge, wxMoonPhase, wxMoonLight, wxMoonLit, wxWeatherName, WX_CONDITIONS, customElements, window,
+       wxSceneSvg, wxTempColor, document, wxSunTimes, wxMoonTimes, wxAltitude, wxMoonAge, wxMoonPhase, wxMoonLight, wxMoonLit, wxWeatherName, WX_CONDITIONS, customElements, window, timers,
        cards: Object.fromEntries(${JSON.stringify(tags)}.map((t) => [t, customElements.get(t)])) })`,
     ctx,
   );
