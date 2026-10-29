@@ -115,6 +115,7 @@ class WeatherPlusCard extends WxElement {
   }
 
   connectedCallback() {
+    clearTimeout(this._detachTimer);
     this._subscribe();
     // The sun's course, the "in N min" of the rain and the current hour move with the clock.
     this._tick = setInterval(() => this._update(), 60000);
@@ -123,7 +124,12 @@ class WeatherPlusCard extends WxElement {
   disconnectedCallback() {
     clearInterval(this._tick);
     this._unsubscribe();
-    this._closePopup();
+    // The masonry view detaches every card and attaches it again when its column count changes (a phone turned to
+    // landscape, a resized window): the full screen detail only closes if the card does not come back.
+    clearTimeout(this._detachTimer);
+    this._detachTimer = setTimeout(() => {
+      if (!this.isConnected) this._closePopup();
+    }, 1000);
   }
 
   getCardSize() {
