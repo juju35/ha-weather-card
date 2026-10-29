@@ -686,3 +686,63 @@ test("scene: the raw condition is escaped in its class", () => {
   h.states["weather.paris"] = { ...h.states["weather.paris"], state: 'odd"<x>' };
   assert.doesNotMatch(html(card({}, h)), /c-odd"/);
 });
+
+test("pressure trend: a refresh with the same trend does not rebuild the card; a changed or lost trend does", async () => {
+  const D = lib.window.Date;
+  const shift = (ms) => {
+    const T = NOON.getTime() + ms;
+    lib.window.Date = class extends D {
+      constructor(...a) {
+        super(...(a.length ? a : [T]));
+      }
+      static now() {
+        return T;
+      }
+    };
+  };
+  try {
+    const h = makeHass("en");
+    const el = card({}, h);
+    await tick();
+    assert.match(html(el), /class="chip trend up"/);
+    let renders = 0;
+    const render = el._render.bind(el);
+    el._render = () => {
+      renders++;
+      render();
+    };
+    // Every 15 minutes the history is fetched again; the same +2.8 hPa leaves the card (and its animations) alone.
+    shift(16 * 60000);
+    el._update();
+    await tick();
+    assert.equal(h.apiCalls.length, 2, "the history is fetched again after 15 minutes");
+    assert.equal(renders, 0, "an unchanged trend rebuilt the card");
+    // The pressure fell: the new trend is shown.
+    h.callApi = () => Promise.resolve([[{ state: "1016" }, { state: "1012" }]]);
+    shift(32 * 60000);
+    el._update();
+    await tick();
+    assert.equal(renders, 1);
+    assert.match(html(el), /class="chip trend down"/);
+    // The history no longer has two points: the trend chip goes away.
+    h.callApi = () => Promise.resolve([[{ state: "unavailable" }]]);
+    shift(48 * 60000);
+    el._update();
+    await tick();
+    assert.equal(renders, 2);
+    assert.doesNotMatch(html(el), /class="chip trend/);
+    // A failed request keeps the card as it is.
+    let failed = 0;
+    h.callApi = () => {
+      failed++;
+      return Promise.reject(new Error("offline"));
+    };
+    el._trendAt -= 15 * 60000; // due again, without reaching the hour rollover
+    el._update();
+    await tick();
+    assert.equal(failed, 1);
+    assert.equal(renders, 2);
+  } finally {
+    lib.window.Date = D;
+  }
+});
