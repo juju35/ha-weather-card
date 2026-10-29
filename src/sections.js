@@ -153,6 +153,11 @@ function wxSectionAlerts(card, m) {
 }
 
 // ── Rain in the next hour (Météo-France), with the rain / snow / frost chances ──
+// The tooltip of a cell of the rain bar, also rewritten as the minute tick counts the rain down (see _patchRain).
+function wxRainSegTitle(card, s) {
+  return `${card._t("min_n", { n: s.min })} · ${card._t(`rain_${s.level}`)}`;
+}
+
 function wxSectionRain(card, m) {
   const r = m.rain;
   const chances = [
@@ -178,18 +183,17 @@ function wxSectionRain(card, m) {
   let body = "";
   if (r) {
     const segs = r.segments
-      .map(
-        (s, i) =>
-          `<span class="seg l${s.level}" style="flex:${s.span};--d:${(i * 0.05).toFixed(2)}s" title="${wxEsc(
-            `${card._t("min_n", { n: s.min })} · ${card._t(`rain_${s.level}`)}`,
-          )}"></span>`,
+      .map((s, i) =>
+        s.na
+          ? `<span class="seg na" data-k="na" style="flex:${s.span}"></span>`
+          : `<span class="seg l${s.level}" data-k="${s.k}" style="flex:${s.span};--d:${(i * 0.05).toFixed(2)}s" title="${wxEsc(wxRainSegTitle(card, s))}"></span>`,
       )
       .join("");
     const ticks = [0, 15, 30, 45, 60].map((n) => `<span>${wxEsc(n ? card._t("min_n", { n }) : card._t("now"))}</span>`).join("");
     body =
       `<div class="rain-head${r.raining ? " wet" : ""}" data-more="${wxEsc(m.ent.next_rain)}" role="button" tabindex="0"><ha-icon icon="${
         r.raining ? "mdi:weather-pouring" : r.next != null ? "mdi:weather-rainy" : "mdi:weather-cloudy-clock"
-      }"></ha-icon><span>${wxEsc(r.headline)}</span></div>` +
+      }"></ha-icon><span class="rain-text">${wxEsc(r.headline)}</span></div>` +
       `<div class="rainbar">${segs}</div><div class="ticks">${ticks}</div>`;
   }
   return `<div class="section s-rain">${wxSectionTitle(card, "rain")}${body}${chances.length ? `<div class="chips">${chances.join("")}</div>` : ""}</div>`;
@@ -588,6 +592,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .rainbar .seg.l1 { background: ${WX_RAIN_COLORS[1]}; }
   .rainbar .seg.l2 { background: ${WX_RAIN_COLORS[2]}; }
   .rainbar .seg.l3 { background: ${WX_RAIN_COLORS[3]}; }
+  .rainbar .seg.na { background: none; }
   .ticks { display: flex; justify-content: space-between; font-size: 10px; color: var(--secondary-text-color); margin-top: -4px; }
 
   .hscroll { overflow-x: auto; overflow-y: hidden; margin: 0 -12px; padding: 0 12px; scrollbar-width: thin; }

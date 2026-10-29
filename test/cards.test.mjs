@@ -120,7 +120,7 @@ test("card: forecasts come from weather/subscribe_forecast", () => {
 test("card: rain in the next hour, alerts, VigiEau, lightning, pollen, UV and sun", () => {
   const out = html(card({}, makeHass("fr")));
   assert.match(out, /Pluie forte dans 15 min/);
-  assert.match(out, /class="seg l3" style="flex:10/);
+  assert.match(out, /class="seg l3" data-k="25" style="flex:10/);
   assert.match(out, /Pluie 60 %/);
   assert.doesNotMatch(out, /Neige 0/);
   assert.match(out, /Vent violent · jaune</);
@@ -633,6 +633,10 @@ test("night scenes: the moon with every condition, night-toned clouds", () => {
   assert.doesNotMatch(lib.wxSceneSvg("rainy", false), /#wx-c[nmk]\)/);
 });
 
+// The mock's rain arrives a quarter of an hour in, and rebuilds the card (see the rain tests): left out where the
+// clock moves for something else.
+const dryHass = (lang = "en") => makeHass(lang, { "sensor.paris_next_rain": { "1_hour_forecast": null } });
+
 test("minute tick: a rebuild only when something displayed moved, not sixty times an hour", () => {
   const D = lib.window.Date;
   const shift = (ms) => {
@@ -647,7 +651,7 @@ test("minute tick: a rebuild only when something displayed moved, not sixty time
     };
   };
   try {
-    const el = card();
+    const el = card({}, dryHass());
     let renders = 0;
     const render = el._render.bind(el);
     el._render = () => {
@@ -823,7 +827,7 @@ test("pressure trend: a refresh with the same trend does not rebuild the card; a
     };
   };
   try {
-    const h = makeHass("en");
+    const h = dryHass();
     const el = card({}, h);
     await tick();
     assert.match(html(el), /class="chip trend up"/);
@@ -865,6 +869,135 @@ test("pressure trend: a refresh with the same trend does not rebuild the card; a
     assert.equal(failed, 1);
     assert.equal(renders, 2);
   } finally {
+    lib.window.Date = D;
+  }
+});
+
+// Météo-France counts the minutes of its `1_hour_forecast` from `forecast_time_ref`, not from now.
+const rainAt = (refMinutesAgo, forecast) =>
+  makeHass("en", {
+    "sensor.paris_next_rain": {
+      forecast_time_ref: refMinutesAgo == null ? undefined : new Date(NOON.getTime() - refMinutesAgo * 60000).toISOString(),
+      ...(forecast ? { "1_hour_forecast": forecast } : {}),
+    },
+  });
+const RAIN_15 = { "0 min": "Temps sec", "5 min": "Temps sec", "10 min": "Temps sec", "15 min": "Pluie forte", "20 min": "Temps sec" };
+
+test("rain in the next hour: the minutes count from the forecast's reference time, cells already gone are dropped", () => {
+  const el = card({}, rainAt(7, RAIN_15));
+  assert.match(html(el), /Heavy rain in 8 min/);
+  const r = el._rainModel(el._entities());
+  // 0 min (14:03-14:08) is gone; 5 min (14:08-14:13) is half gone: it starts now and lasts 3 min.
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(r.segments.filter((s) => !s.na).map((s) => [s.min, s.span, s.level]))),
+    [
+      [0, 3, 0],
+      [3, 5, 0],
+      [8, 5, 3],
+      [13, 40, 0],
+    ],
+  );
+  // The 7 minutes past the end of the forecast stay blank, so the bar still lines up with its 0-60 min ticks.
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(r.segments.filter((s) => s.na).map((s) => s.span))),
+    [7],
+  );
+  assert.equal(r.segments.reduce((n, s) => n + s.span, 0), 60);
+  // Raining: "stopping in" counts from now as well.
+  assert.match(html(card({}, rainAt(7, { "0 min": "Pluie faible", "5 min": "Pluie faible", "10 min": "Pluie faible", "15 min": "Temps sec" }))), /Light rain now, stopping in 8 min/);
+});
+
+test("rain in the next hour: no or an invalid reference time counts from now, a stale forecast shows no rain bar", () => {
+  assert.match(html(card({}, rainAt(null, RAIN_15))), /Heavy rain in 15 min/);
+  const bad = makeHass("en", { "sensor.paris_next_rain": { forecast_time_ref: "unknown", "1_hour_forecast": RAIN_15 } });
+  assert.match(html(card({}, bad)), /Heavy rain in 15 min/);
+  // A reference in the future (a clock ahead of the server's) does not count backwards.
+  assert.match(html(card({}, rainAt(-3, RAIN_15))), /Heavy rain in 15 min/);
+  // An hour and more old: nothing of it is left to show.
+  const stale = card({}, rainAt(75, RAIN_15));
+  assert.doesNotMatch(html(stale), /rainbar|Heavy rain/);
+  assert.equal(stale._rainModel(stale._entities()), null);
+});
+
+test("rain in the next hour: the minute tick updates the text and the bar in place, a rebuild only when the rain starts", () => {
+  const D = lib.window.Date;
+  const shift = (ms) => {
+    const T = NOON.getTime() + ms;
+    lib.window.Date = class extends D {
+      constructor(...a) {
+        super(...(a.length ? a : [T]));
+      }
+      static now() {
+        return T;
+      }
+    };
+  };
+  const createElement = lib.document.createElement;
+  try {
+    const el = mount(lib, "weather-plus-mini-card", {}, makeHass());
+    let renders = 0;
+    const render = el._render.bind(el);
+    el._render = () => {
+      renders++;
+      render();
+    };
+    assert.match(html(el), /Heavy rain in 15 min/);
+    // The rain texts and the rain bar's cells (keyed by their forecast minute) record what is patched.
+    const texts = [{ textContent: "" }, { textContent: "" }];
+    const segs = ["0", "5", "10", "15", "20", "25", "35", "45", "55"].map((k) => ({
+      dataset: { k },
+      style: {},
+      attrs: {},
+      setAttribute(n, v) {
+        this.attrs[n] = v;
+      },
+      remove() {
+        this.removed = true;
+      },
+    }));
+    const bar = {
+      querySelectorAll: (sel) => (sel === ".seg" ? segs.filter((s) => !s.removed) : []),
+      appendChild(n) {
+        segs.push(n);
+      },
+    };
+    lib.document.createElement = () => ({
+      style: {},
+      attrs: {},
+      setAttribute(n, v) {
+        this.attrs[n] = v;
+        if (n === "data-k") this.dataset = { k: v };
+      },
+    });
+    el.shadowRoot.querySelectorAll = (sel) => (sel === ".rain-text" ? texts : []);
+    el.shadowRoot.querySelector = (sel) => (sel === ".rainbar" ? bar : null);
+    shift(7 * 60000);
+    el._update();
+    assert.equal(renders, 0, "the minute tick rebuilt the card");
+    assert.deepEqual(
+      texts.map((t) => t.textContent),
+      ["Heavy rain in 8 min", "Heavy rain in 8 min"],
+    );
+    // 0 min is gone, 5 min has 3 minutes left, a blank end of 7 minutes keeps the bar on its ticks.
+    assert.ok(segs[0].removed);
+    assert.equal(segs[1].style.flex, "3");
+    assert.match(segs[3].attrs.title, /^8 min/);
+    assert.equal(segs.length, 10);
+    assert.equal(segs[9].attrs.class, "seg na");
+    assert.equal(segs[9].style.flex, "7");
+    // The next minute resizes that blank end instead of adding another.
+    shift(8 * 60000);
+    el._update();
+    assert.equal(segs.length, 10);
+    assert.equal(segs[9].style.flex, "8");
+    assert.equal(texts[0].textContent, "Heavy rain in 7 min");
+    // The rain arriving changes the icon and the layout: one rebuild.
+    shift(16 * 60000);
+    el._update();
+    assert.equal(renders, 1);
+    assert.match(html(el), /Heavy rain now, stopping in 39 min/);
+  } finally {
+    lib.document.createElement = createElement;
     lib.window.Date = D;
   }
 });

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.5 - 2026-10-29
+
+### Fixes
+- Rain in the next hour: "Heavy rain in N min" and "stopping in N min" now count from now instead of from the time Météo-France issued its forecast, and keep counting down every minute between two forecast updates, on the card, the mini card and the full screen detail. The bar drops the minutes already gone, and a forecast more than an hour old is no longer shown.
+
 ## 1.8.4 - 2026-10-29
 
 ### Fixes

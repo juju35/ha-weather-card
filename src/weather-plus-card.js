@@ -247,11 +247,15 @@ class WeatherPlusCard extends WxElement {
       return [id, s.state, s.attributes];
     });
     this._fetchTrend(ent.pressure || ent.weather);
-    // The clock only enters the signature through the hourly/daily rollover (and the astro day) on the hour, so the
-    // minute tick does not rebuild the shadow root (restarting every animation); the sun moves along its arc in place.
-    const sig = JSON.stringify([this._lang(), this._zoomed, !!this._popup, this._fcv, Math.floor(Date.now() / 3600000), states]);
+    // The clock only enters the signature through the hourly/daily rollover (and the astro day) on the hour, and
+    // through the rain starting, stopping or leaving the forecast, so the minute tick does not rebuild the shadow root
+    // (restarting every animation); the sun moves along its arc and the rain counts down in place.
+    const rain = this._rainModel(ent);
+    const rainSig = rain && [rain.raining, rain.next != null];
+    const sig = JSON.stringify([this._lang(), this._zoomed, !!this._popup, this._fcv, Math.floor(Date.now() / 3600000), rainSig, states]);
     if (sig === this._sig) {
       this._patchSun(this._sunModel(ent));
+      this._patchRain(rain);
       return;
     }
     this._sig = sig;
@@ -269,6 +273,37 @@ class WeatherPlusCard extends WxElement {
       for (const c of svg.querySelectorAll("circle")) {
         c.setAttribute("cx", x);
         c.setAttribute("cy", y);
+      }
+    }
+  }
+
+  // Counts the rain down: its text on the card, the mini card and the full screen detail, and the cells of its bar
+  // (keyed by their forecast minute): the ones gone are removed, the others resized, the blank end added once the
+  // forecast no longer reaches the end of the hour.
+  _patchRain(rain) {
+    if (!rain) return;
+    for (const root of [this.shadowRoot, this._popup?.shadowRoot]) {
+      for (const el of root?.querySelectorAll?.(".rain-text") || []) el.textContent = rain.headline;
+      const bar = root?.querySelector?.(".rainbar");
+      if (!bar) continue;
+      const byKey = new Map(rain.segments.map((s) => [s.k, s]));
+      for (const el of bar.querySelectorAll(".seg")) {
+        const s = byKey.get(el.dataset.k);
+        byKey.delete(el.dataset.k);
+        if (!s) {
+          el.remove();
+          continue;
+        }
+        el.style.flex = String(s.span);
+        if (!s.na) el.setAttribute("title", wxRainSegTitle(this, s));
+      }
+      for (const s of byKey.values()) {
+        if (!s.na) continue;
+        const el = document.createElement("span");
+        el.setAttribute("class", "seg na");
+        el.setAttribute("data-k", "na");
+        el.style.flex = String(s.span);
+        bar.appendChild(el);
       }
     }
   }
@@ -295,15 +330,25 @@ class WeatherPlusCard extends WxElement {
     return { up, rise, set, frac: (now - rise) / (set - rise || 1) };
   }
 
+  // Météo-France counts the minutes of its forecast from `forecast_time_ref`: they are moved to count from now, the
+  // cells already gone are dropped and the one under way starts now. The minutes past the end of the forecast stay as
+  // a blank cell (`na`), so that the bar keeps lining up with its 0-60 min ticks.
   _rainModel(ent) {
-    const f = this._st(ent.next_rain)?.attributes["1_hour_forecast"];
+    const st = this._st(ent.next_rain);
+    const f = st?.attributes["1_hour_forecast"];
     if (!f || typeof f !== "object") return null;
-    const pts = Object.entries(f)
-      .map(([k, v]) => ({ min: Number.parseInt(k, 10), level: wxRainLevel(v) }))
-      .filter((p) => Number.isFinite(p.min))
-      .sort((a, b) => a.min - b.min);
+    const ref = Date.parse(st.attributes.forecast_time_ref);
+    const off = Number.isFinite(ref) ? Math.max(0, Math.floor((Date.now() - ref) / 60000)) : 0;
+    const cells = Object.entries(f)
+      .map(([k, v]) => ({ key: Number.parseInt(k, 10), level: wxRainLevel(v) }))
+      .filter((p) => Number.isFinite(p.key))
+      .sort((a, b) => a.key - b.key);
+    const pts = cells
+      .map((p, i) => ({ k: String(p.key), min: Math.max(0, p.key - off), end: (cells[i + 1]?.key ?? 60) - off, level: p.level }))
+      .filter((p) => p.end > 0);
     if (!pts.length) return null;
-    const segments = pts.map((p, i) => ({ ...p, span: Math.max(1, (pts[i + 1]?.min ?? 60) - p.min) }));
+    const segments = pts.map((p) => ({ k: p.k, min: p.min, span: Math.max(1, p.end - p.min), level: p.level }));
+    if (off > 0) segments.push({ k: "na", min: 60 - off, span: off, level: 0, na: true });
     const runLevel = (from) => {
       let lvl = 0;
       for (let i = from; i < pts.length && pts[i].level > 0; i++) lvl = Math.max(lvl, pts[i].level);
@@ -799,7 +844,7 @@ class WeatherPlusCard extends WxElement {
 
   _miniBody(m) {
     const lines = [];
-    if (m.rain && (m.rain.raining || m.rain.next != null)) lines.push(`<div class="line"><ha-icon icon="mdi:weather-rainy"></ha-icon><span>${wxEsc(m.rain.headline)}</span></div>`);
+    if (m.rain && (m.rain.raining || m.rain.next != null)) lines.push(`<div class="line"><ha-icon icon="mdi:weather-rainy"></ha-icon><span class="rain-text">${wxEsc(m.rain.headline)}</span></div>`);
     else {
       const feels = m.feels != null ? ` · ${this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) })}` : "";
       lines.push(`<div class="line"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon><span>${wxEsc(wxCondLabel(m.lang, m.cond) + feels)}</span></div>`);
