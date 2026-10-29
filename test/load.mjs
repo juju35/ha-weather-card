@@ -32,6 +32,7 @@ export const fakeNode = () => ({
 // `now` freezes the sandbox's clock (Date.now() and new Date()), so that the tests do not depend on the time of day.
 export const load = (now = null) => {
   const registry = new Map();
+  const winListeners = {};
   class HTMLElement {
     constructor() {
       this.style = {};
@@ -82,13 +83,38 @@ export const load = (now = null) => {
         delete this.listeners[type];
       },
     },
-    history: { state: null, pushState(state) { this.state = state; }, back() { this.state = null; } },
+    // A stack of entries like the browser's: back() traverses later, with its popstate, when the test calls flush().
+    history: {
+      entries: [null],
+      index: 0,
+      pending: 0,
+      get state() {
+        return this.entries[this.index];
+      },
+      pushState(state) {
+        this.entries.splice(this.index + 1, Infinity, state);
+        this.index++;
+      },
+      replaceState(state) {
+        this.entries[this.index] = state;
+      },
+      back() {
+        this.pending++;
+      },
+      flush() {
+        for (; this.pending > 0; this.pending--) {
+          if (this.index === 0) continue;
+          this.index--;
+          for (const fn of [...(winListeners.popstate || [])]) fn({ type: "popstate", state: this.state });
+        }
+      },
+    },
     setInterval: () => 0,
     clearInterval: () => {},
   };
   sandbox.window = sandbox;
-  sandbox.addEventListener = () => {};
-  sandbox.removeEventListener = () => {};
+  sandbox.addEventListener = (type, fn) => (winListeners[type] ||= new Set()).add(fn);
+  sandbox.removeEventListener = (type, fn) => winListeners[type]?.delete(fn);
   const ctx = vm.createContext(sandbox);
   const clock = now
     ? `{ const R = Date; const T = ${now.getTime()};
