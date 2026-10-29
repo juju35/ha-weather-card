@@ -147,7 +147,7 @@ function wxSceneSvg(cond, night, moon = {}) {
 
 // The scene in its frame; `still` turns the animations off.
 function wxScene(cond, night, still, moon) {
-  const cls = ["scene", `c-${cond || "unknown"}`, night ? "night" : "day", still ? "still" : ""].filter(Boolean).join(" ");
+  const cls = ["scene", `c-${wxEsc(cond || "unknown")}`, night ? "night" : "day", still ? "still" : ""].filter(Boolean).join(" ");
   return `<div class="${cls}">${wxSceneSvg(cond, night, moon)}</div>`;
 }
 
