@@ -74,8 +74,10 @@ jobs:
             echo "::error::screenshots failed: $(tail -c 1200 /tmp/screenshots.log | tr -d '\r' | tr '\n' ' ')"
             exit 1
           }
-      # A push made with GITHUB_TOKEN does not trigger pull_request workflows, so the next step re-runs the PR
-      # checks on this commit through workflow_dispatch (which GITHUB_TOKEN can trigger).
+      # A push made with GITHUB_TOKEN does not run the pull_request workflows: GitHub still creates their runs for
+      # this commit, but they wait for an approval with no job and end as "failure" (workflow file issue) once the PR
+      # is closed. They can be ignored: the next step runs the PR checks on this commit through workflow_dispatch
+      # (which GITHUB_TOKEN can trigger), and those are the check runs the commit gets.
       - name: Commit refreshed screenshots
         id: commit
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
