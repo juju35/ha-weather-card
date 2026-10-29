@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.4 - 2026-10-29
+
+### Fixes
+- The full screen detail no longer closes when the dashboard rearranges its columns — turning a phone to landscape or resizing the window in a masonry view; it still closes when the card is removed.
+
 ## 1.8.3 - 2026-10-29
 
 ### Fixes
