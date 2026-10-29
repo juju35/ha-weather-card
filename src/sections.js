@@ -160,6 +160,8 @@ function wxSectionRain(card, m) {
     ["snow_chance", "mdi:snowflake"],
     ["freeze_chance", "mdi:snowflake-alert"],
   ]
+    // The rain chance is always shown, even at 0 %: "Rain 0 %" answers the question this section is about.
+    // Snow and frost chances only show up when above 0: at 0 they are noise for most of the year.
     .filter(([k]) => m.chances?.[k] != null && (k === "rain_chance" || m.chances[k] > 0))
     .map(([k, icon]) => wxChip(icon, card._t(k, { v: `${wxFmtNum(m.lang, m.chances[k], 0)} %` }), { more: m.ent[k] }));
   const t = m.totals;
@@ -215,7 +217,7 @@ function wxSectionHourly(card, m) {
     if (n == null) return t[p];
     return t[p] + ((t[n] - t[p]) * (i - p)) / (n - p);
   };
-  const pts = h.map((x, i) => [i * WX_COL + WX_COL / 2, y(t[i] ?? fill(i))]);
+  const pts = h.map((_, i) => [i * WX_COL + WX_COL / 2, y(t[i] ?? fill(i))]);
   // A smooth curve through the points (Catmull-Rom as cubic Béziers).
   let d = `M${pts[0][0]} ${pts[0][1].toFixed(1)}`;
   for (let i = 1; i < pts.length; i++) {
