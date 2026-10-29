@@ -93,7 +93,7 @@ test("card: the weather now, the warning in the status pill, the hero chips", ()
   assert.match(out, /<span class="val">17\.4<small>°C<\/small>/);
   assert.match(out, /↑<b>18°<\/b> ↓<b>9°<\/b>/);
   assert.match(out, /Feels like 16°/);
-  assert.match(out, /class="st alert" style="--st-color:#fdd835"><span class="dot"><\/span>Yellow warning/);
+  assert.match(out, /class="st alert" style="--st-color:#fdd835" title="Yellow warning"><span class="dot"><\/span><span class="stt">Yellow warning<\/span>/);
   assert.match(out, /<div class="sub">Partly cloudy<\/div>/);
   assert.match(out, /rotate\(45deg\).*18 km\/h SW/);
   assert.match(out, /1014 hPa/);
@@ -189,13 +189,13 @@ test("card: no warning, rain now, clear night, no animation", () => {
   assert.match(out, /class="scene c-clear-night day still"/);
   assert.match(out, /No weather warning/);
   assert.match(out, /Light rain now, stopping in 10 min/);
-  assert.match(out, /class="st" style="--st-color:#5c6bc0"><span class="dot"><\/span>Clear night/);
+  assert.match(out, /class="st" style="--st-color:#5c6bc0" title="Clear night"><span class="dot"><\/span><span class="stt">Clear night<\/span>/);
   assert.match(out, /<ha-card class="still">/);
 });
 
 test("card: lightning nearby goes to the status pill when there is no warning", () => {
   const out = html(card({}, makeHass("en", { "sensor.75_weather_alert": { state: "Vert", "Vent violent": "Vert", Orages: "Vert" } })));
-  assert.match(out, /class="st alert" style="--st-color:#7e57c2"><span class="dot"><\/span>Lightning 18 km away/);
+  assert.match(out, /class="st alert" style="--st-color:#7e57c2" title="Lightning 18 km away"><span class="dot"><\/span><span class="stt">Lightning 18 km away<\/span>/);
 });
 
 test("card: a section's entry animations play when it first shows only", () => {
@@ -532,13 +532,13 @@ test("minute tick: a rebuild only when something displayed moved, not sixty time
       renders++;
       render();
     };
-    // An hour of ticks: the sun's 1% arc steps and the hour rollover re-render, the other minutes do not.
+    // An hour of ticks: only the hour rollover re-renders, the sun moves along its arc in place.
     for (let min = 1; min <= 60; min++) {
       shift(min * 60000);
       el._update();
     }
     assert.ok(renders >= 1, "the hour rollover re-renders");
-    assert.ok(renders < 15, `rebuilt ${renders} times in an hour`);
+    assert.ok(renders <= 2, `rebuilt ${renders} times in an hour`);
   } finally {
     lib.window.Date = D;
   }
@@ -573,4 +573,116 @@ test("i18n: German and Spanish are picked from the Home Assistant language", () 
   assert.match(html(card({}, makeHass("es"))), /Previsión|Tiempo/);
   assert.equal(lib.wxBearing("de", 90).label, "O");
   assert.equal(lib.wxBearing("es", 270).label, "O");
+});
+
+test("full screen detail: an update rewrites the card inside the sheet, keeping its scroll and the hourly strip's", () => {
+  const el = card();
+  el._onClick({ composedPath: () => [{ dataset: { action: "popup" } }] });
+  const root = lib.document.body.children[0].shadowRoot;
+  const before = root.innerHTML;
+  // The browser's parts: replacing the card's markup scrolls the sheet back to the top and resets the hourly strip.
+  const strip = { scrollLeft: 0 };
+  const sheet = { scrollTop: 640, setAttribute(k, v) { this[k] = v; } };
+  const cardEl = {
+    className: "",
+    set innerHTML(v) {
+      this.html = v;
+      sheet.scrollTop = 0;
+      strip.scrollLeft = 0;
+    },
+  };
+  strip.scrollLeft = 180;
+  root.querySelectorAll = (sel) => (sel === ".hscroll" ? [strip] : []);
+  el._popupParts = { color: { textContent: "" }, sheet, card: cardEl };
+  el.hass = makeHass("en", { "weather.paris": { temperature: 19 } });
+  assert.equal(root.innerHTML, before, "the backdrop and the sheet are not rebuilt");
+  assert.match(cardEl.html, /<span class="val">19<small>/);
+  assert.equal(cardEl.className, "popup");
+  assert.equal(sheet.scrollTop, 640);
+  assert.equal(strip.scrollLeft, 180);
+  assert.match(el._popupParts.color.textContent, /--wx-color/);
+  el._closePopup();
+  assert.equal(el._popupParts, null);
+});
+
+test("sun.sun: its elevation and azimuth do not rebuild the card, the minute tick moves the sun in place", () => {
+  const D = lib.window.Date;
+  const shift = (ms) => {
+    const T = NOON.getTime() + ms;
+    lib.window.Date = class extends D {
+      constructor(...a) {
+        super(...(a.length ? a : [T]));
+      }
+      static now() {
+        return T;
+      }
+    };
+  };
+  try {
+    const el = card({ sections: ["sun"] });
+    let renders = 0;
+    const render = el._render.bind(el);
+    el._render = () => {
+      renders++;
+      render();
+    };
+    for (let i = 1; i <= 5; i++) el.hass = makeHass("en", { "sun.sun": { elevation: 30 + i, azimuth: 200 + i } });
+    assert.equal(renders, 0, "sun attributes rebuilt the card");
+    // A sun section whose svg records the patched positions.
+    const attrs = {};
+    const node = (name) => ({ setAttribute: (k, v) => (attrs[`${name}.${k}`] = v) });
+    const svg = { querySelector: () => node("done"), querySelectorAll: () => [node("glow"), node("dot")] };
+    el.shadowRoot.querySelector = (sel) => (sel === ".sun svg" ? svg : null);
+    for (let min = 1; min <= 45; min++) {
+      shift(min * 60000);
+      el._update();
+    }
+    assert.ok(renders <= 1, `rebuilt ${renders} times in 45 minutes`);
+    assert.match(attrs["done.d"], /^M24 56Q/);
+    assert.equal(attrs["glow.cx"], attrs["dot.cx"]);
+    assert.ok(attrs["dot.cy"] != null);
+  } finally {
+    lib.window.Date = D;
+  }
+});
+
+test("discovery: a configured entity that does not exist does not re-run it on every update", () => {
+  const h = makeHass();
+  const el = card({ entities: { uv: "sensor.does_not_exist" } }, h);
+  const ent = el._entities();
+  assert.equal(ent.uv, "sensor.does_not_exist");
+  // A state change: same registry, same count.
+  el.hass = { ...h, states: { ...h.states, "weather.paris": { ...h.states["weather.paris"], state: "rainy" } } };
+  assert.equal(el._entities(), ent);
+});
+
+test("forecasts: a late event of the previous subscription does not land in the new entity's", () => {
+  const h = makeHass();
+  const cbs = [];
+  h.connection.subscribeMessage = (cb, msg) => {
+    cbs.push([cb, msg]);
+    return Promise.resolve(() => {});
+  };
+  const el = card({}, h);
+  const old = cbs.find(([, msg]) => msg.forecast_type === "daily")[0];
+  el._subKey = null;
+  el._subscribe();
+  const fresh = el._fc;
+  old({ forecast: [{ datetime: "2000-01-01", temperature: 99 }] });
+  assert.equal(el._fc, fresh);
+  assert.equal(fresh.daily, undefined);
+});
+
+test("daily forecast: a day without temperatures gets no bar instead of NaN %", () => {
+  const h = makeHass();
+  h.forecasts.daily = h.forecasts.daily.map((d, i) => (i === 1 ? Object.fromEntries(Object.entries(d).filter(([k]) => k !== "temperature" && k !== "templow")) : d));
+  const out = html(card({ sections: ["daily"] }, h));
+  assert.doesNotMatch(out, /NaN/);
+  assert.equal((out.match(/class="fill"/g) || []).length, (out.match(/class="drow"/g) || []).length - 1);
+});
+
+test("scene: the raw condition is escaped in its class", () => {
+  const h = makeHass();
+  h.states["weather.paris"] = { ...h.states["weather.paris"], state: 'odd"<x>' };
+  assert.doesNotMatch(html(card({}, h)), /c-odd"/);
 });
