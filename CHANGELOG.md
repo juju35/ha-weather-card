@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.8.1 - 2026-10-29
+
+### Fixes
+- The full screen detail no longer jumps back to the top (nor replays its opening animation or loses the focus) when a sensor updates; the hourly forecast keeps its horizontal scroll, on the card too.
+- The card no longer rebuilds itself — restarting its animations — every few minutes as the sun moves: the sun's dot slides along its arc in place.
+- A configured entity that does not exist no longer makes the card search the whole instance again on every update.
+- On a narrow card, a long status (German or Spanish labels, lightning distance) is shortened with an ellipsis instead of hiding the title and pushing the buttons out of the card.
+- Wind in Beaufort: strong hours are highlighted from force 7.
+- A forecast day without temperatures shows no broken range bar.
+- Forecasts arriving late from a previous weather entity no longer mix into the current one.
+- Spanish: *Sensación térmica* for the feels-like temperature; German: *Stabil seit 3 h* for a steady pressure.
+
 ## 1.8.0 - 2026-10-28
 
 ### Changes
