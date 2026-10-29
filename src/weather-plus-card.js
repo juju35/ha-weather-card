@@ -215,9 +215,14 @@ class WeatherPlusCard extends WxElement {
     Promise.resolve(this._hass.callApi("GET", path))
       .then((res) => {
         const pts = (res?.[0] || []).map((x) => wxNumber(weather ? x.attributes?.pressure : x.state)).filter((v) => v != null);
+        const prev = this._trend;
         this._trend = pts.length >= 2 ? { delta: pts.at(-1) - pts[0], id } : null;
-        this._sig = null;
-        this._update();
+        // The trend is not in the signature: rebuild only when it changed, so the 15-minute refresh does not restart
+        // every animation and rewrite the full screen detail for nothing.
+        if (prev?.delta !== this._trend?.delta || prev?.id !== this._trend?.id) {
+          this._sig = null;
+          this._update();
+        }
       })
       .catch(() => {});
   }
