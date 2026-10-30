@@ -549,6 +549,8 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .zoom { all: unset; flex-shrink: 0; cursor: pointer; width: 24px; height: 24px; margin: -4px -4px -4px 0; border-radius: 50%;
           display: grid; place-items: center; color: var(--secondary-text-color); }
   .zoom ha-icon { --mdc-icon-size: 16px; }
+  .refresh[data-busy] { cursor: progress; color: var(--primary-color, #03a9f4); }
+  .refresh[data-busy] ha-icon { animation: wx-spin 1s linear infinite; }
   .zoom:hover { background: color-mix(in srgb, var(--secondary-text-color) 16%, transparent); color: var(--primary-text-color); }
   .zoom:focus-visible, [role=button]:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 1px; }
   [data-more] { cursor: pointer; }

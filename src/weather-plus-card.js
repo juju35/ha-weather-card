@@ -40,6 +40,9 @@ function wxStatesCount(states) {
   return n;
 }
 
+// Minimum time the refresh icon turns, in ms.
+const WX_REFRESH_MIN = 600;
+
 // Every entity id the card tracks.
 const wxEntIds = (ent) => [...Object.values(ent), ...Object.values(ent.air || {})].flat().filter((id) => typeof id === "string");
 
@@ -617,7 +620,7 @@ class WeatherPlusCard extends WxElement {
       this.shadowRoot.innerHTML =
         `<style>${WX_STYLES}</style><style>:host{--wx-color:${WX_IDLE}}</style><ha-card><div class="header"><div class="badge"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon></div>` +
         `<div class="titles" data-more="${wxEsc(ent.weather)}"><div class="name">${wxEsc(c.name || wxWeatherName(st) || this._t("title"))}</div></div>` +
-        `<span class="st"><span class="dot"></span><span class="stt">${wxEsc(this._t("unavailable"))}</span></span>${this._zoomButton()}</div></ha-card>`;
+        `<span class="st"><span class="dot"></span><span class="stt">${wxEsc(this._t("unavailable"))}</span></span>${this._refreshButton()}${this._zoomButton()}</div></ha-card>`;
       this._closePopup();
       return;
     }
@@ -628,7 +631,11 @@ class WeatherPlusCard extends WxElement {
     const head =
       `<style>${WX_STYLES}</style><style>:host{--wx-color:${m.color}}</style>` +
       `<ha-card class="${[this._compact() ? "mini" : "", still ? "still" : ""].filter(Boolean).join(" ")}">` +
-      this._header(m, { sub: m.status.alert && !this._compact(), buttons: `${this._popupButton()}${this._zoomButton()}` });
+      this._header(m, {
+        sub: m.status.alert && !this._compact(),
+        // The compact mini card keeps its two buttons; refresh shows once it is unfolded.
+        buttons: `${this._compact() ? "" : this._refreshButton()}${this._popupButton()}${this._zoomButton()}`,
+      });
     const body = `${head}${this._compact() ? this._miniBody(m) : this._fullBody(m)}</ha-card>`;
     wxKeepView(this.shadowRoot, this.shadowRoot, () => {
       this.shadowRoot.innerHTML = body;
@@ -742,6 +749,48 @@ class WeatherPlusCard extends WxElement {
   // a larger scene, then the sections side by side as the width allows, with 24 hours and 10 days of forecast.
   // It closes with its button, Escape, or the browser's back button on a phone.
   // Shown on every layout, including the compact mini card (beside its detail button), so full screen is one click away.
+  // ── Refresh ──
+  // Asks every integration behind the card (weather, UV, pollen, air quality, alerts…) for fresh data, one
+  // homeassistant.update_entity per entity so that one failing doesn't stop the others. The icon turns until all
+  // have answered (at least a moment, so that a fast answer is still seen).
+  _refreshButton() {
+    if (this._config.refresh === false) return "";
+    const label = wxEsc(this._t(this._refreshing ? "refreshing" : "refresh"));
+    return `<button class="zoom refresh" data-action="refresh" title="${label}" aria-label="${label}"${this._refreshing ? ' data-busy="1" aria-busy="true"' : ""}><ha-icon icon="mdi:refresh"></ha-icon></button>`;
+  }
+
+  async _refresh() {
+    if (this._refreshing || !this._hass) return;
+    const ids = wxEntIds(this._entities()).filter((id) => id in this._hass.states);
+    if (!ids.length) return;
+    this._refreshing = true;
+    this._patchRefresh();
+    const started = Date.now();
+    await Promise.allSettled(ids.map((id) => this._hass.callService("homeassistant", "update_entity", { entity_id: id })));
+    const left = WX_REFRESH_MIN - (Date.now() - started);
+    if (left > 0) await new Promise((resolve) => setTimeout(resolve, left));
+    this._refreshing = false;
+    this._patchRefresh();
+  }
+
+  // The buttons change in place (card and full screen detail): no rebuild, the animations go on.
+  _patchRefresh() {
+    const label = this._t(this._refreshing ? "refreshing" : "refresh");
+    for (const root of [this.shadowRoot, this._popup?.shadowRoot]) {
+      for (const b of root?.querySelectorAll?.('[data-action="refresh"]') || []) {
+        b.title = label;
+        b.setAttribute("aria-label", label);
+        if (this._refreshing) {
+          b.setAttribute("data-busy", "1");
+          b.setAttribute("aria-busy", "true");
+        } else {
+          b.removeAttribute("data-busy");
+          b.removeAttribute("aria-busy");
+        }
+      }
+    }
+  }
+
   _popupButton() {
     if (this._config.popup === false) return "";
     const label = wxEsc(this._t("popup_open"));
@@ -816,7 +865,7 @@ class WeatherPlusCard extends WxElement {
     const color = `:host{--wx-color:${m.color}}`;
     const cls = `popup${m.still ? " still" : ""}`;
     const content =
-      this._header(m, { sub: true, buttons: `<button class="close" data-action="close" title="${close}" aria-label="${close}"><ha-icon icon="mdi:close"></ha-icon></button>` }) +
+      this._header(m, { sub: true, buttons: `${this._refreshButton()}<button class="close" data-action="close" title="${close}" aria-label="${close}"><ha-icon icon="mdi:close"></ha-icon></button>` }) +
       `<div class="top">${this._hero(m, { feelsAlways: true })}` +
       `<div class="side">${this._sections(m, this._popupShown, side)}</div></div>` +
       this._sections(m, this._popupShown, across) +
@@ -866,6 +915,10 @@ class WeatherPlusCard extends WxElement {
     }
     if (el.dataset.action === "popup") {
       this._openPopup();
+      return;
+    }
+    if (el.dataset.action === "refresh") {
+      this._refresh();
       return;
     }
     if (el.dataset.more) this._moreInfo(el.dataset.more);

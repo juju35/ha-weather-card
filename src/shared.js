@@ -204,6 +204,8 @@ const WX_I18N = {
     zoom_in: "Show the full card",
     popup_open: "Full screen",
     popup_close: "Close",
+    refresh: "Refresh",
+    refreshing: "Refreshing…",
     zoom_out: "Back to the compact view",
     today: "Today",
     // Editor
@@ -220,6 +222,8 @@ const WX_I18N = {
     ed_animations: "Animations",
     ed_popup: "Full screen button",
     ed_popup_helper: "Button at the top right that opens the detail over the whole screen",
+    ed_refresh: "Refresh button",
+    ed_refresh_helper: "Button at the top right that asks the integrations for fresh data",
     ed_zoom: "Detail button",
     ed_zoom_helper: "Button at the top right that switches the mini card to the full card and back",
     ed_language: "Language",
@@ -418,6 +422,8 @@ const WX_I18N = {
     zoom_in: "Afficher la carte complète",
     popup_open: "Plein écran",
     popup_close: "Fermer",
+    refresh: "Actualiser",
+    refreshing: "Actualisation…",
     zoom_out: "Revenir à la vue compacte",
     today: "Aujourd'hui",
     ed_entity: "Entité météo",
@@ -433,6 +439,8 @@ const WX_I18N = {
     ed_animations: "Animations",
     ed_popup: "Bouton plein écran",
     ed_popup_helper: "Bouton en haut à droite qui ouvre le détail sur tout l'écran",
+    ed_refresh: "Bouton actualiser",
+    ed_refresh_helper: "Bouton en haut à droite qui demande des données à jour aux intégrations",
     ed_zoom: "Bouton détail",
     ed_zoom_helper: "Bouton en haut à droite qui passe la mini-carte en carte complète et inversement",
     ed_language: "Langue",
@@ -631,6 +639,8 @@ const WX_I18N = {
     zoom_in: "Vollständige Karte anzeigen",
     popup_open: "Vollbild",
     popup_close: "Schließen",
+    refresh: "Aktualisieren",
+    refreshing: "Wird aktualisiert…",
     zoom_out: "Zurück zur kompakten Ansicht",
     today: "Heute",
     ed_entity: "Wetter-Entität",
@@ -646,6 +656,8 @@ const WX_I18N = {
     ed_animations: "Animationen",
     ed_popup: "Vollbild-Schaltfläche",
     ed_popup_helper: "Schaltfläche oben rechts, die die Details im Vollbild öffnet",
+    ed_refresh: "Aktualisieren-Schaltfläche",
+    ed_refresh_helper: "Schaltfläche oben rechts, die bei den Integrationen aktuelle Daten anfordert",
     ed_zoom: "Detail-Schaltfläche",
     ed_zoom_helper: "Schaltfläche oben rechts, die zwischen Mini-Karte und vollständiger Karte wechselt",
     ed_language: "Sprache",
@@ -844,6 +856,8 @@ const WX_I18N = {
     zoom_in: "Mostrar la tarjeta completa",
     popup_open: "Pantalla completa",
     popup_close: "Cerrar",
+    refresh: "Actualizar",
+    refreshing: "Actualizando…",
     zoom_out: "Volver a la vista compacta",
     today: "Hoy",
     ed_entity: "Entidad meteorológica",
@@ -859,6 +873,8 @@ const WX_I18N = {
     ed_animations: "Animaciones",
     ed_popup: "Botón de pantalla completa",
     ed_popup_helper: "Botón arriba a la derecha que abre el detalle en pantalla completa",
+    ed_refresh: "Botón actualizar",
+    ed_refresh_helper: "Botón arriba a la derecha que pide datos actualizados a las integraciones",
     ed_zoom: "Botón de detalle",
     ed_zoom_helper: "Botón arriba a la derecha que cambia entre la minitarjeta y la tarjeta completa",
     ed_language: "Idioma",
@@ -1332,7 +1348,7 @@ const wxMini = (Base) =>
 
 // ── Editor (built on Home Assistant's ha-form) ───────────────────────────────
 const WX_SECTIONS = ["alerts", "rain", "hourly", "daily", "air", "uv", "pollen", "sun", "moon"];
-const WX_DEFAULTS = { sections: WX_SECTIONS, hours: 12, days: 5, animations: true, popup: true };
+const WX_DEFAULTS = { sections: WX_SECTIONS, hours: 12, days: 5, animations: true, popup: true, refresh: true };
 
 class WxCardEditor extends HTMLElement {
   static mini = false;
@@ -1375,6 +1391,7 @@ class WxCardEditor extends HTMLElement {
         schema: [
           { name: "animations", selector: { boolean: {} } },
           { name: "popup", selector: { boolean: {} } },
+          { name: "refresh", selector: { boolean: {} } },
           ...(this.constructor.mini ? [{ name: "zoom", selector: { boolean: {} } }] : []),
         ],
       },

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.0 - 2026-10-30
+
+### New
+- Refresh button at the top right of the card, of the unfolded mini card and of the full screen detail: it asks every integration behind the card (weather, rain in the next hour, alerts, sensors) for fresh data at once, and its icon turns until they have answered. It also shows when the weather is unavailable, to retry. `refresh: false` (or the editor's "Refresh button" switch) removes it.
+
 ## 1.8.5 - 2026-10-29
 
 ### Fixes
