@@ -1001,3 +1001,70 @@ test("rain in the next hour: the minute tick updates the text and the bar in pla
     lib.window.Date = D;
   }
 });
+
+test("refresh: asks every integration of the card for fresh data, one entity at a time", async () => {
+  const hass = makeHass("fr");
+  const el = card({}, hass);
+  let out = html(el);
+  assert.match(out, /data-action="refresh" title="Actualiser"/);
+  assert.match(out, /data-action="refresh".*data-action="popup"/);
+  const click = () => el._onClick({ composedPath: () => [{ dataset: { action: "refresh" } }] });
+  click();
+  assert.equal(el._refreshing, true);
+  // A second click while it runs does nothing.
+  click();
+  const calls = hass.calls.filter(([d, s]) => d === "homeassistant" && s === "update_entity").map(([, , data]) => data.entity_id);
+  assert.ok(calls.every((id) => id in hass.states));
+  assert.ok(calls.includes("weather.paris") && calls.includes("sensor.paris_uv"));
+  assert.equal(new Set(calls).size, calls.length);
+  // Turning at least a moment, then idle again.
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(el._refreshing, true);
+  lib.timers.run();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(el._refreshing, false);
+  // Rendered while refreshing: the busy button.
+  el._refreshing = true;
+  el._sig = null;
+  el._update();
+  out = html(el);
+  assert.match(out, /data-action="refresh" title="Actualisation…" aria-label="Actualisation…" data-busy="1"/);
+});
+
+test("refresh: one failing entity doesn't stop the others", async () => {
+  const hass = makeHass();
+  const seen = [];
+  hass.callService = (_domain, _service, data) => {
+    seen.push(data.entity_id);
+    return data.entity_id === "weather.paris" ? Promise.reject(new Error("boom")) : Promise.resolve();
+  };
+  const el = card({}, hass);
+  const done = el._refresh();
+  lib.timers.run();
+  await new Promise((resolve) => setImmediate(resolve));
+  lib.timers.run();
+  await done;
+  assert.ok(seen.length > 1 && seen.includes("weather.paris"));
+  assert.equal(el._refreshing, false);
+});
+
+test("refresh: where the button shows", () => {
+  assert.doesNotMatch(html(card({ refresh: false })), /data-action="refresh"/);
+  // Unavailable weather: refreshing is the way to retry.
+  assert.match(html(card({}, makeHass("en", { "weather.paris": { state: "unavailable" } }))), /data-action="refresh"/);
+  // Compact mini card: its two buttons only; unfolded, the refresh button too.
+  const mini = mount(lib, "weather-plus-mini-card", {}, makeHass());
+  assert.doesNotMatch(html(mini), /data-action="refresh"/);
+  mini._onClick({ detail: 1, composedPath: () => [{ dataset: { action: "zoom" } }] });
+  assert.match(html(mini), /data-action="refresh".*data-action="popup".*data-action="zoom"/);
+  // The full screen detail, beside its close button.
+  const el = card();
+  el._onClick({ composedPath: () => [{ dataset: { action: "popup" } }] });
+  assert.match(lib.document.body.children.at(-1).shadowRoot.innerHTML, /data-action="refresh".*data-action="close"/);
+  el._closePopup();
+  // The editor offers it.
+  const editor = lib.document.createElement("weather-plus-card-editor");
+  editor.setConfig({});
+  editor.hass = makeHass();
+  assert.ok(JSON.stringify(editor._schema("en")).includes('"name":"refresh"'));
+});

@@ -35,6 +35,7 @@ Like the other `ha-*` cards: header with a status pill, illustration next to the
 - The **status pill** shows the highest weather warning (*Orange warning*), else lightning nearby (*Lightning 6 km away*), else the condition
 - Every chip, row and reading opens the more-info dialog of its entity
 - **Full screen** button (top right, `popup: false` removes it): the detail over the whole screen and its width, sections side by side as the width allows, with 24 hours and 10 days of forecast; it closes with its button, Escape, a click outside or the back button on a phone
+- **Refresh** button (top right, `refresh: false` removes it): asks the integrations behind the card — weather, rain, alerts, sensors — for fresh data right away; the icon turns while they answer
 
 Sections, in the order of `sections` (a section with no data hides itself):
 
@@ -138,6 +139,7 @@ entity: weather.paris
 | `days` | number | `5` | Days of the daily forecast |
 | `animations` | boolean | `true` | Animate the scene and the sections |
 | `popup` | boolean | `true` | Full screen button that opens the detail over the whole screen |
+| `refresh` | boolean | `true` | Refresh button that asks the integrations for fresh data (hidden on the folded mini card) |
 | `zoom` | boolean | `true` | Mini card: detail button to unfold the full card |
 | `entities` | map | detected | Overrides of the detected entities, by role (see [Supported integrations](#supported-integrations)) |
 | `language` | string | HA language | `en`, `fr`, `de` or `es` |
