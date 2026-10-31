@@ -11,7 +11,9 @@ An animated weather card for Home Assistant that brings together everything the 
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-weather-card&category=plugin)
 
-![Animated scenes](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scenes.gif)
+| Light | Dark |
+|---|---|
+| ![Animated scenes](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scenes.gif) | ![Animated scenes, dark theme](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scenes-dark.gif) |
 
 | Card | Type | What it shows |
 |---|---|---|
@@ -160,13 +162,17 @@ entity: weather.paris
 
 Each animation has its own GIF, recorded from the mini card:
 
-| | |
-|---|---|
-| ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-sunny.gif) Sunny: the sun turns and its rays pulse. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-windy.gif) Windy: clouds hurry across the sky. |
-| ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-pouring.gif) Pouring: heavy rain streams under the cloud. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-snowy.gif) Snowy: snowflakes drift down and sway. |
-| ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy.gif) Stormy rain: lightning flashes through the rain. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy-night.gif) Stormy rain at night: the same storm under the stars. |
-| ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-clear-night.gif) Clear night: the moon shines and the stars twinkle. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-partlycloudy-night.gif) Partly cloudy night: clouds drift past the moon. |
-| ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-rainy-night.gif) Rainy night: rain falls through the moonlight. | |
+| Scene | Light | Dark |
+|---|---|---|
+| Sunny: the sun turns and its rays pulse. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-sunny.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-sunny-dark.gif) |
+| Windy: clouds hurry across the sky. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-windy.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-windy-dark.gif) |
+| Pouring: heavy rain streams under the cloud. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-pouring.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-pouring-dark.gif) |
+| Snowy: snowflakes drift down and sway. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-snowy.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-snowy-dark.gif) |
+| Stormy rain: lightning flashes through the rain. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy-dark.gif) |
+| Stormy rain at night: the same storm under the stars. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy-night.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy-night-dark.gif) |
+| Clear night: the moon shines and the stars twinkle. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-clear-night.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-clear-night-dark.gif) |
+| Partly cloudy night: clouds drift past the moon. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-partlycloudy-night.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-partlycloudy-night-dark.gif) |
+| Rainy night: rain falls through the moonlight. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-rainy-night.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-rainy-night-dark.gif) |
 
 ## Development
 
