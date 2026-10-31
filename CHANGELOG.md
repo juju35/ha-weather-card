@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.1 - 2026-10-31
+
+### Fixes
+- With `animations: false`, the refresh button's icon now turns while the integrations answer, on the card and in the full screen detail, instead of only changing colour; the rest of the card stays still. The system's reduce motion setting still keeps it still.
+
 ## 1.9.0 - 2026-10-30
 
 ### New
