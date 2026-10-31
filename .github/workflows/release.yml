@@ -15,7 +15,23 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  lint:
+    uses: ./.github/workflows/lint.yml
+    permissions:
+      contents: read
+
+  validate:
+    uses: ./.github/workflows/validate.yml
+    permissions:
+      contents: read
+
+  hacs:
+    uses: ./.github/workflows/hacs.yml
+    permissions:
+      contents: read
+
   release:
+    needs: [lint, validate, hacs]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
