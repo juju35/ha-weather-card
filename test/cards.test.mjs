@@ -1097,3 +1097,9 @@ test("refresh: with animations: false the busy icon still turns, the rest of the
   // The system's reduce motion setting still stops everything, the spinner included.
   assert.ok(animationOff(css).some(([sel, media]) => sel === "ha-card *" && /prefers-reduced-motion: reduce/.test(media)));
 });
+
+test("refresh: the folded mini card shows it when the weather is unavailable, as the README says", () => {
+  const mini = mount(lib, "weather-plus-mini-card", {}, makeHass("en", { "weather.paris": { state: "unavailable" } }));
+  assert.match(html(mini), /data-action="refresh"/);
+  assert.doesNotMatch(html(mount(lib, "weather-plus-mini-card", { refresh: false }, makeHass("en", { "weather.paris": { state: "unavailable" } }))), /data-action="refresh"/);
+});
