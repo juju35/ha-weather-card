@@ -1068,3 +1068,32 @@ test("refresh: where the button shows", () => {
   editor.hass = makeHass();
   assert.ok(JSON.stringify(editor._schema("en")).includes('"name":"refresh"'));
 });
+
+// The card's CSS rules that switch the animations off, as [selector, media] pairs.
+const animationOff = (css) => {
+  const rules = [];
+  const re = /(@media[^{]*\{)?\s*([^{}@]+)\{[^{}]*animation:\s*none\s*!important[^{}]*\}/g;
+  for (const m of css.matchAll(re)) for (const sel of m[2].split(",")) rules.push([sel.trim(), (m[1] || "").trim()]);
+  return rules;
+};
+
+test("refresh: with animations: false the busy icon still turns, the rest of the card stays still", () => {
+  const el = card({ animations: false });
+  el._refreshing = true;
+  el._sig = null;
+  el._update();
+  const out = el.shadowRoot.innerHTML;
+  assert.match(out, /<ha-card class="still">/);
+  assert.match(out, /class="zoom refresh"[^>]*data-busy="1"[^>]*><ha-icon icon="mdi:refresh"><\/ha-icon><\/button>/);
+  const css = [...out.matchAll(/<style>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n");
+  assert.match(css, /\.refresh\[data-busy\] ha-icon \{ animation: wx-spin/);
+  const still = animationOff(css).filter(([sel]) => sel.startsWith("ha-card.still"));
+  assert.ok(still.length, "animations: false still stops the card's animations");
+  // Every "still" rule that reaches all descendants leaves the busy refresh icon (a button > ha-icon) out.
+  for (const [sel] of still) {
+    if (sel.endsWith("::before")) continue;
+    assert.match(sel, /:not\(\.refresh > ha-icon\)/, `${sel} stops the refresh spinner`);
+  }
+  // The system's reduce motion setting still stops everything, the spinner included.
+  assert.ok(animationOff(css).some(([sel, media]) => sel === "ha-card *" && /prefers-reduced-motion: reduce/.test(media)));
+});
