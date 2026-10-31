@@ -1332,8 +1332,8 @@ function wxT(lang, key, vars) {
 }
 
 function wxLang(config, hass) {
-  const l = (config?.language || hass?.language || globalThis.document?.documentElement?.lang || "en").split("-")[0];
-  return WX_I18N[l] ? l : "en";
+  const raw = config?.language || hass?.language || globalThis.document?.documentElement?.lang || "en";
+  return WX_I18N[raw] ? raw : (WX_I18N[raw.split("-")] ? raw.split("-") : "en");
 }
 
 function wxEsc(s) {
