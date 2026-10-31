@@ -121,7 +121,14 @@ export const addCards = (page, cards, cols = 1) =>
             },
           },
         };
-        if (open) el.shadowRoot.querySelector(open).dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true, detail: 1 }));
+        if (open) {
+          el.shadowRoot.querySelector(open).dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true, detail: 1 }));
+          // The popup focuses its close button (for the keyboard); a synthetic click is no real pointer input, so
+          // Chromium would show that focus ring in the shot: blur the focused element, down through the shadow roots.
+          let active = document.activeElement;
+          while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+          active?.blur();
+        }
       }
     },
     { cards, cols },
