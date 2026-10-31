@@ -709,7 +709,8 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   @keyframes wx-fade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes wx-slide { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
   @keyframes wx-pop { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
-  ha-card.still *, ha-card.still *::before { animation: none !important; }
+  /* animations: false stops everything but the busy refresh icon, the only sign that a refresh is under way. */
+  ha-card.still *:not(.refresh > ha-icon), ha-card.still *::before { animation: none !important; }
   @media (prefers-reduced-motion: reduce) { ha-card * { animation: none !important; } }
   @media (max-width: 420px) { .pollen { grid-template-columns: 1fr; } }
 `;
