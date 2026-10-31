@@ -7,6 +7,8 @@ on:
     branches: [main]
   # Also started by the Screenshots workflow on the commit it pushes to a PR branch.
   workflow_dispatch:
+  # Called by Release, so that a version is published only once these checks pass.
+  workflow_call:
 
 permissions:
   contents: read
