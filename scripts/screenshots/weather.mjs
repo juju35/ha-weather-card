@@ -74,6 +74,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     ["popup", "light", 1600, 1000],
     ["popup-dark", "dark", 1600, 1000],
     ["popup-phone", "light", 390, 844],
+    ["popup-phone-dark", "dark", 390, 844],
   ]) {
     const page = await openPage(browser, { theme, width: 360 });
     await page.setViewportSize({ width, height });

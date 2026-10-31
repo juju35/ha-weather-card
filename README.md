@@ -151,7 +151,8 @@ entity: weather.paris
 | Weather card | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card-dark.png) |
 | Storm, orange warning | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm-dark.png) |
 | Night | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night-dark.png) |
-| Full screen | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup.png) ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-dark.png) |
+| Full screen | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-dark.png) |
+| Full screen, phone | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone-dark.png) |
 | Mini card | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini-dark.png) |
 | Conditions | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions-dark.png) |
 
