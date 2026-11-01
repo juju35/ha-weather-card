@@ -49,16 +49,26 @@ test("narrow: the card is a size container, so its parts follow its own width ra
   assert.equal(base("ha-card")["container-type"], "inline-size");
 });
 
+test("narrow: sized by its content (inline-block, a grid's auto column, layout-card), the card keeps a usable width", () => {
+  // A size container counts as 0px wide when its width comes from its content: it falls to its padding (24px).
+  const px = (sel) => Number.parseFloat(base(sel)["contain-intrinsic-inline-size"]);
+  assert.ok(px("ha-card") >= 240, `full card: ${base("ha-card")["contain-intrinsic-inline-size"]}`);
+  assert.ok(px("ha-card.mini") >= 156, `mini card: ${base("ha-card.mini")["contain-intrinsic-inline-size"]}`);
+  // That intrinsic width is the card's min-content: without min-width 0 it would overflow a 1fr 1fr grid or a stack.
+  assert.equal(base(":host")["min-width"], "0", "the host shrinks below its intrinsic width");
+});
+
 test("narrow header: the title keeps a few characters, the pill gives way, the buttons never shrink", () => {
   const titles = base(".titles");
-  assert.equal(titles.flex, "1 1 auto", "the title's base is its text, not 0");
+  // Base 0: the pill keeps its whole text while the title has its 4 characters, it gives way only then.
+  assert.equal(titles.flex, "1 1 0", "the title takes what the pill leaves");
   const m = String(titles["min-width"]).match(/^(\d+(?:\.\d+)?)ch$/);
-  assert.ok(m && Number(m[1]) >= 5, `the title keeps about 4 characters and its ellipsis: ${titles["min-width"]}`);
+  assert.ok(m && Number(m[1]) >= 4 && Number(m[1]) <= 5, `the title keeps 4 characters and its ellipsis: ${titles["min-width"]}`);
   assert.equal(base(".name")["text-overflow"], "ellipsis");
   const st = base(".st");
   assert.equal(st.flex, "0 1 auto");
   assert.equal(st["min-width"], "0");
-  assert.ok(Number.parseFloat(st["max-width"]) <= 50, st["max-width"]);
+  assert.equal(st["max-width"], undefined, "no cap: the pill is cut only when the title is down to its 4 characters");
   assert.equal(base(".st .stt")["text-overflow"], "ellipsis");
   for (const sel of [".badge", ".zoom"]) assert.equal(base(sel).flex, "none", sel);
   assert.equal(rules(lib.WX_STYLES + lib.WX_POPUP_STYLES).find((r) => r.sel === ".close" && !r.at).decl.flex, "none", ".close");
@@ -66,7 +76,8 @@ test("narrow header: the title keeps a few characters, the pill gives way, the b
   const dotOnly = narrow(".st .stt");
   assert.ok(dotOnly.length, "a narrow card hides the pill's text");
   for (const [w, d] of dotOnly) {
-    assert.ok(w >= 260, `the pill turns to a dot below ${w}px`);
+    // A 245px card (221px of content) still reads its pill; the narrowest mini cards show the dot.
+    assert.ok(w < 221 && w >= 180, `the pill turns to a dot below ${w}px`);
     assert.notEqual(d.display, "none", "the text stays readable to screen readers");
     assert.match(`${d["clip-path"]}${d.clip}`, /inset\(50%\)|rect\(0/);
   }
@@ -80,6 +91,31 @@ test("narrow header: every status pill carries its text in a title, the unavaila
     const pill = out.match(/<span class="st[^"]*"[^>]*>/)[0];
     assert.match(pill, /title="[^"]+"/, tag);
   }
+});
+
+test("narrow mini card: unavailable, unknown or missing, the mini card keeps its narrow header (no badge below 190px)", () => {
+  const states = { unavailable: { "weather.paris": { state: "unavailable" } }, unknown: { "weather.paris": { state: "unknown" } } };
+  for (const [name, changes] of Object.entries(states)) {
+    const mini = mount(lib, "weather-plus-mini-card", {}, makeHass("en", changes));
+    assert.match(html(mini), /^<ha-card class="mini"><div class="header">/, name);
+    // Unfolded, it is the full card again.
+    mini._onClick({ detail: 1, composedPath: () => [{ dataset: { action: "zoom" } }] });
+    assert.match(html(mini), /^<ha-card><div class="header">/, `${name}, unfolded`);
+    assert.match(html(mount(lib, "weather-plus-card", {}, makeHass("en", changes))), /^<ha-card><div class="header">/, `${name}, full card`);
+  }
+  const missing = mount(lib, "weather-plus-mini-card", { entity: "weather.nowhere" }, makeHass());
+  assert.match(html(missing), /^<ha-card class="mini"><div class="empty">/);
+  // The badge rule that frees the room is the mini card's.
+  assert.ok(narrow("ha-card.mini .badge").some(([w, d]) => w >= 178 && d.display === "none"));
+});
+
+test("narrow card: the pollen and air rows take one column on a narrow card, their names whole", () => {
+  assert.equal(base(".pollen")["grid-template-columns"], "1fr 1fr");
+  assert.ok(narrow(".pollen").some(([w, d]) => w >= 260 && d["grid-template-columns"] === "1fr"), "one column on a 9-column card");
+});
+
+test("narrow mini card: the rain in the next hour wraps rather than losing its time", () => {
+  assert.ok(narrow(".line .rain-text").some(([w, d]) => w >= 150 && d["white-space"] === "normal"));
 });
 
 test("narrow mini card: below the threshold the badge and the scene step aside for the title and the temperature", () => {
