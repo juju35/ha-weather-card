@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.3 - 2026-11-01
+
+### New
+- Serbian translations, Cyrillic (`sr`) and Latin (`sr-Latn`), with their wind directions. Serbian translations by @cpmarexel2f (#15).
+- Language: a Home Assistant language with a region or script now uses its own dictionary when the card has one (`sr-Latn`), before the base language (`fr-FR` still gives French) and English.
+
 ## 1.9.2 - 2026-11-01
 
 ### Fixes
