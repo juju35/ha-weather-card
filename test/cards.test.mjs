@@ -682,16 +682,83 @@ test("discovery: invalidated when a tracked entity disappears, even with the sta
   assert.notEqual(el._entities().uv, "sensor.paris_uv");
 });
 
-test("i18n parity: every language has exactly the keys and placeholders of en", () => {
+const WX_LANGS = ["en", "fr", "de", "es", "sr", "sr-Latn", "it", "nl", "pt", "pl"];
+
+test("i18n parity: every language has exactly the keys and placeholders of en, and no empty label", () => {
   const en = lib.WX_I18N.en;
   const vars = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
-  for (const lang of ["fr", "de", "es"]) {
+  assert.deepEqual(Object.keys(lib.WX_I18N).sort(), [...WX_LANGS].sort(), "dictionaries");
+  assert.deepEqual(Object.keys(lib.WX_CARDINALS).sort(), [...WX_LANGS].sort(), "compass points");
+  for (const lang of WX_LANGS) {
     const t = lib.WX_I18N[lang];
     assert.ok(t, lang);
     assert.deepEqual(Object.keys(t).sort(), Object.keys(en).sort(), lang);
-    for (const k of Object.keys(en)) assert.deepEqual(vars(t[k]), vars(en[k]), `${lang}.${k}`);
+    for (const k of Object.keys(en)) {
+      assert.equal(typeof t[k], "string", `${lang}.${k}`);
+      assert.ok(t[k].trim(), `${lang}.${k} is empty`);
+      assert.deepEqual(vars(t[k]), vars(en[k]), `${lang}.${k}`);
+    }
     assert.equal(lib.WX_CARDINALS[lang].length, 16, `${lang} cardinals`);
+    assert.ok(lib.WX_CARDINALS[lang].every((c) => c.trim()), `${lang} cardinals not empty`);
   }
+});
+
+test("editor: the language option lists every dictionary", () => {
+  const editor = lib.document.createElement("weather-plus-card-editor");
+  editor.setConfig({});
+  editor.hass = makeHass();
+  const find = (schema) => {
+    for (const s of schema) {
+      if (s.name === "language") return s;
+      const inner = s.schema && find(s.schema);
+      if (inner) return inner;
+    }
+    return null;
+  };
+  const options = find(editor._schema("en")).selector.select.options;
+  assert.deepEqual(Array.from(options, (o) => o.value), ["", ...WX_LANGS]);
+  const labels = Object.fromEntries(options.map((o) => [o.value, o.label]));
+  assert.equal(labels.it, "Italiano");
+  assert.equal(labels.nl, "Nederlands");
+  assert.equal(labels.pt, "Português (Portugal)");
+  assert.equal(labels.pl, "Polski");
+});
+
+test("i18n: the full language when it has a dictionary, else the part before the dash, else English", () => {
+  const lang = (l) => lib.wxLang({}, { language: l });
+  assert.equal(lang("fr-FR"), "fr");
+  assert.equal(lang("de-CH"), "de");
+  assert.equal(lang("sr-Latn"), "sr-Latn");
+  assert.equal(lang("sr"), "sr");
+  assert.equal(lang("it-IT"), "it");
+  assert.equal(lang("nl-BE"), "nl");
+  assert.equal(lang("pt"), "pt");
+  assert.equal(lang("pt-BR"), "pt", "Brazilian Portuguese falls back on European Portuguese");
+  assert.equal(lang("pl-PL"), "pl");
+  assert.equal(lang("ja"), "en");
+  assert.equal(lang("constructor"), "en");
+  assert.equal(lib.wxLang({ language: "sr-Latn" }, { language: "fr" }), "sr-Latn", "the card's language comes first");
+});
+
+test("i18n: Intl gets pt-PT for Portuguese, the full Home Assistant locale, and the card's language first", () => {
+  const loc = (config, hass) => lib.wxIntlLang(config, hass);
+  assert.equal(loc({}, { language: "pt" }), "pt-PT", "pt alone is European Portuguese");
+  assert.equal(loc({}, { language: "pt", locale: { language: "pt" } }), "pt-PT");
+  assert.equal(loc({}, { language: "pt-BR" }), "pt-BR", "Brazilian Portuguese keeps its formats");
+  assert.equal(loc({}, { language: "fr", locale: { language: "fr-CA" } }), "fr-CA");
+  assert.equal(loc({ language: "pt" }, { language: "fr" }), "pt-PT", "the card's language comes first");
+  assert.equal(loc({ language: "de" }, { language: "pt-BR" }), "de");
+  assert.equal(loc({}, { language: "sr-Latn" }), "sr-Latn");
+  assert.equal(loc({}, { language: "ja" }), "en");
+  const h = html(card({}, makeHass("pt")));
+  assert.ok(!/de (jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\./.test(h), "no Brazilian dates");
+});
+
+test("i18n: Serbian, Cyrillic and Latin, is picked from the Home Assistant language", () => {
+  assert.match(html(card({}, makeHass("sr"))), /Прогноза/);
+  assert.match(html(card({}, makeHass("sr-Latn"))), /Prognoza/);
+  assert.equal(lib.wxBearing("sr", 90).label, "И");
+  assert.equal(lib.wxBearing("sr-Latn", 225).label, "JZ");
 });
 
 test("i18n: German and Spanish are picked from the Home Assistant language", () => {
@@ -699,6 +766,17 @@ test("i18n: German and Spanish are picked from the Home Assistant language", () 
   assert.match(html(card({}, makeHass("es"))), /Previsión|Tiempo/);
   assert.equal(lib.wxBearing("de", 90).label, "O");
   assert.equal(lib.wxBearing("es", 270).label, "O");
+});
+
+test("i18n: Italian, Dutch, Portuguese and Polish are picked from the Home Assistant language", () => {
+  assert.match(html(card({}, makeHass("it"))), /Previsioni/);
+  assert.match(html(card({}, makeHass("nl"))), /Verwachting/);
+  assert.match(html(card({}, makeHass("pt"))), /Previsão/);
+  assert.match(html(card({}, makeHass("pl"))), /Prognoza/);
+  assert.equal(lib.wxBearing("it", 270).label, "O");
+  assert.equal(lib.wxBearing("nl", 135).label, "ZO");
+  assert.equal(lib.wxBearing("pt", 225).label, "SO");
+  assert.equal(lib.wxBearing("pl", 315).label, "NW");
 });
 
 test("full screen detail: an update rewrites the card inside the sheet, keeping its scroll and the hourly strip's", () => {
@@ -1102,4 +1180,12 @@ test("refresh: the folded mini card shows it when the weather is unavailable, as
   const mini = mount(lib, "weather-plus-mini-card", {}, makeHass("en", { "weather.paris": { state: "unavailable" } }));
   assert.match(html(mini), /data-action="refresh"/);
   assert.doesNotMatch(html(mount(lib, "weather-plus-mini-card", { refresh: false }, makeHass("en", { "weather.paris": { state: "unavailable" } }))), /data-action="refresh"/);
+});
+
+test("reduced motion: the system setting stops the card's transitions too, not only its animations", () => {
+  const css = lib.WX_STYLES;
+  const m = css.match(/@media \(prefers-reduced-motion: reduce\) \{ ha-card \* \{([^}]*)\} \}/);
+  assert.ok(m, "a reduced motion rule for the card");
+  assert.match(m[1], /animation: none !important/);
+  assert.match(m[1], /transition: none !important/);
 });
