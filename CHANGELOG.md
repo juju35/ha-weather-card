@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.5 - 2026-11-01
+
+### Fixes
+- Narrow cards in a Sections view: the mini card at its default size (6 columns) no longer loses its title. The title keeps at least a few letters, the status pill shows its coloured dot only (its text stays in the tooltip), and on the narrowest cards the badge and then the scene step aside so the temperature stays whole.
+- The full card at its narrowest no longer cuts the daily highs or the chips: the scene gets smaller, the daily rows drop their range bar, and a chip too long for the card ends with "…" instead of being cut off. The full card now asks for 9 columns at least (12 by default); the mini card keeps 6.
+- Serbian: the status pill now reads "Žuto upozorenje" / "Жуто упозорење" (and orange, red) instead of a masculine colour.
+- The number of lightning strikes follows each language's plural rules: "21 udar" in Serbian, as "1 udar".
+
 ## 1.9.4 - 2026-11-01
 
 ### New
