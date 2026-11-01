@@ -1189,3 +1189,50 @@ test("reduced motion: the system setting stops the card's transitions too, not o
   assert.match(m[1], /animation: none !important/);
   assert.match(m[1], /transition: none !important/);
 });
+
+test("i18n: Serbian warning pill agrees with the neuter « upozorenje », Cyrillic and Latin", () => {
+  const storm = { "sensor.75_weather_alert": { state: "Orange", Orages: "Orange", "Vent violent": "Jaune" } };
+  const pill = (lang, changes) => html(card({}, makeHass(lang, changes))).match(/<span class="stt">([^<]*)<\/span>/)[1];
+  assert.equal(pill("sr-Latn", storm), "Narandžasto upozorenje");
+  assert.equal(pill("sr", storm), "Наранџасто упозорење");
+  const yellow = { "sensor.75_weather_alert": { state: "Jaune", Orages: "Jaune" } };
+  assert.equal(pill("sr-Latn", yellow), "Žuto upozorenje");
+  assert.equal(pill("sr", yellow), "Жуто упозорење");
+  const red = { "sensor.75_weather_alert": { state: "Rouge", Orages: "Rouge" } };
+  assert.equal(pill("sr-Latn", red), "Crveno upozorenje");
+  assert.equal(pill("sr", red), "Црвено упозорење");
+  // The phenomenon chips keep their own adjective.
+  assert.match(html(card({}, makeHass("sr-Latn", storm))), /narandžasti/);
+});
+
+test("i18n: the lightning strikes follow each language's plural rules (1, 2, 5, 21, 22)", () => {
+  const strikes = (lang, n) => {
+    const out = html(
+      card(
+        {},
+        makeHass(lang, {
+          "sensor.blitzortung_lightning_counter": { state: n },
+          "sensor.blitzortung_lightning_distance": { state: "unknown" },
+        }),
+      ),
+    );
+    return out.match(new RegExp(`${lib.WX_I18N[lang].lightning_count.replace("{s}", "([^<]*)")}<`))[1];
+  };
+  const cases = {
+    en: ["1 strike", "2 strikes", "5 strikes", "21 strikes", "22 strikes"],
+    fr: ["1 impact", "2 impacts", "5 impacts", "21 impacts", "22 impacts"],
+    sr: ["1 удар", "2 удара", "5 удара", "21 удар", "22 удара"],
+    "sr-Latn": ["1 udar", "2 udara", "5 udara", "21 udar", "22 udara"],
+    pl: ["1 uderzenie", "uderzenia: 2", "uderzenia: 5", "uderzenia: 21", "uderzenia: 22"],
+    pt: ["1 descarga", "2 descargas", "5 descargas", "21 descargas", "22 descargas"],
+  };
+  for (const [lang, want] of Object.entries(cases)) {
+    assert.deepEqual(
+      [1, 2, 5, 21, 22].map((n) => strikes(lang, n)),
+      want,
+      lang,
+    );
+  }
+  // Every language has a singular for 1.
+  for (const lang of Object.keys(lib.WX_I18N)) assert.doesNotMatch(strikes(lang, 1), /^\D*$/, lang);
+});
