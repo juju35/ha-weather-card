@@ -27,8 +27,9 @@ const STORM = {
   "sensor.75_weather_alert": { state: "Orange", Orages: "Orange" },
 };
 
-// Renders `cards` ([{ tag, config, changes, width, wrap }]) on one page, each in a box of its width (or in an
-// inline-block / a grid's auto column with `wrap`), and returns what each one measures.
+// Renders `cards` ([{ tag, config, changes, width, wrap, div }]) on one page, each in a box of its width (or in an
+// inline-block / a grid's auto column / a 1fr 1fr grid with `wrap`), with `div` inside a plain <div> in that box (as
+// hui-card or a stack card wraps it), and returns what each one measures.
 const render = async ({ lang = "en", theme = "light", cards, before }) => {
   const page = await harness.openPage(browser, { theme, width: 600, now: harness.DAY });
   await harness.addCards(
@@ -40,7 +41,8 @@ const render = async ({ lang = "en", theme = "light", cards, before }) => {
     root.style.display = "block";
     [...root.children].forEach((el, i) => {
       const box = document.createElement("div");
-      const { width, wrap } = cards[i];
+      const { width, wrap, div } = cards[i];
+      el.dataset.card = "";
       box.style.cssText =
         wrap === "inline-block"
           ? "display:inline-block"
@@ -51,7 +53,8 @@ const render = async ({ lang = "en", theme = "light", cards, before }) => {
               : `width:${width}px`;
       box.style.marginBottom = "12px";
       root.insertBefore(box, el);
-      box.appendChild(el);
+      box.appendChild(div ? document.createElement("div") : el);
+      if (div) box.firstChild.appendChild(el);
       // A 1fr 1fr grid (grid card, layout-card, horizontal stack): another card in the second column.
       if (wrap === "grid-1fr") box.appendChild(document.createElement("div")).className = "twin";
     });
@@ -59,10 +62,10 @@ const render = async ({ lang = "en", theme = "light", cards, before }) => {
   await page.waitForTimeout(200);
   const out = await (before ? before(page) : null);
   const res = await page.evaluate(() =>
-    [...document.querySelectorAll("#root > div > :not(.twin)")].map((el) => {
+    [...document.querySelectorAll("[data-card]")].map((el) => {
       const sr = el.shadowRoot;
       const cr = sr.querySelector("ha-card").getBoundingClientRect();
-      const box = el.parentElement.getBoundingClientRect();
+      const box = el.closest("#root > div").getBoundingClientRect();
       const host = el.getBoundingClientRect();
       const outside = [];
       for (const n of sr.querySelectorAll("ha-card *")) {
@@ -80,6 +83,7 @@ const render = async ({ lang = "en", theme = "light", cards, before }) => {
       return {
         width: cr.width,
         hostOverflow: Math.max(0, host.right - box.right),
+        wrapperWidth: el.parentElement.getBoundingClientRect().width,
         outside,
         title: name.getBoundingClientRect().width,
         titlesWidth: sr.querySelector(".titles").getBoundingClientRect().width,
@@ -148,26 +152,42 @@ test("layout: from 245px the pill reads its whole label, cut only when the title
   }
 });
 
-test("layout: sized by its content (inline-block, grid auto column), the card keeps a usable width", { skip }, async () => {
+// The six layouts of the brief: sized by its content (inline-block, a grid's auto column) or in a 1fr 1fr grid at
+// 320, 360 and 500px, the card itself or in a plain <div>; full card and mini, normal and unavailable.
+const STATES = [{}, UNAVAILABLE];
+const TAGS = ["weather-plus-card", "weather-plus-mini-card"];
+
+test("layout: sized by its content (inline-block, grid auto column), the card keeps a usable width, in a div too", { skip }, async (t) => {
   const cards = [];
-  for (const tag of ["weather-plus-card", "weather-plus-mini-card"]) for (const wrap of ["inline-block", "grid-auto"]) cards.push({ tag, wrap });
+  for (const tag of TAGS)
+    for (const changes of STATES)
+      for (const wrap of ["inline-block", "grid-auto"]) for (const div of [false, true]) cards.push({ tag, changes, wrap, div });
   const { res } = await render({ cards });
   res.forEach((r, i) => {
-    assert.ok(r.width >= (cards[i].tag === "weather-plus-card" ? 240 : 156), `${cards[i].tag} in ${cards[i].wrap}: ${r.width}px`);
-    assert.deepEqual(r.outside, [], `${cards[i].tag} in ${cards[i].wrap}`);
+    const { tag, changes, wrap, div } = cards[i];
+    const at = `${tag} ${JSON.stringify(changes)} in ${wrap}${div ? " in a div" : ""}`;
+    t.diagnostic(`${at}: ${r.width}px`);
+    assert.ok(r.width >= (tag === "weather-plus-card" ? 240 : 156), `${at}: ${r.width}px`);
+    assert.deepEqual(r.outside, [], at);
   });
 });
 
-test("layout: in a 1fr 1fr grid (grid card, layout-card, horizontal stack) the card shrinks to its column", { skip }, async () => {
+test("layout: in a 1fr 1fr grid (grid card, layout-card, horizontal stack) the card shrinks to its column, in a div too", { skip }, async () => {
   const cards = [];
-  for (const tag of ["weather-plus-card", "weather-plus-mini-card"]) for (const width of [320, 360, 500]) cards.push({ tag, wrap: "grid-1fr", width });
+  for (const tag of TAGS)
+    for (const changes of STATES) for (const width of [320, 360, 500]) for (const div of [false, true]) cards.push({ tag, changes, wrap: "grid-1fr", width, div });
   const { res } = await render({ cards });
+  // Every layout that fails, so a failure lists them all.
+  const bad = [];
   res.forEach((r, i) => {
-    const at = `${cards[i].tag} in a ${cards[i].width}px 1fr 1fr grid`;
-    const column = (cards[i].width - 8) / 2;
-    assert.ok(Math.abs(r.width - column) <= 1, `${at}: ${r.width}px, its column ${column}px`);
-    assert.equal(r.hostOverflow, 0, `${at}: overflows its grid by ${r.hostOverflow}px`);
+    const { tag, changes, width, div } = cards[i];
+    const at = `${tag} ${JSON.stringify(changes)} in a ${width}px 1fr 1fr grid${div ? " in a div" : ""}`;
+    const column = (width - 8) / 2;
+    if (Math.abs(r.width - column) > 1) bad.push(`${at}: ${r.width}px, its column ${column}px`);
+    if (div && Math.abs(r.wrapperWidth - column) > 1) bad.push(`${at}: its div ${r.wrapperWidth}px, its column ${column}px`);
+    if (r.hostOverflow) bad.push(`${at}: overflows its grid by ${r.hostOverflow}px`);
   });
+  assert.deepEqual(bad, []);
 });
 
 test("layout: an update of hass with the focus in the card does not scroll the page", { skip }, async () => {
@@ -176,20 +196,20 @@ test("layout: an update of hass with the focus in the card does not scroll the p
     before: async (page) => {
       await page.evaluate(() => {
         document.body.style.paddingBottom = "3000px";
-        const el = document.querySelector("#root > div > *");
+        const el = document.querySelector("[data-card]");
         el.shadowRoot.querySelector('[data-action="refresh"]').focus();
         // The card scrolled half out of view: a focus() that scrolls would bring it back.
         window.scrollTo(0, 400);
       });
       const y0 = await page.evaluate(() => window.scrollY);
       await page.evaluate(() => {
-        const el = document.querySelector("#root > div > *");
+        const el = document.querySelector("[data-card]");
         const h = el.hass;
         el.hass = { ...h, states: { ...h.states, "weather.paris": { ...h.states["weather.paris"], state: "rainy" } } };
       });
       await page.waitForTimeout(100);
       return page.evaluate((y0) => {
-        const el = document.querySelector("#root > div > *");
+        const el = document.querySelector("[data-card]");
         return { y0, y1: window.scrollY, focused: el.shadowRoot.activeElement?.dataset.action, rainy: el.shadowRoot.innerHTML.includes("rain") };
       }, y0);
     },

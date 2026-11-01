@@ -50,12 +50,18 @@ test("narrow: the card is a size container, so its parts follow its own width ra
 });
 
 test("narrow: sized by its content (inline-block, a grid's auto column, layout-card), the card keeps a usable width", () => {
-  // A size container counts as 0px wide when its width comes from its content: it falls to its padding (24px).
-  const px = (sel) => Number.parseFloat(base(sel)["contain-intrinsic-inline-size"]);
-  assert.ok(px("ha-card") >= 240, `full card: ${base("ha-card")["contain-intrinsic-inline-size"]}`);
-  assert.ok(px("ha-card.mini") >= 156, `mini card: ${base("ha-card.mini")["contain-intrinsic-inline-size"]}`);
-  // That intrinsic width is the card's min-content: without min-width 0 it would overflow a 1fr 1fr grid or a stack.
-  assert.equal(base(":host")["min-width"], "0", "the host shrinks below its intrinsic width");
+  // A size container counts as 0px wide when its width comes from its content: it would fall to its padding (24px).
+  // An empty, 0px high grid on the host gives it a preferred width instead, never a minimum: minmax(0, Npx).
+  const track = (sel) => Number(String(base(sel)["grid-template-columns"]).match(/^minmax\(0,\s*(\d+)px\)$/)?.[1]);
+  const before = base(":host::before");
+  assert.equal(before.display, "grid");
+  assert.equal(before.height, "0");
+  assert.ok(track(":host::before") >= 240, `full card: ${before["grid-template-columns"]}`);
+  assert.ok(track(":host(weather-plus-mini-card)::before") >= 156, `mini card: ${base(":host(weather-plus-mini-card)::before")["grid-template-columns"]}`);
+  // A min-content width (contain-intrinsic-*, a px min-width on the host) would overflow a 1fr 1fr grid when the
+  // card is wrapped in a div (hui-card, a stack), whose min-width stays auto.
+  assert.ok(!/contain-intrinsic/.test(lib.WX_STYLES), "no contain-intrinsic-* size");
+  assert.equal(base(":host")["min-width"], "0", "the host shrinks to its column");
 });
 
 test("narrow header: the title keeps a few characters, the pill gives way, the buttons never shrink", () => {
