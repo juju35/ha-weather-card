@@ -38,7 +38,7 @@ Like the other `ha-*` cards: header with a status pill, illustration next to the
 - Every chip, row and reading opens the more-info dialog of its entity
 - **Full screen** button (top right, `popup: false` removes it): the detail over the whole screen and its width, sections side by side as the width allows, with 24 hours and 10 days of forecast; it closes with its button, Escape, a click outside or the back button on a phone
 - **Refresh** button (top right, `refresh: false` removes it): asks the integrations behind the card — weather, rain, alerts, sensors — for fresh data right away; the icon turns while they answer, even with `animations: false` (not with the system's *reduce motion* setting)
-- In a Sections view the card takes the full width (12 columns) and goes down to 9; on a narrow card the status pill shows its coloured dot only (its text in the tooltip), the scene gets smaller and the daily rows leave out their range bar
+- In a Sections view the card takes the full width (12 columns) and goes down to 9; on a narrow card the scene gets smaller, the status pill shortens its text only when the title is down to a few letters (and on the narrowest cards shows its coloured dot only, its text in the tooltip) and the daily rows leave out their range bar
 
 Sections, in the order of `sections` (a section with no data hides itself):
 
