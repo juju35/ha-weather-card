@@ -2599,8 +2599,10 @@ function wxResolve(hass, weatherId, over = {}) {
 
 // ── Base element ─────────────────────────────────────────────────────────────
 class WxElement extends HTMLElement {
+  // 9 columns at least: narrower (156px in the narrowest section), the scene, the temperature and the daily rows no
+  // longer fit. The mini card goes down to 6.
   getGridOptions() {
-    return { columns: 12, min_columns: 6 };
+    return { columns: 12, min_columns: 9 };
   }
 
   _lang() {

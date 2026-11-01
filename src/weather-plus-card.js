@@ -621,7 +621,7 @@ class WeatherPlusCard extends WxElement {
       this.shadowRoot.innerHTML =
         `<style>${WX_STYLES}</style><style>:host{--wx-color:${WX_IDLE}}</style><ha-card><div class="header"><div class="badge"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon></div>` +
         `<div class="titles" data-more="${wxEsc(ent.weather)}"><div class="name">${wxEsc(c.name || wxWeatherName(st) || this._t("title"))}</div></div>` +
-        `<span class="st"><span class="dot"></span><span class="stt">${wxEsc(this._t("unavailable"))}</span></span>${this._refreshButton()}${this._zoomButton()}</div></ha-card>`;
+        `<span class="st" title="${wxEsc(this._t("unavailable"))}"><span class="dot"></span><span class="stt">${wxEsc(this._t("unavailable"))}</span></span>${this._refreshButton()}${this._zoomButton()}</div></ha-card>`;
       this._closePopup();
       return;
     }
@@ -685,7 +685,7 @@ class WeatherPlusCard extends WxElement {
       const title = `${this._t("wind")}${gust != null ? ` · ${this._t("gusts", { v: `${wxFmtNum(m.fmt, gust, 0)} ${unit}` })}` : ""}`;
       const arrow = b ? `<span class="arrow" style="transform:rotate(${(b.deg + 180) % 360}deg)"><ha-icon icon="mdi:navigation"></ha-icon></span>` : '<ha-icon icon="mdi:weather-windy"></ha-icon>';
       out.push(
-        `<span class="chip" title="${wxEsc(title)}">${arrow}${wxEsc(`${wxFmtNum(m.fmt, Number(a.wind_speed), 0)} ${unit}${b ? ` ${b.label}` : ""}`)}</span>`,
+        `<span class="chip" title="${wxEsc(title)}">${arrow}<span class="ct">${wxEsc(`${wxFmtNum(m.fmt, Number(a.wind_speed), 0)} ${unit}${b ? ` ${b.label}` : ""}`)}</span></span>`,
       );
     }
     if (a.pressure != null) {

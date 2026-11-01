@@ -136,7 +136,7 @@ test("card: rain in the next hour, alerts, VigiEau, lightning, pollen, UV and su
   const pol = out.slice(out.indexOf("s-pollen"));
   assert.match(pol, /<span class="uvval" style="--k:#f0e641">3<\/span>.*<b[^>]*>Moyen<\/b><span>Allergiques : garder son traitement à portée · surtout graminées/);
   assert.equal((pol.match(/class="prow"/g) || []).length, 6);
-  assert.match(out, /class="chip tint"[^>]*title="Risque pollinique"><ha-icon icon="mdi:flower-pollen"><\/ha-icon>Pollens : moyen/);
+  assert.match(out, /class="chip tint"[^>]*title="Risque pollinique"><ha-icon icon="mdi:flower-pollen"><\/ha-icon><span class="ct">Pollens : moyen/);
   assert.match(out, /Modéré.*Lunettes et crème solaire/);
   assert.match(out, /class="sun up"/);
   assert.match(out, /10 h 28 de jour/);
@@ -153,7 +153,7 @@ test("card: sections follow `sections`, and hide without data", () => {
   // The rain section is left with the totals of the hourly forecast.
   assert.match(bare, /s-rain.*Next 6 h: /);
   // Only the storm of the hourly forecast is left in the alerts.
-  assert.match(bare, /s-alerts.*Storms possible at 6 PM<\/span><\/div><\/div>/);
+  assert.match(bare, /s-alerts.*Storms possible at 6 PM<\/span><\/span><\/div><\/div>/);
   assert.match(bare, /s-daily/);
   assert.match(bare, /s-uv/); // from the weather entity's uv_index
 });
