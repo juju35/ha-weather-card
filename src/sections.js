@@ -711,7 +711,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   @keyframes wx-pop { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
   /* animations: false stops everything but the busy refresh icon, the only sign that a refresh is under way. */
   ha-card.still *:not(.refresh > ha-icon), ha-card.still *::before { animation: none !important; }
-  @media (prefers-reduced-motion: reduce) { ha-card * { animation: none !important; } }
+  @media (prefers-reduced-motion: reduce) { ha-card * { animation: none !important; transition: none !important; } }
   @media (max-width: 420px) { .pollen { grid-template-columns: 1fr; } }
 `;
 

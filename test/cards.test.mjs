@@ -1103,3 +1103,11 @@ test("refresh: the folded mini card shows it when the weather is unavailable, as
   assert.match(html(mini), /data-action="refresh"/);
   assert.doesNotMatch(html(mount(lib, "weather-plus-mini-card", { refresh: false }, makeHass("en", { "weather.paris": { state: "unavailable" } }))), /data-action="refresh"/);
 });
+
+test("reduced motion: the system setting stops the card's transitions too, not only its animations", () => {
+  const css = lib.WX_STYLES;
+  const m = css.match(/@media \(prefers-reduced-motion: reduce\) \{ ha-card \* \{([^}]*)\} \}/);
+  assert.ok(m, "a reduced motion rule for the card");
+  assert.match(m[1], /animation: none !important/);
+  assert.match(m[1], /transition: none !important/);
+});
