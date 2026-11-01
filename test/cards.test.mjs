@@ -720,7 +720,7 @@ test("editor: the language option lists every dictionary", () => {
   const labels = Object.fromEntries(options.map((o) => [o.value, o.label]));
   assert.equal(labels.it, "Italiano");
   assert.equal(labels.nl, "Nederlands");
-  assert.equal(labels.pt, "Português");
+  assert.equal(labels.pt, "Português (Portugal)");
   assert.equal(labels.pl, "Polski");
 });
 
@@ -738,6 +738,20 @@ test("i18n: the full language when it has a dictionary, else the part before the
   assert.equal(lang("ja"), "en");
   assert.equal(lang("constructor"), "en");
   assert.equal(lib.wxLang({ language: "sr-Latn" }, { language: "fr" }), "sr-Latn", "the card's language comes first");
+});
+
+test("i18n: Intl gets pt-PT for Portuguese, the full Home Assistant locale, and the card's language first", () => {
+  const loc = (config, hass) => lib.wxIntlLang(config, hass);
+  assert.equal(loc({}, { language: "pt" }), "pt-PT", "pt alone is European Portuguese");
+  assert.equal(loc({}, { language: "pt", locale: { language: "pt" } }), "pt-PT");
+  assert.equal(loc({}, { language: "pt-BR" }), "pt-BR", "Brazilian Portuguese keeps its formats");
+  assert.equal(loc({}, { language: "fr", locale: { language: "fr-CA" } }), "fr-CA");
+  assert.equal(loc({ language: "pt" }, { language: "fr" }), "pt-PT", "the card's language comes first");
+  assert.equal(loc({ language: "de" }, { language: "pt-BR" }), "de");
+  assert.equal(loc({}, { language: "sr-Latn" }), "sr-Latn");
+  assert.equal(loc({}, { language: "ja" }), "en");
+  const h = html(card({}, makeHass("pt")));
+  assert.ok(!/de (jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\./.test(h), "no Brazilian dates");
 });
 
 test("i18n: Serbian, Cyrillic and Latin, is picked from the Home Assistant language", () => {

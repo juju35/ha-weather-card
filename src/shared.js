@@ -2200,6 +2200,22 @@ function wxLang(config, hass) {
   return Object.hasOwn(WX_I18N, base) ? base : "en";
 }
 
+// The locale handed to Intl / toLocale*: the full Home Assistant locale (or the card's `language:`, which comes first)
+// when it is in the card's language, else that language. "pt" alone is European Portuguese, which Intl reads as Brazilian.
+function wxIntlLang(config, hass) {
+  const lang = wxLang(config, hass);
+  let loc = String(config?.language || hass?.locale?.language || hass?.language || "");
+  if (loc.split("-")[0].toLowerCase() !== lang.split("-")[0]) loc = lang;
+  if (lang === "sr-Latn" && !/-latn\b/i.test(loc)) loc = "sr-Latn";
+  if (loc.toLowerCase() === "pt") loc = "pt-PT";
+  try {
+    Intl.getCanonicalLocales(loc);
+  } catch {
+    loc = lang === "pt" ? "pt-PT" : lang;
+  }
+  return loc;
+}
+
 function wxEsc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
@@ -2227,7 +2243,7 @@ function wxFmtNum(lang, v, digits = 1) {
 function wxTime(lang, date, hourOnly = false) {
   const d = date instanceof Date ? date : new Date(date);
   if (Number.isNaN(d.getTime())) return "";
-  if (hourOnly && lang === "fr") return `${d.getHours()} h`;
+  if (hourOnly && /^fr\b/i.test(lang)) return `${d.getHours()} h`;
   return d.toLocaleTimeString(lang, hourOnly ? { hour: "numeric" } : { hour: "2-digit", minute: "2-digit" });
 }
 
@@ -2591,6 +2607,10 @@ class WxElement extends HTMLElement {
     return wxLang(this._config, this._hass);
   }
 
+  _fmtLang() {
+    return wxIntlLang(this._config, this._hass);
+  }
+
   _t(k, vars) {
     return wxT(this._lang(), k, vars);
   }
@@ -2725,7 +2745,7 @@ class WxCardEditor extends HTMLElement {
                   { value: "sr-Latn", label: "Srpski (latinica)" },
                   { value: "it", label: "Italiano" },
                   { value: "nl", label: "Nederlands" },
-                  { value: "pt", label: "Português" },
+                  { value: "pt", label: "Português (Portugal)" },
                   { value: "pl", label: "Polski" },
                 ],
               },
