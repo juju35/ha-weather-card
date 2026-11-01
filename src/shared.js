@@ -955,6 +955,12 @@ const WX_CONDITIONS = {
 };
 const WX_IDLE = "var(--disabled-text-color, #9e9e9e)";
 
+// Text in a state color (a level's label, the status pill, tinted chips, rain and wind figures): the color mixed into
+// the theme's text color, so that it keeps its hue yet reads on the card in a light and a dark theme alike (WCAG AA,
+// 4.5:1 for every color of the scales at 40%; the rain blue and the wind teal pass at 60%). Badges, dots, bars and
+// icons keep the raw color.
+const wxInk = (color, pct = 40) => `color-mix(in srgb, ${color} ${pct}%, var(--primary-text-color))`;
+
 const wxCondLabel = (lang, cond) => (WX_CONDITIONS[cond] ? wxT(lang, `c_${cond.replace(/-/g, "_")}`) : cond ? String(cond) : "—");
 
 // The icon of a condition; at night the sunny and partly cloudy icons become their night versions.

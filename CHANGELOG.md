@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.2 - 2026-11-01
+
+### Fixes
+- Text drawn in a level colour is now readable on light themes as well as dark ones: the UV level and its figure (yellow "Moderate" was barely visible on white), the air quality and pollen levels, the tinted chips, the status pill, the rain chances and strong wind figures now reach the WCAG AA contrast. The badges, dots, bars and icons keep their level colours.
+- With the system's reduce motion setting, the card's colour and arrow transitions no longer play either.
+
 ## 1.9.1 - 2026-10-31
 
 ### Fixes

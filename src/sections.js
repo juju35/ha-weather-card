@@ -338,7 +338,7 @@ function wxSectionUv(card, m) {
   return (
     `<div class="section s-uv">${wxSectionTitle(card, "uv")}` +
     `<div class="uvhead"${u.entity ? ` data-more="${wxEsc(u.entity)}" role="button" tabindex="0"` : ""}><span class="uvval" style="--k:${WX_UV[lvl].color}">${wxFmtNum(m.lang, u.v, 0)}</span>` +
-    `<div class="uvtxt"><b style="color:${WX_UV[lvl].color}">${wxEsc(card._t(`uv_${lvl}`))}</b><span>${wxEsc(card._t(`uv_advice_${lvl}`))}${peak ? ` · ${wxEsc(peak)}` : ""}</span></div></div>` +
+    `<div class="uvtxt"><b style="color:${wxInk(WX_UV[lvl].color)}">${wxEsc(card._t(`uv_${lvl}`))}</b><span>${wxEsc(card._t(`uv_advice_${lvl}`))}${peak ? ` · ${wxEsc(peak)}` : ""}</span></div></div>` +
     `<div class="uvbar"><span class="mark" style="left:${pos.toFixed(1)}%;--k:${WX_UV[lvl].color}"></span></div></div>`
   );
 }
@@ -351,7 +351,7 @@ function wxIndexHead(level, label, sub, entity) {
   const color = WX_LEVEL_COLORS[level];
   return (
     `<div class="uvhead"${entity ? ` data-more="${wxEsc(entity)}" role="button" tabindex="0"` : ""}><span class="uvval" style="--k:${color}">${level}</span>` +
-    `<div class="uvtxt"><b style="color:color-mix(in srgb, ${color} 75%, var(--primary-text-color))">${wxEsc(label)}</b><span>${wxEsc(sub)}</span></div></div>` +
+    `<div class="uvtxt"><b style="color:${wxInk(color)}">${wxEsc(label)}</b><span>${wxEsc(sub)}</span></div></div>` +
     `<div class="aqbar">${[1, 2, 3, 4, 5, 6].map((n) => `<i style="background:${WX_LEVEL_COLORS[n]}"${n === level ? ' class="on"' : ""}></i>`).join("")}</div>`
   );
 }
@@ -538,7 +538,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   /* The pill gives way to the title on a narrow card: it shrinks down to its dot and ellipsizes its text. */
   .st { display: inline-flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 0; max-width: 50%; overflow: hidden; padding: 1px 8px;
         border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap; background: color-mix(in srgb, var(--st-color, var(--wx-color)) 18%, transparent);
-        color: color-mix(in srgb, var(--st-color, var(--wx-color)) 72%, var(--primary-text-color)); }
+        color: ${wxInk("var(--st-color, var(--wx-color))")}; }
   .st .dot { flex: none; background: var(--st-color, var(--wx-color)); }
   .st .stt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   /* With a subtitle the titles span two lines: the pill stays on the title's line, not centred over both. */
@@ -567,7 +567,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; padding: 1px 8px 1px 5px; border-radius: 12px;
           background: var(--secondary-background-color, rgba(128,128,128,.12)); color: var(--secondary-text-color); white-space: nowrap; }
   .chip ha-icon { --mdc-icon-size: 13px; }
-  .chip.tint { background: color-mix(in srgb, var(--k) 20%, transparent); color: color-mix(in srgb, var(--k) 72%, var(--primary-text-color)); }
+  .chip.tint { background: color-mix(in srgb, var(--k) 20%, transparent); color: ${wxInk("var(--k)")}; }
   .chip.tint ha-icon { color: var(--k); }
   .chip.pulse { animation: wx-chip 2s ease-in-out infinite; }
   .chip.bolt ha-icon { animation: wx-blink 1.2s steps(2) infinite; }
@@ -618,19 +618,19 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .pbar { width: 6px; height: 22px; border-radius: 3px; background: color-mix(in srgb, var(--secondary-text-color) 14%, transparent); display: flex; align-items: flex-end; overflow: hidden; }
   .pbar span { width: 100%; background: #42a5f5; border-radius: 3px; transform-origin: bottom; }
   .enter .pbar span { animation: wx-rise .6s ease-out both; }
-  .pv { font-size: 10px; color: #42a5f5; min-height: 12px; font-variant-numeric: tabular-nums; }
+  .pv { font-size: 10px; color: ${wxInk("#42a5f5", 60)}; min-height: 12px; font-variant-numeric: tabular-nums; }
 
   .wcol { flex: 1 1 ${WX_COL}px; min-width: ${WX_COL}px; display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 4px;
           font-size: 11px; color: var(--secondary-text-color); font-variant-numeric: tabular-nums; }
   .wcol .arrow { display: inline-flex; }
   .wcol ha-icon { --mdc-icon-size: 12px; }
-  .wcol.strong { color: #26a69a; font-weight: 600; }
+  .wcol.strong { color: ${wxInk("#26a69a", 60)}; font-weight: 600; }
   .daily { display: flex; flex-direction: column; gap: 4px; }
   .drow { display: grid; grid-template-columns: 84px 24px 38px 30px 1fr 30px; align-items: center; gap: 8px; font-size: 13px; }
   .enter .drow, .enter .prow { animation: wx-slide .45s ease-out both; animation-delay: var(--d, 0s); }
   .drow .day { color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .drow ha-icon { --mdc-icon-size: 22px; }
-  .drow .pp { font-size: 11px; color: #42a5f5; text-align: right; font-variant-numeric: tabular-nums; }
+  .drow .pp { font-size: 11px; color: ${wxInk("#42a5f5", 60)}; text-align: right; font-variant-numeric: tabular-nums; }
   .drow .lo { color: var(--secondary-text-color); text-align: right; font-variant-numeric: tabular-nums; }
   .drow .hi { color: var(--primary-text-color); font-weight: 500; font-variant-numeric: tabular-nums; }
   .range { position: relative; height: 6px; border-radius: 3px; background: var(--secondary-background-color, rgba(128,128,128,.15)); }
@@ -641,7 +641,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
 
   .uvhead { display: flex; align-items: center; gap: 10px; }
   .uvval { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; font-weight: 500; flex: none;
-           background: color-mix(in srgb, var(--k) 18%, transparent); color: var(--k); }
+           background: color-mix(in srgb, var(--k) 18%, transparent); color: ${wxInk("var(--k)")}; }
   .uvtxt { display: flex; flex-direction: column; font-size: 12px; color: var(--secondary-text-color); min-width: 0; }
   .uvtxt b { font-size: 14px; font-weight: 500; }
   .uvbar { position: relative; height: 6px; border-radius: 3px; margin: 2px 4px;
@@ -711,7 +711,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   @keyframes wx-pop { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
   /* animations: false stops everything but the busy refresh icon, the only sign that a refresh is under way. */
   ha-card.still *:not(.refresh > ha-icon), ha-card.still *::before { animation: none !important; }
-  @media (prefers-reduced-motion: reduce) { ha-card * { animation: none !important; } }
+  @media (prefers-reduced-motion: reduce) { ha-card * { animation: none !important; transition: none !important; } }
   @media (max-width: 420px) { .pollen { grid-template-columns: 1fr; } }
 `;
 
