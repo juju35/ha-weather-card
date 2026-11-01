@@ -101,6 +101,25 @@ export const saveFramed = async (browser, { theme, png, width, height, path }) =
   return writeIfChanged(`${path}.new.png`, path);
 };
 
+// Pauses every animation of the page at `t` ms, then waits two animation frames so the seek is painted before a
+// capture: the same frames on every run, whatever the machine's speed. The scenes animate inside the cards' shadow
+// roots, which document.getAnimations() leaves out: each shadow root gives its own. Returns how many were paused.
+export const seekAnimations = (page, t) =>
+  page.evaluate(
+    (t) =>
+      new Promise((done) => {
+        const roots = [document];
+        for (let i = 0; i < roots.length; i++) for (const el of roots[i].querySelectorAll("*")) if (el.shadowRoot) roots.push(el.shadowRoot);
+        const all = roots.flatMap((r) => r.getAnimations());
+        for (const a of all) {
+          a.pause();
+          a.currentTime = t;
+        }
+        requestAnimationFrame(() => requestAnimationFrame(() => done(all.length)));
+      }),
+    t,
+  );
+
 // Adds cards to the page: [{ tag, config, hass }]; the forecasts of each mock are served by a subscription stand-in.
 export const addCards = (page, cards, cols = 1) =>
   page.evaluate(
