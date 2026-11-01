@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.4 - 2026-11-01
+
+### New
+- Added Italian, Dutch, European Portuguese and Polish translations (`it`, `nl`, `pt`, `pl`), with their wind directions and in the editor's language list. Brazilian Portuguese (`pt-BR`) falls back on European Portuguese.
+
 ## 1.9.3 - 2026-11-01
 
 ### New

@@ -10,6 +10,10 @@ const WX_CARDINALS = {
   es: ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"],
   sr: ["С", "ССИ", "СИ", "ИСИ", "И", "ИЈИ", "ЈИ", "ЈЈИ", "Ј", "ЈЈЗ", "ЈЗ", "ЗЈЗ", "З", "ЗСЗ", "СЗ", "ССЗ"],
   "sr-Latn": ["S", "SSI", "SI", "ISI", "I", "IJI", "JI", "JJI", "J", "JJZ", "JZ", "ZJZ", "Z", "ZSZ", "SZ", "SSZ"],
+  it: ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"],
+  nl: ["N", "NNO", "NO", "ONO", "O", "OZO", "ZO", "ZZO", "Z", "ZZW", "ZW", "WZW", "W", "WNW", "NW", "NNW"],
+  pt: ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"],
+  pl: ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"],
 };
 
 // A wind bearing in degrees, or already a cardinal point ("NW"), as { deg, label }.
@@ -69,7 +73,7 @@ const wxChip = (icon, text, { color, cls = "", more, title, style } = {}) =>
   }${title ? ` title="${wxEsc(title)}"` : ""}><ha-icon icon="${icon}"></ha-icon>${wxEsc(text)}</span>`;
 
 // ── Alerts: weather warnings, drought restrictions, lightning nearby, storms in the forecast ──
-const wxStrikes = (card, n) => (n === 1 ? card._t("strikes_1") : card._t("strikes", { n: wxFmtNum(card._lang(), n, 0) }));
+const wxStrikes = (card, n) => (n === 1 ? card._t("strikes_1") : card._t("strikes", { n: wxFmtNum(card._fmtLang(), n, 0) }));
 
 function wxAlertChips(card, m, { onlyActive = false } = {}) {
   const out = [];
@@ -100,7 +104,7 @@ function wxAlertChips(card, m, { onlyActive = false } = {}) {
   }
   const lt = m.lightning;
   if (lt?.count > 0) {
-    const d = lt.dist != null ? `${wxFmtNum(m.lang, lt.dist, 0)} ${lt.unit}` : "";
+    const d = lt.dist != null ? `${wxFmtNum(m.fmt, lt.dist, 0)} ${lt.unit}` : "";
     out.push(
       wxChip("mdi:flash", card._t(d ? "lightning_n" : "lightning_count", { d, s: wxStrikes(card, lt.count) }), {
         color: WX_BOLT_COLOR,
@@ -170,9 +174,9 @@ function wxSectionRain(card, m) {
     // The rain chance is always shown, even at 0 %: "Rain 0 %" answers the question this section is about.
     // Snow and frost chances only show up when above 0: at 0 they are noise for most of the year.
     .filter(([k]) => m.chances?.[k] != null && (k === "rain_chance" || m.chances[k] > 0))
-    .map(([k, icon]) => wxChip(icon, card._t(k, { v: `${wxFmtNum(m.lang, m.chances[k], 0)} %` }), { more: m.ent[k] }));
+    .map(([k, icon]) => wxChip(icon, card._t(k, { v: `${wxFmtNum(m.fmt, m.chances[k], 0)} %` }), { more: m.ent[k] }));
   const t = m.totals;
-  const amount = (v) => `${wxFmtNum(m.lang, v, 1)} ${t.unit}`;
+  const amount = (v) => `${wxFmtNum(m.fmt, v, 1)} ${t.unit}`;
   const totals = t
     ? [
         t.today != null ? wxChip("mdi:weather-rainy", card._t("rain_today", { v: amount(t.today) }), { more: m.ent.daily_precipitation }) : "",
@@ -242,7 +246,7 @@ function wxSectionHourly(card, m) {
     .map((p, i) =>
       h[i].temperature == null
         ? '<div class="pt"></div>'
-        : `<div class="pt" style="--y:${p[1].toFixed(1)}px"><span>${wxFmtNum(m.lang, h[i].temperature, 0)}°</span><i></i></div>`,
+        : `<div class="pt" style="--y:${p[1].toFixed(1)}px"><span>${wxFmtNum(m.fmt, h[i].temperature, 0)}°</span><i></i></div>`,
     )
     .join("");
   const curve =
@@ -252,7 +256,7 @@ function wxSectionHourly(card, m) {
   const top = h
     .map(
       (x, i) =>
-        `<div class="hcol${i === 0 ? " now" : ""}"><span class="t">${wxEsc(i === 0 ? card._t("now") : wxTime(m.lang, x.datetime, true))}</span>` +
+        `<div class="hcol${i === 0 ? " now" : ""}"><span class="t">${wxEsc(i === 0 ? card._t("now") : wxTime(m.fmt, x.datetime, true))}</span>` +
         `<ha-icon icon="${wxCondIcon(x.condition, x.night)}" style="color:${wxCondColor(x.condition, x.night)}"></ha-icon></div>`,
     )
     .join("");
@@ -268,13 +272,13 @@ function wxSectionHourly(card, m) {
         .map((x) => {
           const b = wxBearing(m.lang, x.wind_bearing);
           const gust = wxNumber(x.wind_gust_speed);
-          const title = [b?.label, x.wind_speed != null ? `${wxFmtNum(m.lang, x.wind_speed, 0)} ${wunit}` : "", gust ? card._t("gusts", { v: `${wxFmtNum(m.lang, gust, 0)} ${wunit}` }) : ""]
+          const title = [b?.label, x.wind_speed != null ? `${wxFmtNum(m.fmt, x.wind_speed, 0)} ${wunit}` : "", gust ? card._t("gusts", { v: `${wxFmtNum(m.fmt, gust, 0)} ${wunit}` }) : ""]
             .filter(Boolean)
             .join(" · ");
           const strong = (gust ?? x.wind_speed ?? 0) >= strongAt;
           return (
             `<div class="wcol${strong ? " strong" : ""}" title="${wxEsc(title)}">${b ? `<span class="arrow" style="transform:rotate(${(b.deg + 180) % 360}deg)"><ha-icon icon="mdi:navigation"></ha-icon></span>` : ""}` +
-            `<span>${x.wind_speed != null ? wxFmtNum(m.lang, x.wind_speed, 0) : ""}</span></div>`
+            `<span>${x.wind_speed != null ? wxFmtNum(m.fmt, x.wind_speed, 0) : ""}</span></div>`
           );
         })
         .join("")
@@ -284,7 +288,7 @@ function wxSectionHourly(card, m) {
       const p = x.precipitation_probability;
       const amount = x.precipitation;
       const pct = p != null ? p : amount != null ? Math.min(100, amount * 25) : 0;
-      const txt = p != null ? (p ? `${wxFmtNum(m.lang, p, 0)} %` : "") : amount ? `${wxFmtNum(m.lang, amount, 1)}` : "";
+      const txt = p != null ? (p ? `${wxFmtNum(m.fmt, p, 0)} %` : "") : amount ? `${wxFmtNum(m.fmt, amount, 1)}` : "";
       return `<div class="pcol"><div class="pbar"><span style="height:${Math.max(0, Math.min(100, pct))}%"></span></div><span class="pv">${wxEsc(txt)}</span></div>`;
     })
     .join("");
@@ -318,12 +322,12 @@ function wxSectionDaily(card, m) {
       const now = today && m.temp != null ? `<span class="nowdot" style="left:${(((m.temp - min) / span) * 100).toFixed(1)}%"></span>` : "";
       const p = d.precipitation_probability;
       return (
-        `<div class="drow" style="--d:${(i * 0.06).toFixed(2)}s"><span class="day">${wxEsc(today ? card._t("today") : wxDay(m.lang, d.datetime))}</span>` +
+        `<div class="drow" style="--d:${(i * 0.06).toFixed(2)}s"><span class="day">${wxEsc(today ? card._t("today") : wxDay(m.fmt, d.datetime))}</span>` +
         `<ha-icon icon="${wxCondIcon(d.condition, false)}" style="color:${wxCondColor(d.condition, false)}"></ha-icon>` +
-        `<span class="pp">${p ? `${wxFmtNum(m.lang, p, 0)} %` : ""}</span>` +
-        `<span class="lo">${wxFmtNum(m.lang, lo, 0)}°</span>` +
+        `<span class="pp">${p ? `${wxFmtNum(m.fmt, p, 0)} %` : ""}</span>` +
+        `<span class="lo">${wxFmtNum(m.fmt, lo, 0)}°</span>` +
         `<span class="range">${bar ? `<span class="fill" style="left:${left.toFixed(1)}%;width:${width.toFixed(1)}%;background:${grad}"></span>` : ""}${now}</span>` +
-        `<span class="hi">${wxFmtNum(m.lang, hi, 0)}°</span></div>`
+        `<span class="hi">${wxFmtNum(m.fmt, hi, 0)}°</span></div>`
       );
     })
     .join("");
@@ -336,10 +340,10 @@ function wxSectionUv(card, m) {
   if (!u) return "";
   const lvl = u.level;
   const pos = Math.min(100, (u.v / 11) * 100);
-  const peak = u.max != null && u.max > u.v ? card._t("uv_max", { v: wxFmtNum(m.lang, u.max, 0) }) : "";
+  const peak = u.max != null && u.max > u.v ? card._t("uv_max", { v: wxFmtNum(m.fmt, u.max, 0) }) : "";
   return (
     `<div class="section s-uv">${wxSectionTitle(card, "uv")}` +
-    `<div class="uvhead"${u.entity ? ` data-more="${wxEsc(u.entity)}" role="button" tabindex="0"` : ""}><span class="uvval" style="--k:${WX_UV[lvl].color}">${wxFmtNum(m.lang, u.v, 0)}</span>` +
+    `<div class="uvhead"${u.entity ? ` data-more="${wxEsc(u.entity)}" role="button" tabindex="0"` : ""}><span class="uvval" style="--k:${WX_UV[lvl].color}">${wxFmtNum(m.fmt, u.v, 0)}</span>` +
     `<div class="uvtxt"><b style="color:${wxInk(WX_UV[lvl].color)}">${wxEsc(card._t(`uv_${lvl}`))}</b><span>${wxEsc(card._t(`uv_advice_${lvl}`))}${peak ? ` · ${wxEsc(peak)}` : ""}</span></div></div>` +
     `<div class="uvbar"><span class="mark" style="left:${pos.toFixed(1)}%;--k:${WX_UV[lvl].color}"></span></div></div>`
   );
@@ -455,9 +459,9 @@ function wxSectionSun(card, m) {
   return (
     `<div class="section s-sun">${wxSectionTitle(card, "sun")}<div class="sun${s.up ? " up" : ""}" data-more="${wxEsc(m.ent.sun)}" role="button" tabindex="0">` +
     `<svg viewBox="0 0 400 64" preserveAspectRatio="xMidYMid meet"><path class="horizon" d="M0 56H400"/><path class="arc" d="${arc}"/>${done}${dot}</svg>` +
-    `<div class="suntimes"><span><ha-icon icon="mdi:weather-sunset-up"></ha-icon>${wxEsc(wxTime(m.lang, s.rise))}</span>` +
+    `<div class="suntimes"><span><ha-icon icon="mdi:weather-sunset-up"></ha-icon>${wxEsc(wxTime(m.fmt, s.rise))}</span>` +
     `<span class="dl">${wxEsc(card._t("daylight", { h: Math.floor(dl / 60), m: String(dl % 60).padStart(2, "0") }))}</span>` +
-    `<span><ha-icon icon="mdi:weather-sunset-down"></ha-icon>${wxEsc(wxTime(m.lang, s.set))}</span></div>${wxSunExtras(card, m)}</div></div>`
+    `<span><ha-icon icon="mdi:weather-sunset-down"></ha-icon>${wxEsc(wxTime(m.fmt, s.set))}</span></div>${wxSunExtras(card, m)}</div></div>`
   );
 }
 
@@ -465,18 +469,18 @@ function wxSectionSun(card, m) {
 function wxSunExtras(card, m) {
   const t = m.sunTimes;
   if (!t) return "";
-  const range = (r) => (r ? `${wxTime(m.lang, r[0])}–${wxTime(m.lang, r[1])}` : "");
+  const range = (r) => (r ? `${wxTime(m.fmt, r[0])}–${wxTime(m.fmt, r[1])}` : "");
   const golden = t.goldenEvening || t.goldenMorning;
   const items = [
-    t.dawn ? wxChip("mdi:weather-sunset-up", `${card._t("dawn")} ${wxTime(m.lang, t.dawn)}`) : "",
+    t.dawn ? wxChip("mdi:weather-sunset-up", `${card._t("dawn")} ${wxTime(m.fmt, t.dawn)}`) : "",
     golden
-      ? wxChip("mdi:camera-iris", `${card._t("golden_hour")} ${wxTime(m.lang, golden[0])}`, {
+      ? wxChip("mdi:camera-iris", `${card._t("golden_hour")} ${wxTime(m.fmt, golden[0])}`, {
           color: "#ffb300",
           cls: "tint",
           title: [range(t.goldenMorning), range(t.goldenEvening)].filter(Boolean).join(" · "),
         })
       : "",
-    t.dusk ? wxChip("mdi:weather-sunset-down", `${card._t("dusk")} ${wxTime(m.lang, t.dusk)}`) : "",
+    t.dusk ? wxChip("mdi:weather-sunset-down", `${card._t("dusk")} ${wxTime(m.fmt, t.dusk)}`) : "",
   ].filter(Boolean);
   return items.length ? `<div class="chips sunextra">${items.join("")}</div>` : "";
 }
@@ -485,7 +489,7 @@ function wxSunExtras(card, m) {
 function wxSectionMoon(card, m) {
   const mo = m.moon;
   if (!mo) return "";
-  const date = (d) => d.toLocaleDateString(m.lang, { weekday: "short", day: "numeric", month: "short" });
+  const date = (d) => d.toLocaleDateString(m.fmt, { weekday: "short", day: "numeric", month: "short" });
   const next = [
     ["next_full", mo.nextFull, "mdi:moon-full"],
     ["next_new", mo.nextNew, "mdi:moon-new"],
@@ -502,8 +506,8 @@ function wxSectionMoon(card, m) {
     `<div class="mdisc">${svg}</div><div class="uvtxt"><b>${wxEsc(card._t(`mp_${mo.phase}`))}</b>` +
     `<span>${wxEsc(card._t("moon_lit", { v: Math.round(mo.light * 100), d: Math.floor(mo.age) + 1 }))}</span>${
       mo.times
-        ? `<span class="mtimes"><span title="${wxEsc(card._t("moonrise"))}"><ha-icon icon="mdi:arrow-up-thin"></ha-icon>${wxEsc(mo.times.rise ? wxTime(m.lang, mo.times.rise) : "—")}</span>` +
-          `<span title="${wxEsc(card._t("moonset"))}"><ha-icon icon="mdi:arrow-down-thin"></ha-icon>${wxEsc(mo.times.set ? wxTime(m.lang, mo.times.set) : "—")}</span></span>`
+        ? `<span class="mtimes"><span title="${wxEsc(card._t("moonrise"))}"><ha-icon icon="mdi:arrow-up-thin"></ha-icon>${wxEsc(mo.times.rise ? wxTime(m.fmt, mo.times.rise) : "—")}</span>` +
+          `<span title="${wxEsc(card._t("moonset"))}"><ha-icon icon="mdi:arrow-down-thin"></ha-icon>${wxEsc(mo.times.set ? wxTime(m.fmt, mo.times.set) : "—")}</span></span>`
         : ""
     }</div>` +
     `<div class="mnexts">${next}</div></div></div>`
