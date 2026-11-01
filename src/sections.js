@@ -73,7 +73,15 @@ const wxChip = (icon, text, { color, cls = "", more, title, style } = {}) =>
   }${title ? ` title="${wxEsc(title)}"` : ""}><ha-icon icon="${icon}"></ha-icon>${wxEsc(text)}</span>`;
 
 // ── Alerts: weather warnings, drought restrictions, lightning nearby, storms in the forecast ──
-const wxStrikes = (card, n) => (n === 1 ? card._t("strikes_1") : card._t("strikes", { n: wxFmtNum(card._fmtLang(), n, 0) }));
+// "strikes_one" where the language's plural rule says "one" (1, and 21, 31… in Serbian), else "strikes".
+const wxStrikes = (card, n) => {
+  const shown = Math.round(n);
+  let one = shown === 1;
+  try {
+    one = new Intl.PluralRules(card._lang()).select(shown) === "one";
+  } catch {}
+  return card._t(one ? "strikes_one" : "strikes", { n: wxFmtNum(card._fmtLang(), shown, 0) });
+};
 
 function wxAlertChips(card, m, { onlyActive = false } = {}) {
   const out = [];
