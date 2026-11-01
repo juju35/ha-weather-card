@@ -611,15 +611,18 @@ class WeatherPlusCard extends WxElement {
     const ent = this._entities();
     const st = this._st(ent.weather);
     const still = c.animations === false;
+    // The mini card's class in every state: its narrow layout (no badge, a smaller gap) holds when unavailable too.
+    const cls = [this._compact() ? "mini" : "", still ? "still" : ""].filter(Boolean).join(" ");
+    const haCard = `<ha-card${cls ? ` class="${cls}"` : ""}>`;
     if (!st) {
-      this.shadowRoot.innerHTML = `<style>${WX_STYLES}</style><ha-card><div class="empty"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon>${wxEsc(
+      this.shadowRoot.innerHTML = `<style>${WX_STYLES}</style>${haCard}<div class="empty"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon>${wxEsc(
         c.entity ? `${this._t("no_weather")} (${c.entity})` : this._t("no_weather"),
       )}</div></ha-card>`;
       return;
     }
     if (wxUnavailable(st)) {
       this.shadowRoot.innerHTML =
-        `<style>${WX_STYLES}</style><style>:host{--wx-color:${WX_IDLE}}</style><ha-card><div class="header"><div class="badge"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon></div>` +
+        `<style>${WX_STYLES}</style><style>:host{--wx-color:${WX_IDLE}}</style>${haCard}<div class="header"><div class="badge"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon></div>` +
         `<div class="titles" data-more="${wxEsc(ent.weather)}"><div class="name">${wxEsc(c.name || wxWeatherName(st) || this._t("title"))}</div></div>` +
         `<span class="st" title="${wxEsc(this._t("unavailable"))}"><span class="dot"></span><span class="stt">${wxEsc(this._t("unavailable"))}</span></span>${this._refreshButton()}${this._zoomButton()}</div></ha-card>`;
       this._closePopup();
@@ -631,7 +634,7 @@ class WeatherPlusCard extends WxElement {
     m.still = still;
     const head =
       `<style>${WX_STYLES}</style><style>:host{--wx-color:${m.color}}</style>` +
-      `<ha-card class="${[this._compact() ? "mini" : "", still ? "still" : ""].filter(Boolean).join(" ")}">` +
+      haCard +
       this._header(m, {
         sub: m.status.alert && !this._compact(),
         // The compact mini card keeps its two buttons; refresh shows once it is unfolded.
@@ -832,7 +835,7 @@ class WeatherPlusCard extends WxElement {
     this._popupShown = new Set();
     this._popupParts = null;
     this._renderPopup();
-    root.querySelector?.(".close")?.focus?.();
+    root.querySelector?.(".close")?.focus?.({ preventScroll: true });
   }
 
   // `fromBack`: the back button already left the history entry the popup added.
@@ -846,7 +849,7 @@ class WeatherPlusCard extends WxElement {
     window.removeEventListener?.("popstate", this._onPopupBack);
     document.body.style.overflow = this._bodyOverflow || "";
     if (!fromBack && window.history?.state?.weatherPlusPopup) window.history.back();
-    this.shadowRoot?.querySelector?.('[data-action="popup"]')?.focus?.();
+    this.shadowRoot?.querySelector?.('[data-action="popup"]')?.focus?.({ preventScroll: true });
   }
 
   _renderPopup() {

@@ -536,10 +536,14 @@ const WX_SECTION_RENDER = {
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 const WX_STYLES = `${WX_SCENE_STYLES}
-  :host { display: block; height: 100%; }
-  /* A size container: on a narrow card (Sections view, 6 to 9 columns) its parts follow the card's width, not the window's. */
+  /* min-width 0: the card's intrinsic width below must not stop it shrinking in a 1fr grid or a horizontal stack. */
+  :host { display: block; height: 100%; min-width: 0; }
+  /* A size container: on a narrow card (Sections view, 6 to 9 columns) its parts follow the card's width, not the window's.
+     Sized by its content (an inline-block, a grid's auto column, layout-card), a size container would count as 0px wide:
+     it counts as 300px there (180px for the mini card), its width anywhere else. */
   ha-card { height: 100%; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden;
-            container-type: inline-size; }
+            container-type: inline-size; contain-intrinsic-inline-size: 300px; }
+  ha-card.mini { contain-intrinsic-inline-size: 180px; }
   ha-card > *, .section, .info, .hero > div { min-width: 0; }
   .empty { display: flex; align-items: center; gap: 10px; color: var(--secondary-text-color); }
   /* The body starts 8px under the header, like the other ha-* cards (the card's gap is 12px, 8px on the mini card). */
@@ -548,12 +552,14 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .badge { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
            background: color-mix(in srgb, var(--wx-color) 16%, transparent); color: var(--wx-color); transition: background .4s, color .4s; }
   .badge ha-icon { --mdc-icon-size: 24px; }
-  /* The title's base is its text and it keeps about 4 characters and its ellipsis, whatever the pill's length. */
-  .titles { flex: 1 1 auto; min-width: 6ch; cursor: pointer; }
+  /* The title takes the room the pill leaves (base 0, so the pill keeps its whole text while there is room for both),
+     and keeps 4 characters and its ellipsis whatever the pill's length. */
+  .titles { flex: 1 1 0; min-width: 5ch; cursor: pointer; }
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  /* The pill gives way to the title: it ellipsizes its text, and on a narrow card shows its dot only (see @container). */
-  .st { position: relative; display: inline-flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 0; max-width: 50%; overflow: hidden; padding: 1px 8px;
+  /* The pill gives way only when the title is down to its 4 characters: then it ellipsizes its text, and on the
+     narrowest cards shows its dot only (see @container). */
+  .st { position: relative; display: inline-flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 0; overflow: hidden; padding: 1px 8px;
         border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap; background: color-mix(in srgb, var(--st-color, var(--wx-color)) 18%, transparent);
         color: ${wxInk("var(--st-color, var(--wx-color))")}; }
   .st .dot { flex: none; background: var(--st-color, var(--wx-color)); }
@@ -735,21 +741,25 @@ const WX_STYLES = `${WX_SCENE_STYLES}
 
   /* Narrow cards (the content box of the card: a 6-column card in a Sections view is 156 to 246px wide, 9 columns 238 to 370px). */
   @container (max-width: 300px) {
-    .st { padding: 4px; }
-    .st .stt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     .hero { gap: 10px; }
     .scene { width: 88px; height: 70px; border-radius: 12px; }
+    .pollen { grid-template-columns: 1fr; }
   }
   @container (max-width: 280px) {
     .drow { grid-template-columns: minmax(0, 1fr) 24px 38px 30px 30px; }
     .drow .range { display: none; }
   }
+  /* Below this, the pill's text would be down to a letter or two: the pill shows its dot only, its text in its title. */
   @container (max-width: 220px) {
+    .st { padding: 4px; }
+    .st .stt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     ha-card.mini .scene { width: 64px; height: 52px; border-radius: 10px; }
     .content { gap: 8px; }
   }
   @container (max-width: 190px) {
     .header { gap: 6px; }
+    /* The rain in the next hour wraps rather than losing its time. */
+    .line .rain-text { white-space: normal; }
     ha-card.mini .badge { display: none; }
     ha-card.mini .content > div:first-child, .hero > div:first-child { display: none; }
   }

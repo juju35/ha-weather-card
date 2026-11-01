@@ -2674,7 +2674,7 @@ const wxMini = (Base) =>
     // From the keyboard (Enter / Space: no click count), the focus follows to the button that replaced this one.
     _toggleZoom(ev) {
       this._setZoom(!this._zoomed);
-      if (ev.detail === 0) this.shadowRoot.querySelector(".zoom")?.focus();
+      if (ev.detail === 0) this.shadowRoot.querySelector(".zoom")?.focus({ preventScroll: true });
     }
   };
 
