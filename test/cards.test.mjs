@@ -685,13 +685,31 @@ test("discovery: invalidated when a tracked entity disappears, even with the sta
 test("i18n parity: every language has exactly the keys and placeholders of en", () => {
   const en = lib.WX_I18N.en;
   const vars = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
-  for (const lang of ["fr", "de", "es"]) {
+  for (const lang of ["fr", "de", "es", "sr", "sr-Latn"]) {
     const t = lib.WX_I18N[lang];
     assert.ok(t, lang);
     assert.deepEqual(Object.keys(t).sort(), Object.keys(en).sort(), lang);
     for (const k of Object.keys(en)) assert.deepEqual(vars(t[k]), vars(en[k]), `${lang}.${k}`);
     assert.equal(lib.WX_CARDINALS[lang].length, 16, `${lang} cardinals`);
   }
+});
+
+test("i18n: the full language when it has a dictionary, else the part before the dash, else English", () => {
+  const lang = (l) => lib.wxLang({}, { language: l });
+  assert.equal(lang("fr-FR"), "fr");
+  assert.equal(lang("de-CH"), "de");
+  assert.equal(lang("sr-Latn"), "sr-Latn");
+  assert.equal(lang("sr"), "sr");
+  assert.equal(lang("pt-BR"), "en");
+  assert.equal(lang("constructor"), "en");
+  assert.equal(lib.wxLang({ language: "sr-Latn" }, { language: "fr" }), "sr-Latn", "the card's language comes first");
+});
+
+test("i18n: Serbian, Cyrillic and Latin, is picked from the Home Assistant language", () => {
+  assert.match(html(card({}, makeHass("sr"))), /Прогноза/);
+  assert.match(html(card({}, makeHass("sr-Latn"))), /Prognoza/);
+  assert.equal(lib.wxBearing("sr", 90).label, "И");
+  assert.equal(lib.wxBearing("sr-Latn", 225).label, "JZ");
 });
 
 test("i18n: German and Spanish are picked from the Home Assistant language", () => {

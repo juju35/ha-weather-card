@@ -24,7 +24,7 @@ An animated weather card for Home Assistant that brings together everything the 
 |---|---|---|
 | ![Weather](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card.png) | ![Storm](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm.png) | ![Mini](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini.png) |
 
-Like the other `ha-*` cards: header with a status pill, illustration next to the state, mini card with a detail button, a visual editor in the dashboard UI covering every option (the entity overrides in its folded **Advanced** section, as YAML), English, French, German and Spanish labels following the Home Assistant language, light and dark themes, a single HACS download with no dependency.
+Like the other `ha-*` cards: header with a status pill, illustration next to the state, mini card with a detail button, a visual editor in the dashboard UI covering every option (the entity overrides in its folded **Advanced** section, as YAML), English, French, German, Spanish and Serbian (Cyrillic and Latin) labels following the Home Assistant language, light and dark themes, a single HACS download with no dependency.
 
 ## Features
 
@@ -144,7 +144,7 @@ entity: weather.paris
 | `refresh` | boolean | `true` | Refresh button that asks the integrations for fresh data (hidden on the folded mini card, unless the weather is unavailable) |
 | `zoom` | boolean | `true` | Mini card: detail button to unfold the full card |
 | `entities` | map | detected | Overrides of the detected entities, by role (see [Supported integrations](#supported-integrations)) |
-| `language` | string | HA language | `en`, `fr`, `de` or `es` |
+| `language` | string | HA language | `en`, `fr`, `de`, `es`, `sr` or `sr-Latn` |
 
 ## Screenshots
 
@@ -202,6 +202,8 @@ The cards auto-detect the language from your Home Assistant settings. Currently 
 | Français | `fr` |
 | Deutsch | `de` |
 | Español | `es` |
+| Српски | `sr` |
+| Srpski (latinica) | `sr-Latn` |
 
 Contributions for additional languages are welcome!
 
