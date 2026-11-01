@@ -536,14 +536,16 @@ const WX_SECTION_RENDER = {
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 const WX_STYLES = `${WX_SCENE_STYLES}
-  /* min-width 0: the card's intrinsic width below must not stop it shrinking in a 1fr grid or a horizontal stack. */
   :host { display: block; height: 100%; min-width: 0; }
-  /* A size container: on a narrow card (Sections view, 6 to 9 columns) its parts follow the card's width, not the window's.
-     Sized by its content (an inline-block, a grid's auto column, layout-card), a size container would count as 0px wide:
-     it counts as 300px there (180px for the mini card), its width anywhere else. */
+  /* The card is a size container (below): on a narrow card (Sections view, 6 to 9 columns) its parts follow the
+     card's width, not the window's. Sized by its content (an inline-block, a grid's auto column, layout-card), a size
+     container counts as 0px wide: this empty, 0px high grid gives the card 326px there (206px for the mini card).
+     Its track is minmax(0, …): that width is the card's preferred width only, never its minimum, so the card (or the
+     div that wraps it, whose min-width stays auto) still shrinks to its column in a 1fr 1fr grid or a stack. */
+  :host::before { content: ""; display: grid; grid-template-columns: minmax(0, 326px); height: 0; }
+  :host(weather-plus-mini-card)::before { grid-template-columns: minmax(0, 206px); }
   ha-card { height: 100%; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden;
-            container-type: inline-size; contain-intrinsic-inline-size: 300px; }
-  ha-card.mini { contain-intrinsic-inline-size: 180px; }
+            container-type: inline-size; }
   ha-card > *, .section, .info, .hero > div { min-width: 0; }
   .empty { display: flex; align-items: center; gap: 10px; color: var(--secondary-text-color); }
   /* The body starts 8px under the header, like the other ha-* cards (the card's gap is 12px, 8px on the mini card). */
