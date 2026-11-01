@@ -82,8 +82,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     await addCards(page, [{ tag: "weather-plus-card", config, hass: mockHass(lang, {}, DAY), open: '[data-action="popup"]' }]);
     await page.waitForTimeout(500);
     const png = await page.screenshot({ animations: "disabled" });
-    await saveFramed(browser, { theme, png, width, height, path: `${root}screenshots/${file}.png` });
-    console.log(`screenshots/${file}.png`);
+    const written = await saveFramed(browser, { theme, png, width, height, path: `${root}screenshots/${file}.png` });
+    console.log(`screenshots/${file}.png${written ? "" : " (unchanged)"}`);
     await page.close();
   }
   await browser.close();
