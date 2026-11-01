@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.9.4 - 2026-11-01
+
+### New
+- Added Italian, Dutch, European Portuguese and Polish translations (`it`, `nl`, `pt`, `pl`), with their wind directions and in the editor's language list. Brazilian Portuguese (`pt-BR`) falls back on European Portuguese.
+
+## 1.9.3 - 2026-11-01
+
+### New
+- Serbian translations, Cyrillic (`sr`) and Latin (`sr-Latn`), with their wind directions. Serbian translations by @cpmarexel2f (#15).
+- Language: a Home Assistant language with a region or script now uses its own dictionary when the card has one (`sr-Latn`), before the base language (`fr-FR` still gives French) and English.
+
+## 1.9.2 - 2026-11-01
+
+### Fixes
+- Text drawn in a level colour is now readable on light themes as well as dark ones: the UV level and its figure (yellow "Moderate" was barely visible on white), the air quality and pollen levels, the tinted chips, the status pill, the rain chances and strong wind figures now reach the WCAG AA contrast. The badges, dots, bars and icons keep their level colours.
+- With the system's reduce motion setting, the card's colour and arrow transitions no longer play either.
+
 ## 1.9.1 - 2026-10-31
 
 ### Fixes

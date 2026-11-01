@@ -255,7 +255,7 @@ class WeatherPlusCard extends WxElement {
     // (restarting every animation); the sun moves along its arc and the rain counts down in place.
     const rain = this._rainModel(ent);
     const rainSig = rain && [rain.raining, rain.next != null];
-    const sig = JSON.stringify([this._lang(), this._zoomed, !!this._popup, this._fcv, Math.floor(Date.now() / 3600000), rainSig, states]);
+    const sig = JSON.stringify([this._fmtLang(), this._zoomed, !!this._popup, this._fcv, Math.floor(Date.now() / 3600000), rainSig, states]);
     if (sig === this._sig) {
       this._patchSun(this._sunModel(ent));
       this._patchRain(rain);
@@ -461,7 +461,7 @@ class WeatherPlusCard extends WxElement {
         const level = wxAirLevel(st, key);
         if (level == null) return null;
         const unit = st.attributes.unit_of_measurement;
-        return { key, entity: id, level, value: unit && unit !== "AQI" ? `${wxFmtNum(this._lang(), wxNum(st), 0)} ${unit}` : null };
+        return { key, entity: id, level, value: unit && unit !== "AQI" ? `${wxFmtNum(this._fmtLang(), wxNum(st), 0)} ${unit}` : null };
       })
       .filter(Boolean);
     const st = this._st(ent.aqi);
@@ -559,6 +559,7 @@ class WeatherPlusCard extends WxElement {
 
     return {
       lang,
+      fmt: this._fmtLang(),
       ent,
       st,
       a,
@@ -595,13 +596,13 @@ class WeatherPlusCard extends WxElement {
     const top = Math.max(0, ...(m.alerts?.phenomena || []).map((p) => p.level));
     if (top >= 2) return { text: this._t("vigilance_level", { v: this._t(`lvl_${top}`) }), color: WX_ALERT_COLORS[top], alert: true };
     if (m.lightning?.count > 0 && m.lightning.dist != null) {
-      return { text: this._t("lightning_near", { d: `${wxFmtNum(m.lang, m.lightning.dist, 0)} ${m.lightning.unit}` }), color: WX_BOLT_COLOR, alert: true };
+      return { text: this._t("lightning_near", { d: `${wxFmtNum(m.fmt, m.lightning.dist, 0)} ${m.lightning.unit}` }), color: WX_BOLT_COLOR, alert: true };
     }
     return { text: wxCondLabel(m.lang, m.cond), color: m.color, alert: false };
   }
 
   _fmtTemp(m, t, digits = 1) {
-    return `${wxFmtNum(m.lang, t, digits)}°`;
+    return `${wxFmtNum(m.fmt, t, digits)}°`;
   }
 
   // ── Render ──
@@ -670,39 +671,39 @@ class WeatherPlusCard extends WxElement {
       m.hi != null
         ? `<span class="hilo">↑<b>${this._fmtTemp(m, m.hi, 0)}</b>${m.lo != null ? ` ↓<b>${this._fmtTemp(m, m.lo, 0)}</b>` : ""}</span>`
         : "";
-    return `<div class="big" data-more="${wxEsc(m.ent.weather)}"><span class="val">${wxFmtNum(m.lang, m.temp, 1)}<small>${wxEsc(m.tempUnit)}</small></span>${hilo}</div>`;
+    return `<div class="big" data-more="${wxEsc(m.ent.weather)}"><span class="val">${wxFmtNum(m.fmt, m.temp, 1)}<small>${wxEsc(m.tempUnit)}</small></span>${hilo}</div>`;
   }
 
   _heroChips(m) {
     const a = m.a;
     const out = [];
-    if (a.humidity != null) out.push(wxChip("mdi:water-percent", `${wxFmtNum(m.lang, Number(a.humidity), 0)} %`, { title: this._t("humidity") }));
+    if (a.humidity != null) out.push(wxChip("mdi:water-percent", `${wxFmtNum(m.fmt, Number(a.humidity), 0)} %`, { title: this._t("humidity") }));
     if (a.wind_speed != null) {
       const b = wxBearing(m.lang, a.wind_bearing);
       const unit = a.wind_speed_unit || "km/h";
       const gust = wxNumber(a.wind_gust_speed);
-      const title = `${this._t("wind")}${gust != null ? ` · ${this._t("gusts", { v: `${wxFmtNum(m.lang, gust, 0)} ${unit}` })}` : ""}`;
+      const title = `${this._t("wind")}${gust != null ? ` · ${this._t("gusts", { v: `${wxFmtNum(m.fmt, gust, 0)} ${unit}` })}` : ""}`;
       const arrow = b ? `<span class="arrow" style="transform:rotate(${(b.deg + 180) % 360}deg)"><ha-icon icon="mdi:navigation"></ha-icon></span>` : '<ha-icon icon="mdi:weather-windy"></ha-icon>';
       out.push(
-        `<span class="chip" title="${wxEsc(title)}">${arrow}${wxEsc(`${wxFmtNum(m.lang, Number(a.wind_speed), 0)} ${unit}${b ? ` ${b.label}` : ""}`)}</span>`,
+        `<span class="chip" title="${wxEsc(title)}">${arrow}${wxEsc(`${wxFmtNum(m.fmt, Number(a.wind_speed), 0)} ${unit}${b ? ` ${b.label}` : ""}`)}</span>`,
       );
     }
     if (a.pressure != null) {
       const unit = a.pressure_unit || "hPa";
       const d = m.trend;
       const dir = d == null ? null : d >= 1 ? "up" : d <= -1 ? "down" : "steady";
-      const delta = d == null ? "" : `${d > 0 ? "+" : d < 0 ? "−" : ""}${wxFmtNum(m.lang, Math.abs(d), 1)} ${unit}`;
+      const delta = d == null ? "" : `${d > 0 ? "+" : d < 0 ? "−" : ""}${wxFmtNum(m.fmt, Math.abs(d), 1)} ${unit}`;
       const icon = { up: "mdi:trending-up", down: "mdi:trending-down", steady: "mdi:trending-neutral" }[dir] || "mdi:gauge";
       out.push(
-        wxChip(icon, `${wxFmtNum(m.lang, Number(a.pressure), 0)} ${unit}`, {
+        wxChip(icon, `${wxFmtNum(m.fmt, Number(a.pressure), 0)} ${unit}`, {
           title: `${this._t("pressure")}${dir ? ` · ${this._t(`trend_${dir}`, { v: delta })}` : ""}`,
           cls: dir ? `trend ${dir}` : "",
           more: m.ent.pressure,
         }),
       );
     }
-    if (m.clouds != null) out.push(wxChip("mdi:cloud-percent-outline", this._t("clouds_n", { v: wxFmtNum(m.lang, m.clouds, 0) }), { title: this._t("cloud_cover"), more: m.ent.cloud_cover }));
-    if (m.uv) out.push(wxChip("mdi:sun-wireless-outline", this._t("uv_n", { v: wxFmtNum(m.lang, m.uv.v, 0) }), { color: WX_UV[m.uv.level].color, cls: "tint", more: m.uv.entity, title: this._t(`uv_${m.uv.level}`) }));
+    if (m.clouds != null) out.push(wxChip("mdi:cloud-percent-outline", this._t("clouds_n", { v: wxFmtNum(m.fmt, m.clouds, 0) }), { title: this._t("cloud_cover"), more: m.ent.cloud_cover }));
+    if (m.uv) out.push(wxChip("mdi:sun-wireless-outline", this._t("uv_n", { v: wxFmtNum(m.fmt, m.uv.v, 0) }), { color: WX_UV[m.uv.level].color, cls: "tint", more: m.uv.entity, title: this._t(`uv_${m.uv.level}`) }));
     if (m.pollen?.level >= 1) {
       out.push(
         wxChip("mdi:flower-pollen", this._t("pollen_chip", { v: this._t(`pl_${m.pollen.level}`).toLowerCase() }), {

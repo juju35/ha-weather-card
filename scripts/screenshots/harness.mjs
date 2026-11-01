@@ -4,13 +4,13 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import * as mdi from "@mdi/js";
 import { chromium } from "playwright";
+import { DAY, NIGHT, TZ } from "./clock.mjs";
 
 export const root = fileURLToPath(new URL("../..", import.meta.url));
 const cardJs = readFileSync(`${root}dist/ha-weather-card.js`, "utf8");
 
-// The clock of every shot: an October afternoon (or `night`), the forecasts drawn around it.
-export const DAY = new Date(2026, 9, 21, 14, 10);
-export const NIGHT = new Date(2026, 9, 21, 22, 40);
+// The clock of every shot, in Paris time (see clock.mjs).
+export { DAY, NIGHT };
 
 // Every mdi:* icon the cards can use, as SVG paths for the <ha-icon> stand-in.
 const iconsFor = (extra) => {
@@ -71,7 +71,7 @@ export const launch = () =>
 
 // A page with the theme, the stand-ins and the card script, its clock set to `now`.
 export const openPage = async (browser, { theme = "light", width = 460, now = DAY, icons = [] } = {}) => {
-  const page = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: width + 32, height: 2400 } });
+  const page = await browser.newPage({ deviceScaleFactor: 2, timezoneId: TZ, viewport: { width: width + 32, height: 2400 } });
   page.on("pageerror", (err) => console.error(`pageerror: ${err.message}`));
   await page.clock.setFixedTime(now);
   await page.setContent(pageHtml(theme, width));
@@ -83,7 +83,7 @@ export const openPage = async (browser, { theme = "light", width = 460, now = DA
 // Saves `png` (a full-viewport capture, `width` × `height` CSS pixels) framed like the card shots: on the theme
 // background with a 16px margin, in a card-like box (12px radius, divider border).
 export const saveFramed = async (browser, { theme, png, width, height, path }) => {
-  const page = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: width + 34, height: height + 34 } });
+  const page = await browser.newPage({ deviceScaleFactor: 2, timezoneId: TZ, viewport: { width: width + 34, height: height + 34 } });
   await page.setContent(pageHtml(theme, width + 2));
   await page.evaluate(
     ({ src, width, height }) => {
