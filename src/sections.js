@@ -10,6 +10,10 @@ const WX_CARDINALS = {
   es: ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"],
   sr: ["С", "ССИ", "СИ", "ИСИ", "И", "ИЈИ", "ЈИ", "ЈЈИ", "Ј", "ЈЈЗ", "ЈЗ", "ЗЈЗ", "З", "ЗСЗ", "СЗ", "ССЗ"],
   "sr-Latn": ["S", "SSI", "SI", "ISI", "I", "IJI", "JI", "JJI", "J", "JJZ", "JZ", "ZJZ", "Z", "ZSZ", "SZ", "SSZ"],
+  it: ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"],
+  nl: ["N", "NNO", "NO", "ONO", "O", "OZO", "ZO", "ZZO", "Z", "ZZW", "ZW", "WZW", "W", "WNW", "NW", "NNW"],
+  pt: ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"],
+  pl: ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"],
 };
 
 // A wind bearing in degrees, or already a cardinal point ("NW"), as { deg, label }.
