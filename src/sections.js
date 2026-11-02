@@ -719,8 +719,6 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .mnext ha-icon { --mdc-icon-size: 14px; }
   .mnext b { font-weight: 500; color: var(--primary-text-color); }
   ha-card.mini { gap: 8px; }
-  ha-card.mini .badge { width: 32px; height: 32px; }
-  ha-card.mini .badge ha-icon { --mdc-icon-size: 20px; }
   .content { display: flex; align-items: center; gap: 12px; }
   ha-card.mini .scene { width: 88px; height: 70px; border-radius: 12px; }
   ha-card.mini .big .val { font-size: 24px; }
