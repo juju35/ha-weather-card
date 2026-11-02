@@ -118,6 +118,14 @@ test("narrow mini card: unavailable, unknown or missing, the mini card keeps its
   assert.ok(narrow("ha-card.mini .badge").some(([w, d]) => w >= 178 && d.display === "none"));
 });
 
+test("mini card: the header badge keeps the full card's size (40px, a 24px icon), only a narrow card hides it", () => {
+  assert.equal(base(".badge").width, "40px");
+  assert.equal(base(".badge ha-icon")["--mdc-icon-size"], "24px");
+  // No mini-only rule outside a width breakpoint resizes the badge or its icon.
+  const miniBadge = R.filter((r) => !r.at && /^ha-card\.mini \.badge\b/.test(r.sel));
+  assert.deepEqual(miniBadge, [], "the mini card does not shrink its badge");
+});
+
 test("narrow card: the pollen and air rows take one column on a narrow card, their names whole", () => {
   assert.equal(base(".pollen")["grid-template-columns"], "1fr 1fr");
   assert.ok(narrow(".pollen").some(([w, d]) => w >= 260 && d["grid-template-columns"] === "1fr"), "one column on a 9-column card");
