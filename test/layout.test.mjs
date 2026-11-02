@@ -27,7 +27,7 @@ const STORM = {
   "sensor.75_weather_alert": { state: "Orange", Orages: "Orange" },
 };
 
-// Renders `cards` ([{ tag, config, changes, width, wrap, div }]) on one page, each in a box of its width (or in an
+// Renders `cards` ([{ tag, config, changes, width, wrap, div, zoom }]) (`zoom`: the mini card unfolded) on one page, each in a box of its width (or in an
 // inline-block / a grid's auto column / a 1fr 1fr grid with `wrap`), with `div` inside a plain <div> in that box (as
 // hui-card or a stack card wraps it), and returns what each one measures.
 const render = async ({ lang = "en", theme = "light", cards, before }) => {
@@ -41,8 +41,9 @@ const render = async ({ lang = "en", theme = "light", cards, before }) => {
     root.style.display = "block";
     [...root.children].forEach((el, i) => {
       const box = document.createElement("div");
-      const { width, wrap, div } = cards[i];
+      const { width, wrap, div, zoom } = cards[i];
       el.dataset.card = "";
+      if (zoom) el._setZoom(true);
       box.style.cssText =
         wrap === "inline-block"
           ? "display:inline-block"
@@ -155,33 +156,52 @@ test("layout: from 245px the pill reads its whole label, cut only when the title
 // The six layouts of the brief: sized by its content (inline-block, a grid's auto column) or in a 1fr 1fr grid at
 // 320, 360 and 500px, the card itself or in a plain <div>; full card and mini, normal and unavailable.
 const STATES = [{}, UNAVAILABLE];
-const TAGS = ["weather-plus-card", "weather-plus-mini-card"];
+// The mini card folded and unfolded (zoom: the full card in it).
+const TAGS = [{ tag: "weather-plus-card" }, { tag: "weather-plus-mini-card" }, { tag: "weather-plus-mini-card", zoom: true }];
+const label = ({ tag, zoom }) => `${tag}${zoom ? " unfolded" : ""}`;
 
 test("layout: sized by its content (inline-block, grid auto column), the card keeps a usable width, in a div too", { skip }, async (t) => {
   const cards = [];
-  for (const tag of TAGS)
+  for (const kind of TAGS)
     for (const changes of STATES)
-      for (const wrap of ["inline-block", "grid-auto"]) for (const div of [false, true]) cards.push({ tag, changes, wrap, div });
+      for (const wrap of ["inline-block", "grid-auto"]) for (const div of [false, true]) cards.push({ ...kind, changes, wrap, div });
   const { res } = await render({ cards });
   res.forEach((r, i) => {
-    const { tag, changes, wrap, div } = cards[i];
-    const at = `${tag} ${JSON.stringify(changes)} in ${wrap}${div ? " in a div" : ""}`;
+    const { tag, zoom, changes, wrap, div } = cards[i];
+    const at = `${label(cards[i])} ${JSON.stringify(changes)} in ${wrap}${div ? " in a div" : ""}`;
     t.diagnostic(`${at}: ${r.width}px`);
-    assert.ok(r.width >= (tag === "weather-plus-card" ? 240 : 156), `${at}: ${r.width}px`);
+    // Unfolded, the mini card shows the full card: it takes the full card's width (its dates no longer cut).
+    assert.ok(r.width >= (tag === "weather-plus-card" || zoom ? 240 : 156), `${at}: ${r.width}px`);
     assert.deepEqual(r.outside, [], at);
   });
 });
 
+test("layout: in an inline-block, the mini card folded again takes back the mini card's width", { skip }, async () => {
+  const { out } = await render({
+    cards: [{ tag: "weather-plus-mini-card", wrap: "inline-block", zoom: true }],
+    before: (page) =>
+      page.evaluate(async () => {
+        const el = document.querySelector("[data-card]");
+        const width = () => el.shadowRoot.querySelector("ha-card").getBoundingClientRect().width;
+        const unfolded = width();
+        el._setZoom(false);
+        await new Promise((r) => setTimeout(r, 100));
+        return { unfolded, folded: width(), attr: el.hasAttribute("zoomed") };
+      }),
+  });
+  assert.deepEqual(out, { unfolded: 326, folded: 206, attr: false });
+});
+
 test("layout: in a 1fr 1fr grid (grid card, layout-card, horizontal stack) the card shrinks to its column, in a div too", { skip }, async () => {
   const cards = [];
-  for (const tag of TAGS)
-    for (const changes of STATES) for (const width of [320, 360, 500]) for (const div of [false, true]) cards.push({ tag, changes, wrap: "grid-1fr", width, div });
+  for (const kind of TAGS)
+    for (const changes of STATES) for (const width of [320, 360, 500]) for (const div of [false, true]) cards.push({ ...kind, changes, wrap: "grid-1fr", width, div });
   const { res } = await render({ cards });
   // Every layout that fails, so a failure lists them all.
   const bad = [];
   res.forEach((r, i) => {
-    const { tag, changes, width, div } = cards[i];
-    const at = `${tag} ${JSON.stringify(changes)} in a ${width}px 1fr 1fr grid${div ? " in a div" : ""}`;
+    const { changes, width, div } = cards[i];
+    const at = `${label(cards[i])} ${JSON.stringify(changes)} in a ${width}px 1fr 1fr grid${div ? " in a div" : ""}`;
     const column = (width - 8) / 2;
     if (Math.abs(r.width - column) > 1) bad.push(`${at}: ${r.width}px, its column ${column}px`);
     if (div && Math.abs(r.wrapperWidth - column) > 1) bad.push(`${at}: its div ${r.wrapperWidth}px, its column ${column}px`);

@@ -255,12 +255,15 @@ test("mini card: compact, unfolds into the full card", () => {
   assert.match(out, /class="section enter s-daily"/);
   assert.match(out, /mdi:arrow-collapse/);
   assert.match(out, /data-action="popup".*data-action="zoom"/);
+  // The host carries the unfolded state: its preferred width is then the full card's (sections.js, :host::before).
+  assert.equal(el.hasAttribute("zoomed"), true);
   // A click in the full screen detail opened from the zoomed view leaves the card zoomed.
   el._onClick({ composedPath: () => [{ dataset: { action: "popup" } }] });
   el._onUnzoom({ composedPath: () => [lib.document.body.children[0]] });
   assert.equal(el._zoomed, true);
   el._onUnzoom({ composedPath: () => [] });
   assert.equal(el._zoomed, false);
+  assert.equal(el.hasAttribute("zoomed"), false);
   el._closePopup();
   assert.doesNotMatch(html(mount(lib, "weather-plus-mini-card", { zoom: false }, makeHass())), /data-action="zoom"/);
 });

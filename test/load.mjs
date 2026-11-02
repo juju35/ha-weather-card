@@ -37,6 +37,15 @@ export const load = (now = null) => {
     constructor() {
       this.style = {};
       this.events = [];
+      this.attrs = new Set();
+    }
+    toggleAttribute(name, on = !this.attrs.has(name)) {
+      if (on) this.attrs.add(name);
+      else this.attrs.delete(name);
+      return on;
+    }
+    hasAttribute(name) {
+      return this.attrs.has(name);
     }
     attachShadow() {
       this.shadowRoot = fakeNode();

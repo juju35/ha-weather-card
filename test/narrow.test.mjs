@@ -57,7 +57,10 @@ test("narrow: sized by its content (inline-block, a grid's auto column, layout-c
   assert.equal(before.display, "grid");
   assert.equal(before.height, "0");
   assert.ok(track(":host::before") >= 240, `full card: ${before["grid-template-columns"]}`);
-  assert.ok(track(":host(weather-plus-mini-card)::before") >= 156, `mini card: ${base(":host(weather-plus-mini-card)::before")["grid-template-columns"]}`);
+  const mini = ":host(weather-plus-mini-card:not([zoomed]))::before";
+  assert.ok(track(mini) >= 156, `mini card: ${base(mini)["grid-template-columns"]}`);
+  // Unfolded ([zoomed], set by _setZoom), the mini card shows the full card: the full card's width (rule above).
+  assert.ok(track(mini) < track(":host::before"));
   // A min-content width (contain-intrinsic-*, a px min-width on the host) would overflow a 1fr 1fr grid when the
   // card is wrapped in a div (hui-card, a stack), whose min-width stays auto.
   assert.ok(!/contain-intrinsic/.test(lib.WX_STYLES), "no contain-intrinsic-* size");
