@@ -180,17 +180,28 @@ test("card: no warning, rain now, clear night, no animation", () => {
       { animations: false },
       makeHass("en", {
         "weather.paris": { state: "clear-night" },
+        "sun.sun": { state: "below_horizon" },
         "sensor.75_weather_alert": { state: "Vert", "Vent violent": "Vert", Orages: "Vert" },
         "sensor.blitzortung_lightning_counter": { state: 0 },
         "sensor.paris_next_rain": { "1_hour_forecast": { "0 min": "Pluie faible", "5 min": "Pluie faible", "10 min": "Temps sec" } },
       }),
     ),
   );
-  assert.match(out, /class="scene c-clear-night day still"/);
+  assert.match(out, /class="scene c-clear-night night still"/);
   assert.match(out, /No weather warning/);
   assert.match(out, /Light rain now, stopping in 10 min/);
   assert.match(out, /class="st" style="--st-color:#5c6bc0" title="Clear night"><span class="dot"><\/span><span class="stt">Clear night<\/span>/);
   assert.match(out, /<ha-card class="still">/);
+});
+
+test("card: a clear night reported while the sun is up reads as sunny", () => {
+  const out = html(card({ animations: false }, makeHass("en", { "weather.paris": { state: "clear-night" }, "sensor.75_weather_alert": { state: "Vert", "Vent violent": "Vert", Orages: "Vert" } })));
+  assert.match(out, /class="scene c-sunny day still"/);
+  assert.match(out, /icon="mdi:weather-sunny"/);
+  assert.doesNotMatch(out, /Clear night/);
+  assert.equal(lib.wxCondIcon("clear-night", false), "mdi:weather-sunny");
+  assert.equal(lib.wxCondIcon("clear-night", true), "mdi:weather-night");
+  assert.equal(lib.wxCondIcon("clear-night"), "mdi:weather-night");
 });
 
 test("card: lightning nearby goes to the status pill when there is no warning", () => {
@@ -396,7 +407,7 @@ test("moon: section and night scene follow today's phase; the Moon integration n
   assert.match(moon, /<b>Gibbeuse croissante<\/b><span>Éclairée à \d+ % · jour \d+ sur 29/);
   assert.match(moon, /data-more="sensor.moon_phase"/);
   assert.ok(moon.indexOf("Pleine lune") < moon.indexOf("Nouvelle lune"));
-  const night = html(card({}, makeHass("en", { "weather.paris": { state: "clear-night" } })));
+  const night = html(card({}, makeHass("en", { "weather.paris": { state: "clear-night" }, "sun.sun": { state: "below_horizon" } })));
   assert.match(night, /class="earthshine"/);
 });
 

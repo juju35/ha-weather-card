@@ -2283,14 +2283,23 @@ const wxInk = (color, pct = 40) => `color-mix(in srgb, ${color} ${pct}%, var(--p
 
 const wxCondLabel = (lang, cond) => (WX_CONDITIONS[cond] ? wxT(lang, `c_${cond.replace(/-/g, "_")}`) : cond ? String(cond) : "—");
 
-// The icon of a condition; at night the sunny and partly cloudy icons become their night versions.
+// The condition as the sky stands: a provider's "clear-night" by day is a clear day. Météo-France, for one, keeps
+// its night slot ("Nuit claire") for a while after sunrise. Only an explicit day (`night === false`) turns it.
+const wxDayCond = (cond, night) => (night === false && cond === "clear-night" ? "sunny" : cond);
+
+// The icon of a condition; at night the sunny and partly cloudy icons become their night versions, by day a clear
+// night becomes sunny.
 function wxCondIcon(cond, night) {
+  cond = wxDayCond(cond, night);
   if (night && cond === "sunny") return "mdi:weather-night";
   if (night && cond === "partlycloudy") return "mdi:weather-night-partly-cloudy";
   return WX_CONDITIONS[cond]?.icon || "mdi:weather-cloudy-alert";
 }
 
-const wxCondColor = (cond, night) => (night && (cond === "sunny" || cond === "partlycloudy") ? WX_CONDITIONS["clear-night"].color : WX_CONDITIONS[cond]?.color || WX_IDLE);
+const wxCondColor = (cond, night) => {
+  cond = wxDayCond(cond, night);
+  return night && (cond === "sunny" || cond === "partlycloudy") ? WX_CONDITIONS["clear-night"].color : WX_CONDITIONS[cond]?.color || WX_IDLE;
+};
 
 const WX_STORM = new Set(["lightning", "lightning-rainy"]);
 

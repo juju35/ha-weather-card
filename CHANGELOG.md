@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.6 - 2026-11-02
+
+### Fixes
+- A clear night reported while the sun is up now shows as sunny: the sun, the day scene, the "Sunny" label and pill, the sunny icon. Météo-France keeps its "Nuit claire" for a while after sunrise; `sun.sun` now decides day or night, as it already did for the other conditions. The hourly and daily forecasts do the same with a daytime "clear-night". Without `sun.sun` the provider's condition is kept as is.
+
 ## 1.9.5 - 2026-11-01
 
 ### Fixes

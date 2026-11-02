@@ -503,8 +503,9 @@ class WeatherPlusCard extends WxElement {
     const st = this._st(ent.weather);
     const a = st.attributes;
     const sun = this._sunModel(ent);
-    const cond = st.state;
-    const night = sun ? !sun.up : cond === "clear-night";
+    // sun.sun decides day or night when there is one; a "clear-night" while the sun is up then reads as sunny.
+    const night = sun ? !sun.up : st.state === "clear-night";
+    const cond = wxDayCond(st.state, night);
     const tempUnit = a.temperature_unit || hass.config?.unit_system?.temperature || "°C";
     const fc = this._fc || {};
     const now = Date.now();
