@@ -152,7 +152,7 @@ export const load = (now = null) => {
   return vm.runInContext(
     `${code}
     ({ WX_I18N, WX_CARDINALS, wxLang, wxIntlLang, wxResolve, wxFindWeather, wxPollenLevel, wxAlertLevel, wxDroughtLevel, wxRainLevel, wxUvLevel, wxBearing, wxCleanConfig,
-       wxSceneSvg, wxTempColor, document, wxSunTimes, wxMoonTimes, wxAltitude, wxMoonAge, wxMoonPhase, wxMoonLight, wxMoonLit, wxWeatherName, WX_CONDITIONS,
+       wxSceneSvg, wxCondIcon, wxTempColor, document, wxSunTimes, wxMoonTimes, wxAltitude, wxMoonAge, wxMoonPhase, wxMoonLight, wxMoonLit, wxWeatherName, WX_CONDITIONS,
        WX_UV, WX_ALERT_COLORS, WX_VG_COLORS, WX_AQ_COLORS, WX_LEVEL_COLORS, WX_RAIN_COLORS, WX_STYLES, WX_POPUP_STYLES, customElements, window, timers,
        cards: Object.fromEntries(${JSON.stringify(tags)}.map((t) => [t, customElements.get(t)])) })`,
     ctx,
