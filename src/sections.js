@@ -539,11 +539,12 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   :host { display: block; height: 100%; min-width: 0; }
   /* The card is a size container (below): on a narrow card (Sections view, 6 to 9 columns) its parts follow the
      card's width, not the window's. Sized by its content (an inline-block, a grid's auto column, layout-card), a size
-     container counts as 0px wide: this empty, 0px high grid gives the card 326px there (206px for the mini card).
+     container counts as 0px wide: this empty, 0px high grid gives the card 326px there (206px for the mini card, 326px
+     again once unfolded: it then shows the full card).
      Its track is minmax(0, …): that width is the card's preferred width only, never its minimum, so the card (or the
      div that wraps it, whose min-width stays auto) still shrinks to its column in a 1fr 1fr grid or a stack. */
   :host::before { content: ""; display: grid; grid-template-columns: minmax(0, 326px); height: 0; }
-  :host(weather-plus-mini-card)::before { grid-template-columns: minmax(0, 206px); }
+  :host(weather-plus-mini-card:not([zoomed]))::before { grid-template-columns: minmax(0, 206px); }
   ha-card { height: 100%; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden;
             container-type: inline-size; }
   ha-card > *, .section, .info, .hero > div { min-width: 0; }

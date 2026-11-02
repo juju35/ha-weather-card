@@ -2666,8 +2666,10 @@ const wxMini = (Base) =>
       return `<button class="zoom" data-action="zoom" title="${label}" aria-label="${label}"><ha-icon icon="${z ? "mdi:arrow-collapse" : "mdi:arrow-expand"}"></ha-icon></button>`;
     }
 
+    // The host carries the state ([zoomed]): unfolded, its preferred width (sections.js, :host::before) is the full card's.
     _setZoom(on) {
       this._zoomed = on;
+      this.toggleAttribute("zoomed", !!on);
       this._update();
     }
 
