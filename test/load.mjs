@@ -37,6 +37,15 @@ export const load = (now = null) => {
     constructor() {
       this.style = {};
       this.events = [];
+      this.attrs = new Set();
+    }
+    toggleAttribute(name, on = !this.attrs.has(name)) {
+      if (on) this.attrs.add(name);
+      else this.attrs.delete(name);
+      return on;
+    }
+    hasAttribute(name) {
+      return this.attrs.has(name);
     }
     attachShadow() {
       this.shadowRoot = fakeNode();
@@ -144,7 +153,7 @@ export const load = (now = null) => {
     `${code}
     ({ WX_I18N, WX_CARDINALS, wxLang, wxIntlLang, wxResolve, wxFindWeather, wxPollenLevel, wxAlertLevel, wxDroughtLevel, wxRainLevel, wxUvLevel, wxBearing, wxCleanConfig,
        wxSceneSvg, wxTempColor, document, wxSunTimes, wxMoonTimes, wxAltitude, wxMoonAge, wxMoonPhase, wxMoonLight, wxMoonLit, wxWeatherName, WX_CONDITIONS,
-       WX_UV, WX_ALERT_COLORS, WX_VG_COLORS, WX_AQ_COLORS, WX_LEVEL_COLORS, WX_RAIN_COLORS, WX_STYLES, customElements, window, timers,
+       WX_UV, WX_ALERT_COLORS, WX_VG_COLORS, WX_AQ_COLORS, WX_LEVEL_COLORS, WX_RAIN_COLORS, WX_STYLES, WX_POPUP_STYLES, customElements, window, timers,
        cards: Object.fromEntries(${JSON.stringify(tags)}.map((t) => [t, customElements.get(t)])) })`,
     ctx,
   );

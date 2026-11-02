@@ -154,7 +154,7 @@ const WX_I18N = {
     vg_4: "crisis",
     lightning: "Lightning",
     strikes: "{n} strikes",
-    strikes_1: "1 strike",
+    strikes_one: "{n} strike",
     lightning_count: "Lightning: {s}",
     lightning_n: "Lightning {d} away ({s})",
     lightning_near: "Lightning {d} away",
@@ -375,7 +375,7 @@ const WX_I18N = {
     vg_4: "crise",
     lightning: "Foudre",
     strikes: "{n} impacts",
-    strikes_1: "1 impact",
+    strikes_one: "{n} impact",
     lightning_count: "Foudre : {s}",
     lightning_n: "Foudre à {d} ({s})",
     lightning_near: "Foudre à {d}",
@@ -592,7 +592,7 @@ const WX_I18N = {
     vg_4: "Krise",
     lightning: "Blitze",
     strikes: "{n} Einschläge",
-    strikes_1: "1 Einschlag",
+    strikes_one: "{n} Einschlag",
     lightning_count: "Blitze: {s}",
     lightning_n: "Blitze in {d} Entfernung ({s})",
     lightning_near: "Blitze in {d} Entfernung",
@@ -809,7 +809,7 @@ const WX_I18N = {
     vg_4: "crisis",
     lightning: "Rayos",
     strikes: "{n} impactos",
-    strikes_1: "1 impacto",
+    strikes_one: "{n} impacto",
     lightning_count: "Rayos: {s}",
     lightning_n: "Rayos a {d} ({s})",
     lightning_near: "Rayos a {d}",
@@ -990,10 +990,10 @@ const WX_I18N = {
     now: "Сада",
     min_n: "{n} мин",
     vigilance_level: "{v} упозорење",
-    lvl_1: "Зелени",
-    lvl_2: "Жути",
-    lvl_3: "Наранџасти",
-    lvl_4: "Црвени",
+    lvl_1: "Зелено",
+    lvl_2: "Жуто",
+    lvl_3: "Наранџасто",
+    lvl_4: "Црвено",
     ph_wind: "Јак ветар",
     ph_rain_flood: "Обилна киша",
     ph_thunderstorm: "Грмљавина",
@@ -1026,7 +1026,7 @@ const WX_I18N = {
     vg_4: "криза",
     lightning: "Муње",
     strikes: "{n} удара",
-    strikes_1: "1 удар",
+    strikes_one: "{n} удар",
     lightning_count: "Муње: {s}",
     lightning_n: "Муње на {d} удаљености ({s})",
     lightning_near: "Муње на {d} удаљености",
@@ -1207,10 +1207,10 @@ const WX_I18N = {
     now: "Sada",
     min_n: "{n} min",
     vigilance_level: "{v} upozorenje",
-    lvl_1: "Zeleni",
-    lvl_2: "Žuti",
-    lvl_3: "Narandžasti",
-    lvl_4: "Crveni",
+    lvl_1: "Zeleno",
+    lvl_2: "Žuto",
+    lvl_3: "Narandžasto",
+    lvl_4: "Crveno",
     ph_wind: "Jak vetar",
     ph_rain_flood: "Obilna kiša",
     ph_thunderstorm: "Grmljavina",
@@ -1243,7 +1243,7 @@ const WX_I18N = {
     vg_4: "kriza",
     lightning: "Munje",
     strikes: "{n} udara",
-    strikes_1: "1 udar",
+    strikes_one: "{n} udar",
     lightning_count: "Munje: {s}",
     lightning_n: "Munje na {d} udaljenosti ({s})",
     lightning_near: "Munje na {d} udaljenosti",
@@ -1460,7 +1460,7 @@ const WX_I18N = {
     vg_4: "crisi",
     lightning: "Fulmini",
     strikes: "{n} scariche",
-    strikes_1: "1 scarica",
+    strikes_one: "{n} scarica",
     lightning_count: "Fulmini: {s}",
     lightning_n: "Fulmini a {d} ({s})",
     lightning_near: "Fulmini a {d}",
@@ -1677,7 +1677,7 @@ const WX_I18N = {
     vg_4: "crisis",
     lightning: "Bliksem",
     strikes: "{n} inslagen",
-    strikes_1: "1 inslag",
+    strikes_one: "{n} inslag",
     lightning_count: "Bliksem: {s}",
     lightning_n: "Bliksem op {d} ({s})",
     lightning_near: "Bliksem op {d}",
@@ -1894,7 +1894,7 @@ const WX_I18N = {
     vg_4: "crise",
     lightning: "Relâmpagos",
     strikes: "{n} descargas",
-    strikes_1: "1 descarga",
+    strikes_one: "{n} descarga",
     lightning_count: "Relâmpagos: {s}",
     lightning_n: "Relâmpagos a {d} ({s})",
     lightning_near: "Relâmpagos a {d}",
@@ -2111,7 +2111,7 @@ const WX_I18N = {
     vg_4: "kryzys",
     lightning: "Pioruny",
     strikes: "uderzenia: {n}",
-    strikes_1: "1 uderzenie",
+    strikes_one: "{n} uderzenie",
     lightning_count: "Pioruny – {s}",
     lightning_n: "Pioruny {d} stąd ({s})",
     lightning_near: "Pioruny {d} stąd",
@@ -2599,8 +2599,10 @@ function wxResolve(hass, weatherId, over = {}) {
 
 // ── Base element ─────────────────────────────────────────────────────────────
 class WxElement extends HTMLElement {
+  // 9 columns at least: narrower (156px in the narrowest section), the scene, the temperature and the daily rows no
+  // longer fit. The mini card goes down to 6.
   getGridOptions() {
-    return { columns: 12, min_columns: 6 };
+    return { columns: 12, min_columns: 9 };
   }
 
   _lang() {
@@ -2664,15 +2666,17 @@ const wxMini = (Base) =>
       return `<button class="zoom" data-action="zoom" title="${label}" aria-label="${label}"><ha-icon icon="${z ? "mdi:arrow-collapse" : "mdi:arrow-expand"}"></ha-icon></button>`;
     }
 
+    // The host carries the state ([zoomed]): unfolded, its preferred width (sections.js, :host::before) is the full card's.
     _setZoom(on) {
       this._zoomed = on;
+      this.toggleAttribute("zoomed", !!on);
       this._update();
     }
 
     // From the keyboard (Enter / Space: no click count), the focus follows to the button that replaced this one.
     _toggleZoom(ev) {
       this._setZoom(!this._zoomed);
-      if (ev.detail === 0) this.shadowRoot.querySelector(".zoom")?.focus();
+      if (ev.detail === 0) this.shadowRoot.querySelector(".zoom")?.focus({ preventScroll: true });
     }
   };
 

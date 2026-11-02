@@ -7,7 +7,8 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { addCards, DAY, launch, NIGHT, openPage, root } from "./harness.mjs";
+import { addCards, DAY, launch, NIGHT, openPage, root, seekAnimations } from "./harness.mjs";
+import { writeIfChanged } from "./write-if-changed.mjs";
 import { conditionCards } from "./weather.mjs";
 
 const SCENES = [
@@ -28,9 +29,9 @@ const gif = (dir, out, filter) => {
   execFileSync("ffmpeg", [
     "-y", "-loglevel", "error", "-framerate", String(FPS), "-i", join(dir, "f%03d.png"),
     "-vf", `${filter},split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=4`,
-    "-loop", "0", out,
+    "-loop", "0", `${out}.new.gif`,
   ]);
-  console.log(out.slice(root.length));
+  console.log(`${out.slice(root.length)}${writeIfChanged(`${out}.new.gif`, out) ? "" : " (unchanged)"}`);
 };
 
 // Every GIF in both themes: the light one as X.gif, its dark twin as X-dark.gif.
@@ -45,12 +46,8 @@ for (const [theme, suffix] of [
   const dir = mkdtempSync(join(tmpdir(), "wx-frames-"));
   const frames = Math.round(FPS * SECONDS);
   for (let i = 0; i < frames; i++) {
-    await page.evaluate((t) => {
-      for (const a of document.getAnimations()) {
-        a.pause();
-        a.currentTime = t;
-      }
-    }, 5000 + (i * 1000) / FPS);
+    const paused = await seekAnimations(page, 5000 + (i * 1000) / FPS);
+    if (!paused) throw new Error("no animation to step: the GIF would be a real-time capture");
     // The cards on the theme background, with the body's 16px padding around them, like the still shots.
     const box = await page.locator("#root").boundingBox();
     await page.screenshot({

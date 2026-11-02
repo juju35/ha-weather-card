@@ -136,7 +136,7 @@ test("card: rain in the next hour, alerts, VigiEau, lightning, pollen, UV and su
   const pol = out.slice(out.indexOf("s-pollen"));
   assert.match(pol, /<span class="uvval" style="--k:#f0e641">3<\/span>.*<b[^>]*>Moyen<\/b><span>Allergiques : garder son traitement à portée · surtout graminées/);
   assert.equal((pol.match(/class="prow"/g) || []).length, 6);
-  assert.match(out, /class="chip tint"[^>]*title="Risque pollinique"><ha-icon icon="mdi:flower-pollen"><\/ha-icon>Pollens : moyen/);
+  assert.match(out, /class="chip tint"[^>]*title="Risque pollinique"><ha-icon icon="mdi:flower-pollen"><\/ha-icon><span class="ct">Pollens : moyen/);
   assert.match(out, /Modéré.*Lunettes et crème solaire/);
   assert.match(out, /class="sun up"/);
   assert.match(out, /10 h 28 de jour/);
@@ -153,7 +153,7 @@ test("card: sections follow `sections`, and hide without data", () => {
   // The rain section is left with the totals of the hourly forecast.
   assert.match(bare, /s-rain.*Next 6 h: /);
   // Only the storm of the hourly forecast is left in the alerts.
-  assert.match(bare, /s-alerts.*Storms possible at 6 PM<\/span><\/div><\/div>/);
+  assert.match(bare, /s-alerts.*Storms possible at 6 PM<\/span><\/span><\/div><\/div>/);
   assert.match(bare, /s-daily/);
   assert.match(bare, /s-uv/); // from the weather entity's uv_index
 });
@@ -255,12 +255,15 @@ test("mini card: compact, unfolds into the full card", () => {
   assert.match(out, /class="section enter s-daily"/);
   assert.match(out, /mdi:arrow-collapse/);
   assert.match(out, /data-action="popup".*data-action="zoom"/);
+  // The host carries the unfolded state: its preferred width is then the full card's (sections.js, :host::before).
+  assert.equal(el.hasAttribute("zoomed"), true);
   // A click in the full screen detail opened from the zoomed view leaves the card zoomed.
   el._onClick({ composedPath: () => [{ dataset: { action: "popup" } }] });
   el._onUnzoom({ composedPath: () => [lib.document.body.children[0]] });
   assert.equal(el._zoomed, true);
   el._onUnzoom({ composedPath: () => [] });
   assert.equal(el._zoomed, false);
+  assert.equal(el.hasAttribute("zoomed"), false);
   el._closePopup();
   assert.doesNotMatch(html(mount(lib, "weather-plus-mini-card", { zoom: false }, makeHass())), /data-action="zoom"/);
 });
@@ -1188,4 +1191,51 @@ test("reduced motion: the system setting stops the card's transitions too, not o
   assert.ok(m, "a reduced motion rule for the card");
   assert.match(m[1], /animation: none !important/);
   assert.match(m[1], /transition: none !important/);
+});
+
+test("i18n: Serbian warning pill agrees with the neuter « upozorenje », Cyrillic and Latin", () => {
+  const storm = { "sensor.75_weather_alert": { state: "Orange", Orages: "Orange", "Vent violent": "Jaune" } };
+  const pill = (lang, changes) => html(card({}, makeHass(lang, changes))).match(/<span class="stt">([^<]*)<\/span>/)[1];
+  assert.equal(pill("sr-Latn", storm), "Narandžasto upozorenje");
+  assert.equal(pill("sr", storm), "Наранџасто упозорење");
+  const yellow = { "sensor.75_weather_alert": { state: "Jaune", Orages: "Jaune" } };
+  assert.equal(pill("sr-Latn", yellow), "Žuto upozorenje");
+  assert.equal(pill("sr", yellow), "Жуто упозорење");
+  const red = { "sensor.75_weather_alert": { state: "Rouge", Orages: "Rouge" } };
+  assert.equal(pill("sr-Latn", red), "Crveno upozorenje");
+  assert.equal(pill("sr", red), "Црвено упозорење");
+  // The phenomenon chips keep their own adjective.
+  assert.match(html(card({}, makeHass("sr-Latn", storm))), /narandžasti/);
+});
+
+test("i18n: the lightning strikes follow each language's plural rules (1, 2, 5, 21, 22)", () => {
+  const strikes = (lang, n) => {
+    const out = html(
+      card(
+        {},
+        makeHass(lang, {
+          "sensor.blitzortung_lightning_counter": { state: n },
+          "sensor.blitzortung_lightning_distance": { state: "unknown" },
+        }),
+      ),
+    );
+    return out.match(new RegExp(`${lib.WX_I18N[lang].lightning_count.replace("{s}", "([^<]*)")}<`))[1];
+  };
+  const cases = {
+    en: ["1 strike", "2 strikes", "5 strikes", "21 strikes", "22 strikes"],
+    fr: ["1 impact", "2 impacts", "5 impacts", "21 impacts", "22 impacts"],
+    sr: ["1 удар", "2 удара", "5 удара", "21 удар", "22 удара"],
+    "sr-Latn": ["1 udar", "2 udara", "5 udara", "21 udar", "22 udara"],
+    pl: ["1 uderzenie", "uderzenia: 2", "uderzenia: 5", "uderzenia: 21", "uderzenia: 22"],
+    pt: ["1 descarga", "2 descargas", "5 descargas", "21 descargas", "22 descargas"],
+  };
+  for (const [lang, want] of Object.entries(cases)) {
+    assert.deepEqual(
+      [1, 2, 5, 21, 22].map((n) => strikes(lang, n)),
+      want,
+      lang,
+    );
+  }
+  // Every language has a singular for 1.
+  for (const lang of Object.keys(lib.WX_I18N)) assert.doesNotMatch(strikes(lang, 1), /^\D*$/, lang);
 });

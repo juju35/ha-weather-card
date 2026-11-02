@@ -70,10 +70,18 @@ const wxSectionTitle = (card, key, extra = "") =>
 const wxChip = (icon, text, { color, cls = "", more, title, style } = {}) =>
   `<span class="chip ${cls}"${color ? ` style="--k:${color}${style ? `;${style}` : ""}"` : style ? ` style="${style}"` : ""}${
     more ? ` data-more="${wxEsc(more)}" role="button" tabindex="0"` : ""
-  }${title ? ` title="${wxEsc(title)}"` : ""}><ha-icon icon="${icon}"></ha-icon>${wxEsc(text)}</span>`;
+  }${title ? ` title="${wxEsc(title)}"` : ""}><ha-icon icon="${icon}"></ha-icon><span class="ct">${wxEsc(text)}</span></span>`;
 
 // ── Alerts: weather warnings, drought restrictions, lightning nearby, storms in the forecast ──
-const wxStrikes = (card, n) => (n === 1 ? card._t("strikes_1") : card._t("strikes", { n: wxFmtNum(card._fmtLang(), n, 0) }));
+// "strikes_one" where the language's plural rule says "one" (1, and 21, 31… in Serbian), else "strikes".
+const wxStrikes = (card, n) => {
+  const shown = Math.round(n);
+  let one = shown === 1;
+  try {
+    one = new Intl.PluralRules(card._lang()).select(shown) === "one";
+  } catch {}
+  return card._t(one ? "strikes_one" : "strikes", { n: wxFmtNum(card._fmtLang(), shown, 0) });
+};
 
 function wxAlertChips(card, m, { onlyActive = false } = {}) {
   const out = [];
@@ -528,8 +536,17 @@ const WX_SECTION_RENDER = {
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 const WX_STYLES = `${WX_SCENE_STYLES}
-  :host { display: block; height: 100%; }
-  ha-card { height: 100%; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+  :host { display: block; height: 100%; min-width: 0; }
+  /* The card is a size container (below): on a narrow card (Sections view, 6 to 9 columns) its parts follow the
+     card's width, not the window's. Sized by its content (an inline-block, a grid's auto column, layout-card), a size
+     container counts as 0px wide: this empty, 0px high grid gives the card 326px there (206px for the mini card, 326px
+     again once unfolded: it then shows the full card).
+     Its track is minmax(0, …): that width is the card's preferred width only, never its minimum, so the card (or the
+     div that wraps it, whose min-width stays auto) still shrinks to its column in a 1fr 1fr grid or a stack. */
+  :host::before { content: ""; display: grid; grid-template-columns: minmax(0, 326px); height: 0; }
+  :host(weather-plus-mini-card:not([zoomed]))::before { grid-template-columns: minmax(0, 206px); }
+  ha-card { height: 100%; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden;
+            container-type: inline-size; }
   ha-card > *, .section, .info, .hero > div { min-width: 0; }
   .empty { display: flex; align-items: center; gap: 10px; color: var(--secondary-text-color); }
   /* The body starts 8px under the header, like the other ha-* cards (the card's gap is 12px, 8px on the mini card). */
@@ -538,11 +555,14 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .badge { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
            background: color-mix(in srgb, var(--wx-color) 16%, transparent); color: var(--wx-color); transition: background .4s, color .4s; }
   .badge ha-icon { --mdc-icon-size: 24px; }
-  .titles { flex: 1; min-width: 0; cursor: pointer; }
+  /* The title takes the room the pill leaves (base 0, so the pill keeps its whole text while there is room for both),
+     and keeps 4 characters and its ellipsis whatever the pill's length. */
+  .titles { flex: 1 1 0; min-width: 5ch; cursor: pointer; }
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  /* The pill gives way to the title on a narrow card: it shrinks down to its dot and ellipsizes its text. */
-  .st { display: inline-flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 0; max-width: 50%; overflow: hidden; padding: 1px 8px;
+  /* The pill gives way only when the title is down to its 4 characters: then it ellipsizes its text, and on the
+     narrowest cards shows its dot only (see @container). */
+  .st { position: relative; display: inline-flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 0; overflow: hidden; padding: 1px 8px;
         border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap; background: color-mix(in srgb, var(--st-color, var(--wx-color)) 18%, transparent);
         color: ${wxInk("var(--st-color, var(--wx-color))")}; }
   .st .dot { flex: none; background: var(--st-color, var(--wx-color)); }
@@ -552,7 +572,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   .st.alert .dot { animation: wx-blink 1.4s ease-in-out infinite; }
   button { font: inherit; cursor: pointer; border: none; }
-  .zoom { all: unset; flex-shrink: 0; cursor: pointer; width: 24px; height: 24px; margin: -4px -4px -4px 0; border-radius: 50%;
+  .zoom { all: unset; flex: none; cursor: pointer; width: 24px; height: 24px; margin: -4px -4px -4px 0; border-radius: 50%;
           display: grid; place-items: center; color: var(--secondary-text-color); }
   .zoom ha-icon { --mdc-icon-size: 16px; }
   .refresh[data-busy] { cursor: progress; color: var(--primary-color, #03a9f4); }
@@ -571,13 +591,15 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .feels { font-size: 12px; color: var(--secondary-text-color); }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; padding: 1px 8px 1px 5px; border-radius: 12px;
-          background: var(--secondary-background-color, rgba(128,128,128,.12)); color: var(--secondary-text-color); white-space: nowrap; }
-  .chip ha-icon { --mdc-icon-size: 13px; }
+          background: var(--secondary-background-color, rgba(128,128,128,.12)); color: var(--secondary-text-color); white-space: nowrap;
+          max-width: 100%; min-width: 0; box-sizing: border-box; }
+  .chip ha-icon { --mdc-icon-size: 13px; flex: none; }
+  .chip .ct { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .chip.tint { background: color-mix(in srgb, var(--k) 20%, transparent); color: ${wxInk("var(--k)")}; }
   .chip.tint ha-icon { color: var(--k); }
   .chip.pulse { animation: wx-chip 2s ease-in-out infinite; }
   .chip.bolt ha-icon { animation: wx-blink 1.2s steps(2) infinite; }
-  .chip .arrow { display: inline-flex; transition: transform .6s; }
+  .chip .arrow { display: inline-flex; flex: none; transition: transform .6s; }
 
   .section { display: flex; flex-direction: column; gap: 8px; }
   .section-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; text-transform: uppercase;
@@ -632,7 +654,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .wcol ha-icon { --mdc-icon-size: 12px; }
   .wcol.strong { color: ${wxInk("#26a69a", 60)}; font-weight: 600; }
   .daily { display: flex; flex-direction: column; gap: 4px; }
-  .drow { display: grid; grid-template-columns: 84px 24px 38px 30px 1fr 30px; align-items: center; gap: 8px; font-size: 13px; }
+  .drow { display: grid; grid-template-columns: minmax(0, 84px) 24px 38px 30px 1fr 30px; align-items: center; gap: 8px; font-size: 13px; }
   .enter .drow, .enter .prow { animation: wx-slide .45s ease-out both; animation-delay: var(--d, 0s); }
   .drow .day { color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .drow ha-icon { --mdc-icon-size: 22px; }
@@ -719,6 +741,31 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   ha-card.still *:not(.refresh > ha-icon), ha-card.still *::before { animation: none !important; }
   @media (prefers-reduced-motion: reduce) { ha-card * { animation: none !important; transition: none !important; } }
   @media (max-width: 420px) { .pollen { grid-template-columns: 1fr; } }
+
+  /* Narrow cards (the content box of the card: a 6-column card in a Sections view is 156 to 246px wide, 9 columns 238 to 370px). */
+  @container (max-width: 300px) {
+    .hero { gap: 10px; }
+    .scene { width: 88px; height: 70px; border-radius: 12px; }
+    .pollen { grid-template-columns: 1fr; }
+  }
+  @container (max-width: 280px) {
+    .drow { grid-template-columns: minmax(0, 1fr) 24px 38px 30px 30px; }
+    .drow .range { display: none; }
+  }
+  /* Below this, the pill's text would be down to a letter or two: the pill shows its dot only, its text in its title. */
+  @container (max-width: 220px) {
+    .st { padding: 4px; }
+    .st .stt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    ha-card.mini .scene { width: 64px; height: 52px; border-radius: 10px; }
+    .content { gap: 8px; }
+  }
+  @container (max-width: 190px) {
+    .header { gap: 6px; }
+    /* The rain in the next hour wraps rather than losing its time. */
+    .line .rain-text { white-space: normal; }
+    ha-card.mini .badge { display: none; }
+    ha-card.mini .content > div:first-child, .hero > div:first-child { display: none; }
+  }
 `;
 
 // ── Full screen detail ───────────────────────────────────────────────────────
@@ -739,7 +786,7 @@ const WX_POPUP_STYLES = `
   /* The full screen detail keeps its larger, lighter temperature. */
   .popup .big .val { font-size: 40px; font-weight: 300; }
   .popup .big .val small { font-size: 18px; }
-  .close { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; margin-left: 4px;
+  .close { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; margin-left: 4px;
            background: var(--secondary-background-color, rgba(128,128,128,.12)); color: var(--primary-text-color); }
   .close:hover { background: color-mix(in srgb, var(--primary-text-color) 14%, transparent); }
   .close:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 2px; }

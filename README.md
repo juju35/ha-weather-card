@@ -38,6 +38,7 @@ Like the other `ha-*` cards: header with a status pill, illustration next to the
 - Every chip, row and reading opens the more-info dialog of its entity
 - **Full screen** button (top right, `popup: false` removes it): the detail over the whole screen and its width, sections side by side as the width allows, with 24 hours and 10 days of forecast; it closes with its button, Escape, a click outside or the back button on a phone
 - **Refresh** button (top right, `refresh: false` removes it): asks the integrations behind the card — weather, rain, alerts, sensors — for fresh data right away; the icon turns while they answer, even with `animations: false` (not with the system's *reduce motion* setting)
+- In a Sections view the card takes the full width (12 columns) and goes down to 9; on a narrow card the scene gets smaller, the status pill shortens its text only when the title is down to a few letters (and on the narrowest cards shows its coloured dot only, its text in the tooltip) and the daily rows leave out their range bar
 
 Sections, in the order of `sections` (a section with no data hides itself):
 
@@ -59,6 +60,7 @@ Sections, in the order of `sections` (a section with no data hides itself):
 
 - The animated scene, the temperature with today's high and low, the rain to come in the hour (or the condition and feels-like temperature), and the active warnings
 - The **detail** button (top right) unfolds the full card, and back, as does a click anywhere else (`zoom: false` removes it); the unfolded card has the **Refresh** and **Full screen** buttons. When the weather is unavailable, the folded card shows the **Refresh** button too, to retry
+- In a Sections view it takes 6 columns (half a section); on the narrowest sections its status pill shows its dot only, then the badge and the scene step aside for the title and the temperature
 
 | Conditions | Night |
 |---|---|

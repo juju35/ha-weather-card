@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import * as mdi from "@mdi/js";
 import { chromium } from "playwright";
 import { DAY, NIGHT, TZ } from "./clock.mjs";
+import { writeIfChanged } from "./write-if-changed.mjs";
 
 export const root = fileURLToPath(new URL("../..", import.meta.url));
 const cardJs = readFileSync(`${root}dist/ha-weather-card.js`, "utf8");
@@ -95,9 +96,29 @@ export const saveFramed = async (browser, { theme, png, width, height, path }) =
     },
     { src: `data:image/png;base64,${png.toString("base64")}`, width, height },
   );
-  await page.screenshot({ path, clip: { x: 0, y: 0, width: width + 34, height: height + 34 } });
+  await page.screenshot({ path: `${path}.new.png`, clip: { x: 0, y: 0, width: width + 34, height: height + 34 } });
   await page.close();
+  return writeIfChanged(`${path}.new.png`, path);
 };
+
+// Pauses every animation of the page at `t` ms, then waits two animation frames so the seek is painted before a
+// capture: the same frames on every run, whatever the machine's speed. The scenes animate inside the cards' shadow
+// roots, which document.getAnimations() leaves out: each shadow root gives its own. Returns how many were paused.
+export const seekAnimations = (page, t) =>
+  page.evaluate(
+    (t) =>
+      new Promise((done) => {
+        const roots = [document];
+        for (let i = 0; i < roots.length; i++) for (const el of roots[i].querySelectorAll("*")) if (el.shadowRoot) roots.push(el.shadowRoot);
+        const all = roots.flatMap((r) => r.getAnimations());
+        for (const a of all) {
+          a.pause();
+          a.currentTime = t;
+        }
+        requestAnimationFrame(() => requestAnimationFrame(() => done(all.length)));
+      }),
+    t,
+  );
 
 // Adds cards to the page: [{ tag, config, hass }]; the forecasts of each mock are served by a subscription stand-in.
 export const addCards = (page, cards, cols = 1) =>
@@ -157,11 +178,11 @@ export const shoot = async ({ shots, setup, width = 460 }) => {
     // The cards on the theme background, with the body's 16px padding around them.
     const box = await page.locator("#root").boundingBox();
     await page.screenshot({
-      path: `${root}${out}`,
+      path: `${root}${out}.new.png`,
       clip: { x: 0, y: 0, width: w + 32, height: Math.ceil(box.height) + 32 },
       animations: "disabled",
     });
-    console.log(out);
+    console.log(writeIfChanged(`${root}${out}.new.png`, `${root}${out}`) ? out : `${out} (unchanged)`);
     await page.close();
   }
   await browser.close();
