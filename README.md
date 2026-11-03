@@ -90,15 +90,26 @@ The other sections read the sensors of these integrations, found by their transl
 | Tomorrow's air and pollen | Atmo France's *-J+1* sensors next to the ones in use | — |
 | Moon phase | [Moon](https://www.home-assistant.io/integrations/moon/) (`sensor.moon_phase`), optional | `moon` |
 
+## Prerequisites
+
+- Home Assistant 2024.8 or later with a `weather` entity
+
 ## Installation
 
-### HACS (recommended)
+### Via HACS (recommended)
 
-1. Open HACS → **Dashboard**
-2. Menu (⋮) → **Custom repositories**
-3. Add `https://github.com/juju35/ha-weather-card` with category **Dashboard**
-4. Search for **Weather Plus Card** and install it
-5. Reload the browser
+Click the button below to add the repository directly:
+
+[![Add to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-weather-card&category=plugin)
+
+Then click **Download**, and reload your browser when HACS asks you to.
+
+Or manually:
+
+1. Open HACS → **⋮** (top right) → **Custom repositories**
+2. Add `https://github.com/juju35/ha-weather-card` — Type: **Dashboard**
+3. Search for **Weather Plus Card** and click **Download**
+4. Clear your browser cache and refresh
 
 ### Manual
 
