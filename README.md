@@ -5,7 +5,7 @@
 [![Validate](https://github.com/juju35/ha-weather-card/actions/workflows/validate.yml/badge.svg)](https://github.com/juju35/ha-weather-card/actions/workflows/validate.yml)
 [![Lint](https://github.com/juju35/ha-weather-card/actions/workflows/lint.yml/badge.svg)](https://github.com/juju35/ha-weather-card/actions/workflows/lint.yml)
 [![Release](https://img.shields.io/github/v/release/juju35/ha-weather-card)](https://github.com/juju35/ha-weather-card/releases/latest)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/juju35/ha-weather-card/blob/main/LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/julienstep9)
 
 An animated weather card for Home Assistant that brings together everything the weather integrations of your instance know: the weather now and its forecasts, **rain in the next hour**, **weather warnings**, **thunderstorms and lightning nearby**, **air quality and pollutants**, **UV index**, **pollen** and **VigiEau drought restrictions**, with a mini card. Add it, it finds the weather entity and the sensors around it by itself. The sky comes alive: the sun turns, clouds drift, rain and snow fall, lightning flashes.
@@ -203,7 +203,7 @@ npm run screenshots  # renders the cards with mock data into screenshots/, and t
 ### Releasing
 
 1. Bump `version` in `package.json`
-2. Add a `## <version>` section at the top of [CHANGELOG.md](CHANGELOG.md)
+2. Add a `## <version>` section at the top of [CHANGELOG.md](https://github.com/juju35/ha-weather-card/blob/main/CHANGELOG.md)
 3. Push to `main`: the **Release** workflow builds the bundle, creates the tag and the GitHub release with the changelog section as notes, and attaches `ha-weather-card.js`
 
 ## Translations
@@ -241,7 +241,7 @@ Contributions for additional languages are welcome!
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/juju35/ha-weather-card/blob/main/LICENSE)
 
 ## Support
 
