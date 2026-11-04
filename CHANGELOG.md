@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.9 - 2026-11-04
+
+### Documentation
+- README: images and links use absolute URLs, so the screenshots, icons, badges and links display in HACS (relative paths broke there).
+- README: screenshots get a display size, so cards no longer show oversized in HACS and on GitHub.
+
 ## 1.9.8 - 2026-11-04
 
 ### New
