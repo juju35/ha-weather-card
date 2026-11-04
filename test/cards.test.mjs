@@ -696,7 +696,7 @@ test("discovery: invalidated when a tracked entity disappears, even with the sta
   assert.notEqual(el._entities().uv, "sensor.paris_uv");
 });
 
-const WX_LANGS = ["en", "fr", "de", "es", "sr", "sr-Latn", "it", "nl", "pt", "pl", "ro", "da", "sv", "bg", "ru", "uk", "hu", "ga", "sk", "cs", "sl", "mt", "lv", "el"];
+const WX_LANGS = ["en", "fr", "de", "es", "sr", "sr-Latn", "it", "nl", "pt", "pl", "ro", "da", "sv", "bg", "ru", "uk", "hu", "sk", "cs", "sl", "lv", "el"];
 
 test("i18n parity: every language has exactly the keys and placeholders of en, and no empty label", () => {
   const en = lib.WX_I18N.en;
@@ -738,7 +738,6 @@ test("editor: the language option lists every dictionary", () => {
   assert.equal(labels.pl, "Polski");
   assert.equal(labels.ro, "Română");
   assert.equal(labels.uk, "Українська");
-  assert.equal(labels.ga, "Gaeilge");
   assert.equal(labels.el, "Ελληνικά");
 });
 
@@ -801,7 +800,7 @@ test("i18n: Italian, Dutch, Portuguese and Polish are picked from the Home Assis
   assert.equal(lib.wxBearing("pl", 315).label, "NW");
 });
 
-test("i18n: the 14 languages added in 1.9.8 are picked from the Home Assistant language", () => {
+test("i18n: the 12 languages added in 1.9.8 are picked from the Home Assistant language", () => {
   const want = {
     ro: /Prognoză/,
     da: /Prognose/,
@@ -810,11 +809,9 @@ test("i18n: the 14 languages added in 1.9.8 are picked from the Home Assistant l
     ru: /Прогноз/,
     uk: /Прогноз/,
     hu: /Előrejelzés/,
-    ga: /Réamhaisnéis/,
     sk: /Predpoveď/,
     cs: /Předpověď/,
     sl: /Napoved/,
-    mt: /Tbassir/,
     lv: /Prognoze/,
     el: /Πρόγνωση/,
   };
