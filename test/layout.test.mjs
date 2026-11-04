@@ -101,7 +101,7 @@ const render = async ({ lang = "en", theme = "light", cards, before }) => {
 
 test.after(() => browser?.close());
 
-const LANGS = ["en", "pl", "sr-Latn"];
+const LANGS = ["en", "pl", "sr-Latn", "ru", "bg", "el"];
 const PHONE = [156, 178, 245];
 
 test("layout: the mini card, unavailable or unknown, keeps its buttons inside at 6 columns of a phone", { skip }, async () => {

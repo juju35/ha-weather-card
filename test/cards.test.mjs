@@ -696,7 +696,7 @@ test("discovery: invalidated when a tracked entity disappears, even with the sta
   assert.notEqual(el._entities().uv, "sensor.paris_uv");
 });
 
-const WX_LANGS = ["en", "fr", "de", "es", "sr", "sr-Latn", "it", "nl", "pt", "pl"];
+const WX_LANGS = ["en", "fr", "de", "es", "sr", "sr-Latn", "it", "nl", "pt", "pl", "ro", "da", "sv", "bg", "ru", "uk", "hu", "sk", "cs", "sl", "lv", "el"];
 
 test("i18n parity: every language has exactly the keys and placeholders of en, and no empty label", () => {
   const en = lib.WX_I18N.en;
@@ -736,6 +736,9 @@ test("editor: the language option lists every dictionary", () => {
   assert.equal(labels.nl, "Nederlands");
   assert.equal(labels.pt, "Português (Portugal)");
   assert.equal(labels.pl, "Polski");
+  assert.equal(labels.ro, "Română");
+  assert.equal(labels.uk, "Українська");
+  assert.equal(labels.el, "Ελληνικά");
 });
 
 test("i18n: the full language when it has a dictionary, else the part before the dash, else English", () => {
@@ -749,6 +752,10 @@ test("i18n: the full language when it has a dictionary, else the part before the
   assert.equal(lang("pt"), "pt");
   assert.equal(lang("pt-BR"), "pt", "Brazilian Portuguese falls back on European Portuguese");
   assert.equal(lang("pl-PL"), "pl");
+  assert.equal(lang("ro-RO"), "ro");
+  assert.equal(lang("sv-FI"), "sv");
+  assert.equal(lang("ru-RU"), "ru");
+  assert.equal(lang("el-GR"), "el");
   assert.equal(lang("ja"), "en");
   assert.equal(lang("constructor"), "en");
   assert.equal(lib.wxLang({ language: "sr-Latn" }, { language: "fr" }), "sr-Latn", "the card's language comes first");
@@ -791,6 +798,30 @@ test("i18n: Italian, Dutch, Portuguese and Polish are picked from the Home Assis
   assert.equal(lib.wxBearing("nl", 135).label, "ZO");
   assert.equal(lib.wxBearing("pt", 225).label, "SO");
   assert.equal(lib.wxBearing("pl", 315).label, "NW");
+});
+
+test("i18n: the 12 languages added in 1.9.8 are picked from the Home Assistant language", () => {
+  const want = {
+    ro: /Prognoză/,
+    da: /Prognose/,
+    sv: /Prognos/,
+    bg: /Прогноза/,
+    ru: /Прогноз/,
+    uk: /Прогноз/,
+    hu: /Előrejelzés/,
+    sk: /Predpoveď/,
+    cs: /Předpověď/,
+    sl: /Napoved/,
+    lv: /Prognoze/,
+    el: /Πρόγνωση/,
+  };
+  for (const [lang, re] of Object.entries(want)) assert.match(html(card({}, makeHass(lang))), re, lang);
+  assert.equal(lib.wxBearing("da", 90).label, "Ø");
+  assert.equal(lib.wxBearing("ru", 225).label, "ЮЗ");
+  assert.equal(lib.wxBearing("hu", 270).label, "Ny");
+  assert.equal(lib.wxBearing("cs", 45).label, "SV");
+  assert.equal(lib.wxBearing("lv", 135).label, "DA");
+  assert.equal(lib.wxBearing("el", 0).label, "Β");
 });
 
 test("full screen detail: an update rewrites the card inside the sheet, keeping its scroll and the hourly strip's", () => {
@@ -1239,6 +1270,11 @@ test("i18n: the lightning strikes follow each language's plural rules (1, 2, 5, 
     "sr-Latn": ["1 udar", "2 udara", "5 udara", "21 udar", "22 udara"],
     pl: ["1 uderzenie", "uderzenia: 2", "uderzenia: 5", "uderzenia: 21", "uderzenia: 22"],
     pt: ["1 descarga", "2 descargas", "5 descargas", "21 descargas", "22 descargas"],
+    ru: ["1 удар", "удары: 2", "удары: 5", "21 удар", "удары: 22"],
+    uk: ["1 удар", "удари: 2", "удари: 5", "21 удар", "удари: 22"],
+    cs: ["1 úder", "údery: 2", "údery: 5", "údery: 21", "údery: 22"],
+    lv: ["1 spēriens", "spērieni: 2", "spērieni: 5", "21 spēriens", "spērieni: 22"],
+    bg: ["1 удар", "2 удара", "5 удара", "21 удара", "22 удара"],
   };
   for (const [lang, want] of Object.entries(cases)) {
     assert.deepEqual(
