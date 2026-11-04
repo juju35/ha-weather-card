@@ -14,7 +14,7 @@ An animated weather card for Home Assistant that brings together everything the 
 
 | Light | Dark |
 |---|---|
-| ![Animated scenes](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scenes.gif) | ![Animated scenes, dark theme](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scenes-dark.gif) |
+| <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scenes.gif" alt="Animated scenes" width="400"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scenes-dark.gif" alt="Animated scenes, dark theme" width="400"> |
 
 | Card | Type | What it shows |
 |---|---|---|
@@ -23,7 +23,7 @@ An animated weather card for Home Assistant that brings together everything the 
 
 | Weather | Storm | Mini |
 |---|---|---|
-| ![Weather](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card.png) | ![Storm](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm.png) | ![Mini](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini.png) |
+| <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card.png" alt="Weather" width="169"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm.png" alt="Storm" width="374"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini.png" alt="Mini" width="400"> |
 
 Like the other `ha-*` cards: header with a status pill, illustration next to the state, mini card with a detail button, a visual editor in the dashboard UI covering every option (the entity overrides in its folded **Advanced** section, as YAML), English, French, German, Spanish, Serbian (Cyrillic and Latin), Italian, Dutch, European Portuguese, Polish, Romanian, Danish, Swedish, Bulgarian, Russian, Ukrainian, Hungarian, Slovak, Czech, Slovenian, Latvian and Greek labels following the Home Assistant language, light and dark themes, a single HACS download with no dependency.
 
@@ -65,7 +65,7 @@ Sections, in the order of `sections` (a section with no data hides itself):
 
 | Conditions | Night |
 |---|---|
-| ![Conditions](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions.png) | ![Night](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night.png) |
+| <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions.png" alt="Conditions" width="329"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night.png" alt="Night" width="315"> |
 
 ## Supported integrations
 
@@ -164,13 +164,13 @@ entity: weather.paris
 
 | | Light | Dark |
 |---|---|---|
-| Weather card | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card-dark.png) |
-| Storm, orange warning | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm-dark.png) |
-| Night | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night-dark.png) |
-| Full screen | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-dark.png) |
-| Full screen, phone | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone-dark.png) |
-| Mini card | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini-dark.png) |
-| Conditions | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions.png) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions-dark.png) |
+| Weather card | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card.png" alt="" width="169"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card-dark.png" alt="" width="169"> |
+| Storm, orange warning | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm.png" alt="" width="374"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm-dark.png" alt="" width="374"> |
+| Night | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night.png" alt="" width="315"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night-dark.png" alt="" width="315"> |
+| Full screen | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup.png" alt="" width="700"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-dark.png" alt="" width="700"> |
+| Full screen, phone | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone.png" alt="" width="241"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone-dark.png" alt="" width="241"> |
+| Mini card | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini.png" alt="" width="400"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini-dark.png" alt="" width="400"> |
+| Conditions | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions.png" alt="" width="329"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions-dark.png" alt="" width="329"> |
 
 ### Animated scenes
 
