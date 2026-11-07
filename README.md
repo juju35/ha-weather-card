@@ -1,6 +1,6 @@
 # ha-weather-card
 
-[![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![Marketplace](https://img.shields.io/badge/Marketplace-Custom-41BDF5.svg)](https://www.home-assistant.io/integrations/marketplace/)
 [![HACS Validation](https://github.com/juju35/ha-weather-card/actions/workflows/hacs.yml/badge.svg)](https://github.com/juju35/ha-weather-card/actions/workflows/hacs.yml)
 [![Validate](https://github.com/juju35/ha-weather-card/actions/workflows/validate.yml/badge.svg)](https://github.com/juju35/ha-weather-card/actions/workflows/validate.yml)
 [![Lint](https://github.com/juju35/ha-weather-card/actions/workflows/lint.yml/badge.svg)](https://github.com/juju35/ha-weather-card/actions/workflows/lint.yml)
@@ -10,7 +10,7 @@
 
 An animated weather card for Home Assistant that brings together everything the weather integrations of your instance know: the weather now and its forecasts, **rain in the next hour**, **weather warnings**, **thunderstorms and lightning nearby**, **air quality and pollutants**, **UV index**, **pollen** and **VigiEau drought restrictions**, with a mini card. Add it, it finds the weather entity and the sensors around it by itself. The sky comes alive: the sun turns, clouds drift, rain and snow fall, lightning flashes.
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-weather-card&category=plugin)
+[![Open your Home Assistant instance and open a repository inside the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=juju35&repository=ha-weather-card&category=plugin)
 
 | Light | Dark |
 |---|---|
@@ -25,7 +25,7 @@ An animated weather card for Home Assistant that brings together everything the 
 |---|---|---|
 | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card.png" alt="Weather" width="169"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm.png" alt="Storm" width="374"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini.png" alt="Mini" width="400"> |
 
-Like the other `ha-*` cards: header with a status pill, illustration next to the state, mini card with a detail button, a visual editor in the dashboard UI covering every option (the entity overrides in its folded **Advanced** section, as YAML), English, French, German, Spanish, Serbian (Cyrillic and Latin), Italian, Dutch, European Portuguese, Polish, Romanian, Danish, Swedish, Bulgarian, Russian, Ukrainian, Hungarian, Slovak, Czech, Slovenian, Latvian and Greek labels following the Home Assistant language, light and dark themes, a single HACS download with no dependency.
+Like the other `ha-*` cards: header with a status pill, illustration next to the state, mini card with a detail button, a visual editor in the dashboard UI covering every option (the entity overrides in its folded **Advanced** section, as YAML), English, French, German, Spanish, Serbian (Cyrillic and Latin), Italian, Dutch, European Portuguese, Polish, Romanian, Danish, Swedish, Bulgarian, Russian, Ukrainian, Hungarian, Slovak, Czech, Slovenian, Latvian and Greek labels following the Home Assistant language, light and dark themes, a single Marketplace install with no dependency.
 
 ## Features
 
@@ -97,19 +97,19 @@ The other sections read the sensors of these integrations, found by their transl
 
 ## Installation
 
-### Via HACS (recommended)
+### Via the Marketplace (recommended)
 
 Click the button below to add the repository directly:
 
-[![Add to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-weather-card&category=plugin)
+[![Add to the Marketplace](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=juju35&repository=ha-weather-card&category=plugin)
 
-Then click **Download**, and reload your browser when HACS asks you to.
+Then click **Install**, and reload your browser when the Marketplace asks you to.
 
 Or manually:
 
-1. Open HACS → **⋮** (top right) → **Custom repositories**
+1. Open **Settings → Marketplace → Add from link** (top right; this needs a GitHub account connected)
 2. Add `https://github.com/juju35/ha-weather-card` — Type: **Dashboard**
-3. Search for **Weather Plus Card** and click **Download**
+3. Open **Weather Plus Card** and click **Install**
 4. Clear your browser cache and refresh
 
 ### Manual
@@ -198,7 +198,7 @@ npm test             # unit tests, no browser
 npm run screenshots  # renders the cards with mock data into screenshots/, and the animated GIFs (needs ffmpeg)
 ```
 
-`src/shared.js` holds the i18n, the entity discovery, the mini card and the editor, `src/scene.js` the animated scenes, `src/sections.js` the sections and the styles, and `src/weather-plus-card.js` the cards; the build concatenates them into the single HACS file. `dist/` is not committed: `npm run build` creates it locally, CI builds it on every push, and the release workflow attaches the built file to the release, which is where HACS downloads it from.
+`src/shared.js` holds the i18n, the entity discovery, the mini card and the editor, `src/scene.js` the animated scenes, `src/sections.js` the sections and the styles, and `src/weather-plus-card.js` the cards; the build concatenates them into the single file the Marketplace installs. `dist/` is not committed: `npm run build` creates it locally, CI builds it on every push, and the release workflow attaches the built file to the release, which is where the Marketplace installs it from.
 
 ### Releasing
 
