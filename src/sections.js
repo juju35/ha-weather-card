@@ -613,6 +613,15 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .chip.bolt ha-icon { animation: wx-blink 1.2s steps(2) infinite; }
   .chip .arrow { display: inline-flex; flex: none; transition: transform .6s; }
 
+  /* The warning banner (warning_entities): a row per warning in its level's colour, its title on one line. */
+  .warnings { display: flex; flex-direction: column; gap: 4px; }
+  .warning { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 10px; border-radius: 10px; border-left: 4px solid var(--k);
+             font-size: 13px; font-weight: 500; background: color-mix(in srgb, var(--k) 20%, transparent); color: ${wxInk("var(--k)")}; }
+  .warning ha-icon { --mdc-icon-size: 18px; flex: none; color: var(--k); }
+  .warning .wt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .warning.lvl3 ha-icon, .warning.lvl4 ha-icon { animation: wx-blink 1.4s ease-in-out infinite; }
+  .warnings-more { font-size: 11px; color: var(--secondary-text-color); padding-left: 14px; }
+
   .section { display: flex; flex-direction: column; gap: 8px; }
   .section-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; text-transform: uppercase;
                    letter-spacing: .04em; color: var(--secondary-text-color); }
@@ -750,6 +759,8 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   /* animations: false stops everything but the busy refresh icon, the only sign that a refresh is under way. */
   ha-card.still *:not(.refresh > ha-icon), ha-card.still *::before { animation: none !important; }
   @media (prefers-reduced-motion: reduce) { ha-card * { animation: none !important; transition: none !important; } }
+  /* Off-screen or in a hidden tab ([paused], set by the card), the animations stop where they are. */
+  :host([paused]) ha-card *, :host([paused]) ha-card *::before { animation-play-state: paused !important; }
   @media (max-width: 420px) { .pollen { grid-template-columns: 1fr; } }
 
   /* Narrow cards (the content box of the card: a 6-column card in a Sections view is 156 to 246px wide, 9 columns 238 to 370px). */
