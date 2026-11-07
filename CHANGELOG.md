@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.10.1 - 2026-11-07
+
+### Fixes
+- The pressure trend reads its 1 hPa threshold in the unit of its source (a pressure sensor in inHg, Pa or mmHg, or the weather entity's own unit), and its tooltip shows the change in that unit. The hourly precipitation bars read amounts in inches or centimetres as their millimetre equivalent.
+- Times (hourly forecast, sunrise and sunset, twilight, moonrise and moonset, the next storm) follow the 12/24 h format of the Home Assistant profile and, when the profile uses the server time zone, that time zone.
+- Full screen detail: Tab and Shift+Tab stay inside it, going round its controls instead of reaching the page behind.
+- The card picker shows the cards' name and description in the Home Assistant language.
+
 ## 1.10.0 - 2026-11-07
 
 ### New
