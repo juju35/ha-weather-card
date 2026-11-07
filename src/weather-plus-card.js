@@ -120,12 +120,17 @@ class WeatherPlusCard extends WxElement {
   connectedCallback() {
     clearTimeout(this._detachTimer);
     this._subscribe();
-    // The sun's course, the "in N min" of the rain and the current hour move with the clock.
+    // The sun's course, the "in N min" of the rain and the current hour move with the clock. Cleared first: a card
+    // attached again without being detached (a reconnect) keeps a single timer.
+    clearInterval(this._tick);
     this._tick = setInterval(() => this._update(), 60000);
+    this._watchVisibility();
   }
 
   disconnectedCallback() {
     clearInterval(this._tick);
+    this._tick = null;
+    this._unwatchVisibility();
     this._unsubscribe();
     // The masonry view detaches every card and attaches it again when its column count changes (a phone turned to
     // landscape, a resized window): the full screen detail only closes if the card does not come back.
@@ -133,6 +138,38 @@ class WeatherPlusCard extends WxElement {
     this._detachTimer = setTimeout(() => {
       if (!this.isConnected) this._closePopup();
     }, 1000);
+  }
+
+  // ── Pause ──
+  // The animations stop while the card is off-screen or the tab hidden ([paused] on the host, see sections.js), and
+  // go on where they were when it shows again.
+  _watchVisibility() {
+    this._unwatchVisibility();
+    this._onVisibility = () => this._applyPause();
+    document.addEventListener?.("visibilitychange", this._onVisibility);
+    if (typeof IntersectionObserver === "function") {
+      this._io = new IntersectionObserver((entries) => {
+        this._offscreen = !entries.at(-1).isIntersecting;
+        this._applyPause();
+      });
+      this._io.observe(this);
+    }
+    this._applyPause();
+  }
+
+  _unwatchVisibility() {
+    if (this._onVisibility) document.removeEventListener?.("visibilitychange", this._onVisibility);
+    this._onVisibility = null;
+    this._io?.disconnect();
+    this._io = null;
+    this._offscreen = false;
+  }
+
+  _applyPause() {
+    const hidden = !!document.hidden;
+    this.toggleAttribute("paused", hidden || !!this._offscreen);
+    // The full screen detail is on screen whenever it is open: only a hidden tab pauses it.
+    this._popup?.toggleAttribute?.("paused", hidden);
   }
 
   getCardSize() {
@@ -154,6 +191,9 @@ class WeatherPlusCard extends WxElement {
   _entities() {
     if (!this._ent || this._ent.weather !== this._weatherId()) {
       this._ent = wxResolve(this._hass, this._weatherId(), this._config.entities);
+      // The warning banner's entities, tracked like the detected ones (signature, refresh).
+      const warnings = [].concat(this._config.warning_entities || []).filter((id) => typeof id === "string" && id);
+      if (warnings.length) this._ent.warnings = warnings;
       this._entPresent = wxEntIds(this._ent).filter((id) => id in this._hass.states);
     }
     return this._ent;
@@ -579,6 +619,7 @@ class WeatherPlusCard extends WxElement {
       rain: this._rainModel(ent),
       chances,
       alerts: this._alertModel(ent),
+      warnings: wxWarnings(hass, ent.warnings),
       vigieau: this._droughtModel(ent),
       lightning,
       storm: storm ? wxTime(lang, storm.datetime, true) : null,
@@ -594,7 +635,7 @@ class WeatherPlusCard extends WxElement {
 
   // The status pill: the highest weather warning, else lightning nearby, else the condition.
   _status(m) {
-    const top = Math.max(0, ...(m.alerts?.phenomena || []).map((p) => p.level));
+    const top = Math.max(0, ...(m.alerts?.phenomena || []).map((p) => p.level), ...m.warnings.map((w) => w.level));
     if (top >= 2) return { text: this._t("vigilance_level", { v: this._t(`lvl_${top}`) }), color: WX_ALERT_COLORS[top], alert: true };
     if (m.lightning?.count > 0 && m.lightning.dist != null) {
       return { text: this._t("lightning_near", { d: `${wxFmtNum(m.fmt, m.lightning.dist, 0)} ${m.lightning.unit}` }), color: WX_BOLT_COLOR, alert: true };
@@ -641,7 +682,7 @@ class WeatherPlusCard extends WxElement {
         // The compact mini card keeps its two buttons; refresh shows once it is unfolded.
         buttons: `${this._compact() ? "" : this._refreshButton()}${this._popupButton()}${this._zoomButton()}`,
       });
-    const body = `${head}${this._compact() ? this._miniBody(m) : this._fullBody(m)}</ha-card>`;
+    const body = `${head}${this._warningBanner(m, this._compact() ? 1 : 4)}${this._compact() ? this._miniBody(m) : this._fullBody(m)}</ha-card>`;
     wxKeepView(this.shadowRoot, this.shadowRoot, () => {
       this.shadowRoot.innerHTML = body;
     });
@@ -656,6 +697,22 @@ class WeatherPlusCard extends WxElement {
       `<div class="titles" data-more="${wxEsc(m.ent.weather)}"><div class="name">${wxEsc(m.name)}</div>${sub ? `<div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div>` : ""}</div>` +
       `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}" title="${wxEsc(m.status.text)}"><span class="dot"></span><span class="stt">${wxEsc(m.status.text)}</span></span>${buttons}</div>`
     );
+  }
+
+  // The banner of the `warning_entities` under the header: one row per warning, in its level's colour, the highest
+  // first (`max` rows); nothing when there is none.
+  _warningBanner(m, max) {
+    if (!m.warnings.length) return "";
+    const rows = m.warnings.slice(0, max).map((w) => {
+      const level = this._t("vigilance_level", { v: this._t(`lvl_${w.level}`) });
+      const title = w.ph ? this._t(`ph_title_${w.ph}`) : w.title || level;
+      return (
+        `<div class="warning lvl${w.level}" style="--k:${WX_ALERT_COLORS[w.level]}" data-more="${wxEsc(w.entity)}" role="button" tabindex="0" title="${wxEsc(`${title} · ${level}`)}">` +
+        `<ha-icon icon="${w.icon}"></ha-icon><span class="wt">${wxEsc(title)}</span></div>`
+      );
+    });
+    const more = m.warnings.length - max;
+    return `<div class="warnings" role="status" aria-label="${wxEsc(this._t("s_alerts"))}">${rows.join("")}${more > 0 ? `<div class="warnings-more">+${more}</div>` : ""}</div>`;
   }
 
   // The hero shared by the card and its full screen detail: the scene, the big temperature, the feels-like
@@ -833,6 +890,7 @@ class WeatherPlusCard extends WxElement {
     document.body.style.overflow = "hidden";
     document.body.appendChild(host);
     this._popup = host;
+    this._applyPause();
     this._popupShown = new Set();
     this._popupParts = null;
     this._renderPopup();
@@ -871,6 +929,7 @@ class WeatherPlusCard extends WxElement {
     const cls = `popup${m.still ? " still" : ""}`;
     const content =
       this._header(m, { sub: true, buttons: `${this._refreshButton()}<button class="close" data-action="close" title="${close}" aria-label="${close}"><ha-icon icon="mdi:close"></ha-icon></button>` }) +
+      this._warningBanner(m, 10) +
       `<div class="top">${this._hero(m, { feelsAlways: true })}` +
       `<div class="side">${this._sections(m, this._popupShown, side)}</div></div>` +
       this._sections(m, this._popupShown, across) +

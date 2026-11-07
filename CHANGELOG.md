@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.10.0 - 2026-11-07
+
+### New
+- Weather warning banner: the new `warning_entities` option shows the warnings of Meteoalarm, DWD, NWS alerts or Météo-France sensors under the header, with their title in their level's colour, and hides itself when there is none.
+- The animations pause while the card is off-screen or the browser tab is hidden, and go on when it shows again.
+- Mini card: its height follows its content in a Sections view (`rows: auto`).
+
+### Fixes
+- The minute timer is cleared before it is started again, so a card attached again without being detached keeps a single timer.
+
 ## 1.9.9 - 2026-11-04
 
 ### Documentation

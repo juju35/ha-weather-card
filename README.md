@@ -33,9 +33,10 @@ Like the other `ha-*` cards: header with a status pill, illustration next to the
 
 `custom:weather-plus-card` — A `weather` entity and the sensors of the weather integrations around it.
 
-- **Animated scene** for each condition, by day and by night (from `sun.sun`): the sun's rays turn and its glow breathes, at night the moon, in its real phase, shines among twinkling stars or peeks above the rain and storm clouds, tinted for the night, clouds drift, rain falls (harder when it pours), snow flutters down, hail bounces, lightning flashes over the cloud, fog rolls and the wind blows in gusts; a warning sign for exceptional weather. `animations: false` or the system's *reduce motion* setting keeps it still
+- **Animated scene** for each condition, by day and by night (from `sun.sun`): the sun's rays turn and its glow breathes, at night the moon, in its real phase, shines among twinkling stars or peeks above the rain and storm clouds, tinted for the night, clouds drift, rain falls (harder when it pours), snow flutters down, hail bounces, lightning flashes over the cloud, fog rolls and the wind blows in gusts; a warning sign for exceptional weather. `animations: false` or the system's *reduce motion* setting keeps it still. The animations pause while the card is off-screen or the browser tab is hidden, and go on when it shows again
+- **Warning banner** (`warning_entities`): the warnings of Meteoalarm, DWD (Deutscher Wetterdienst), NWS alerts or Météo-France sensors under the header, one row per warning with its title, in its level's colour (yellow, orange, red), the highest first; a click opens its entity. It hides itself when there is no warning
 - The temperature in large with today's high and low, the feels-like temperature, and chips for humidity, wind (an arrow turned to its direction, gusts on hover), pressure (with its 3-hour trend from the history: rising, falling or steady), cloud cover, UV index, pollen and air quality (*Pollen: low*, *Air: fair*, in the colour of their level)
-- The **status pill** shows the highest weather warning (*Orange warning*), else lightning nearby (*Lightning 6 km away*), else the condition
+- The **status pill** shows the highest weather warning (*Orange warning*, the banner's included), else lightning nearby (*Lightning 6 km away*), else the condition
 - Every chip, row and reading opens the more-info dialog of its entity
 - **Full screen** button (top right, `popup: false` removes it): the detail over the whole screen and its width, sections side by side as the width allows, with 24 hours and 10 days of forecast; it closes with its button, Escape, a click outside or the back button on a phone
 - **Refresh** button (top right, `refresh: false` removes it): asks the integrations behind the card — weather, rain, alerts, sensors — for fresh data right away; the icon turns while they answer, even with `animations: false` (not with the system's *reduce motion* setting)
@@ -59,7 +60,8 @@ Sections, in the order of `sections` (a section with no data hides itself):
 
 `custom:weather-plus-mini-card` — The weather on two lines, for a compact dashboard.
 
-- The animated scene, the temperature with today's high and low, the rain to come in the hour (or the condition and feels-like temperature), and the active warnings
+- The animated scene, the temperature with today's high and low, the rain to come in the hour (or the condition and feels-like temperature), and the active warnings; the highest warning of the banner under the header
+- In a Sections view its height follows its content (`rows: auto`)
 - The **detail** button (top right) unfolds the full card, and back, as does a click anywhere else (`zoom: false` removes it); the unfolded card has the **Refresh** and **Full screen** buttons. When the weather is unavailable, the folded card shows the **Refresh** button too, to retry
 - In a Sections view it takes 6 columns (half a section); on the narrowest sections its status pill shows its dot only, then the badge and the scene step aside for the title and the temperature
 
@@ -89,6 +91,7 @@ The other sections read the sensors of these integrations, found by their transl
 | Pressure trend | The weather entity's pressure sensor (else the entity itself), read from the recorder's history | `pressure` |
 | Today's rainfall | Météo-France *daily precipitation* | `daily_precipitation` |
 | Tomorrow's air and pollen | Atmo France's *-J+1* sensors next to the ones in use | — |
+| Warning banner | [Meteoalarm](https://www.home-assistant.io/integrations/meteoalarm/) (`binary_sensor`, *awareness level* and *headline*), [DWD Weather Warnings](https://www.home-assistant.io/integrations/dwd_weather_warnings/) (current and advance warning level sensors), [NWS Alerts](https://github.com/finity69x2/nws_alerts) (`Alerts` list, by severity), Météo-France *weather alert* | `warning_entities` option |
 | Moon phase | [Moon](https://www.home-assistant.io/integrations/moon/) (`sensor.moon_phase`), optional | `moon` |
 
 ## Prerequisites
@@ -133,6 +136,9 @@ name: Home
 sections: [alerts, rain, hourly, daily, air, pollen]
 hours: 18
 days: 7
+warning_entities:
+  - binary_sensor.meteoalarm
+  - sensor.berlin_current_warning_level
 entities:
   uv: sensor.openuv_current_uv_index
   vigieau: sensor.alert_level_in_paris
@@ -157,6 +163,7 @@ entity: weather.paris
 | `popup` | boolean | `true` | Full screen button that opens the detail over the whole screen |
 | `refresh` | boolean | `true` | Refresh button that asks the integrations for fresh data (hidden on the folded mini card, unless the weather is unavailable) |
 | `zoom` | boolean | `true` | Mini card: detail button to unfold the full card |
+| `warning_entities` | list | — | Warning entities shown as a banner under the header (Meteoalarm, DWD, NWS alerts, Météo-France); hidden when none has a warning (yellow and up) |
 | `entities` | map | detected | Overrides of the detected entities, by role (see [Supported integrations](#supported-integrations)) |
 | `language` | string | HA language | `en`, `fr`, `de`, `es`, `sr`, `sr-Latn`, `it`, `nl`, `pt`, `pl`, `ro`, `da`, `sv`, `bg`, `ru`, `uk`, `hu`, `sk`, `cs`, `sl`, `lv` or `el` |
 

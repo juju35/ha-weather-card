@@ -177,5 +177,8 @@ test("narrow card: the full card asks for 9 columns at least, the mini card keep
   const full = mount(lib, "weather-plus-card", {}, makeHass());
   assert.deepEqual({ ...full.getGridOptions() }, { columns: 12, min_columns: 9 });
   const mini = mount(lib, "weather-plus-mini-card", {}, makeHass());
-  assert.deepEqual({ ...mini.getGridOptions() }, { columns: 6, min_columns: 6 });
+  // Its height follows its content, folded or unfolded.
+  assert.deepEqual({ ...mini.getGridOptions() }, { columns: 6, min_columns: 6, rows: "auto" });
+  mini._setZoom(true);
+  assert.deepEqual({ ...mini.getGridOptions() }, { columns: 12, min_columns: 9, rows: "auto" });
 });

@@ -1286,3 +1286,159 @@ test("i18n: the lightning strikes follow each language's plural rules (1, 2, 5, 
   // Every language has a singular for 1.
   for (const lang of Object.keys(lib.WX_I18N)) assert.doesNotMatch(strikes(lang, 1), /^\D*$/, lang);
 });
+
+// ── Warning banner (warning_entities) ──
+const WARN = {
+  "binary_sensor.meteoalarm": {
+    state: "on",
+    awareness_level: "3; orange; Severe",
+    awareness_type: "1; Wind",
+    headline: "Orange Wind Warning for Bas-Rhin",
+    severity: "Severe",
+  },
+  "sensor.berlin_current_warning_level": {
+    state: 2,
+    warning_count: 2,
+    warning_1_name: "STURMBÖEN",
+    warning_1_level: 1,
+    warning_1_headline: "Amtliche WARNUNG vor STURMBÖEN",
+    warning_2_name: "STARKREGEN",
+    warning_2_level: 3,
+    warning_2_headline: "Amtliche UNWETTERWARNUNG vor HEFTIGEM STARKREGEN",
+  },
+  "sensor.nws_alerts": {
+    state: 2,
+    Alerts: [
+      { Event: "Severe Thunderstorm Warning", Headline: "Severe Thunderstorm Warning issued", Severity: "Severe" },
+      { Event: "Heat Advisory", Severity: "Minor" },
+    ],
+  },
+};
+const WARN_IDS = Object.keys(WARN);
+
+test("warning banner: Meteoalarm, DWD and NWS warnings with their level and title, the highest first", () => {
+  const h = makeHass("en", WARN);
+  const list = lib.wxWarnings(h, WARN_IDS);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(list.map((w) => [w.entity, w.level, w.title]))),
+    [
+      ["sensor.berlin_current_warning_level", 4, "Amtliche UNWETTERWARNUNG vor HEFTIGEM STARKREGEN"],
+      ["binary_sensor.meteoalarm", 3, "Orange Wind Warning for Bas-Rhin"],
+      ["sensor.nws_alerts", 3, "Severe Thunderstorm Warning"],
+      ["sensor.berlin_current_warning_level", 2, "Amtliche WARNUNG vor STURMBÖEN"],
+      ["sensor.nws_alerts", 2, "Heat Advisory"],
+    ],
+  );
+  assert.equal(list.find((w) => w.entity === "binary_sensor.meteoalarm").icon, "mdi:weather-windy");
+  assert.equal(list.find((w) => w.entity === "sensor.nws_alerts").icon, "mdi:weather-lightning");
+
+  const el = card({ warning_entities: WARN_IDS }, h);
+  const out = html(el);
+  assert.match(out, /<div class="warnings" role="status" aria-label="Alerts">/);
+  assert.match(out, /class="warning lvl4" style="--k:#e53935" data-more="sensor\.berlin_current_warning_level"[^>]*title="Amtliche UNWETTERWARNUNG vor HEFTIGEM STARKREGEN · Red warning"/);
+  assert.match(out, /class="warning lvl3"[^>]*data-more="binary_sensor\.meteoalarm"/);
+  // At most 4 rows on the card, the rest counted.
+  assert.equal((out.match(/class="warning lvl/g) || []).length, 4);
+  assert.match(out, /<div class="warnings-more">\+1<\/div>/);
+  // The banner sits under the header, before the scene; the status pill takes the highest level.
+  assert.ok(out.indexOf('class="warnings"') < out.indexOf('class="hero"'));
+  assert.match(out, /class="st alert" style="--st-color:#e53935"/);
+  // The mini card shows the highest one only.
+  const mini = html(mount(lib, "weather-plus-mini-card", { warning_entities: WARN_IDS }, h));
+  assert.equal((mini.match(/class="warning lvl/g) || []).length, 1);
+  // A click on a row opens its entity.
+  el._onClick({ composedPath: () => [{ dataset: { more: "binary_sensor.meteoalarm" } }] });
+  assert.equal(el.events.at(-1).detail.entityId, "binary_sensor.meteoalarm");
+});
+
+test("warning banner: hidden without warnings; Météo-France phenomena named in the card's language", () => {
+  const quiet = makeHass("en", {
+    "binary_sensor.meteoalarm": { state: "off" },
+    "sensor.berlin_current_warning_level": { state: 0, warning_count: 0 },
+    "sensor.nws_alerts": { state: 0, Alerts: [] },
+  });
+  assert.doesNotMatch(html(card({ warning_entities: WARN_IDS }, quiet)), /class="warnings"/);
+  assert.doesNotMatch(html(card({}, makeHass())), /class="warnings"/);
+  // A green awareness level is no warning.
+  const green = makeHass("en", { "binary_sensor.meteoalarm": { state: "on", awareness_level: "1; green; Minor", headline: "No special awareness" } });
+  assert.doesNotMatch(html(card({ warning_entities: ["binary_sensor.meteoalarm"] }, green)), /class="warnings"/);
+  // The mock's Météo-France sensor: a yellow wind warning.
+  const fr = html(card({ warning_entities: ["sensor.75_weather_alert"], language: "fr" }, makeHass("fr")));
+  assert.match(fr, /class="warning lvl2"[^>]*><ha-icon icon="mdi:weather-windy"><\/ha-icon><span class="wt">Vigilance vent violent<\/span>/);
+  // A change of a warning entity rebuilds the card.
+  const h = makeHass("en", WARN);
+  const el = card({ warning_entities: ["binary_sensor.meteoalarm"] }, h);
+  assert.match(html(el), /Orange Wind Warning/);
+  el.hass = { ...h, states: { ...h.states, "binary_sensor.meteoalarm": { entity_id: "binary_sensor.meteoalarm", state: "off", attributes: {} } } };
+  assert.doesNotMatch(html(el), /class="warnings"/);
+  // The editor drops an emptied list.
+  assert.deepEqual(JSON.parse(JSON.stringify(lib.wxCleanConfig({ warning_entities: [] }, { sections: [] }))), {});
+});
+
+test("pause: the animations stop off-screen or in a hidden tab, and go on after", () => {
+  const observers = [];
+  lib.window.IntersectionObserver = class {
+    constructor(cb) {
+      this.cb = cb;
+      this.targets = [];
+      observers.push(this);
+    }
+    observe(el) {
+      this.targets.push(el);
+    }
+    disconnect() {
+      this.disconnected = true;
+    }
+  };
+  try {
+    const el = card();
+    el.connectedCallback();
+    const io = observers.at(-1);
+    assert.deepEqual(io.targets, [el]);
+    assert.equal(el.hasAttribute("paused"), false);
+    io.cb([{ isIntersecting: false }]);
+    assert.equal(el.hasAttribute("paused"), true);
+    io.cb([{ isIntersecting: true }]);
+    assert.equal(el.hasAttribute("paused"), false);
+    lib.document.hidden = true;
+    lib.document.listeners.visibilitychange();
+    assert.equal(el.hasAttribute("paused"), true);
+    lib.document.hidden = false;
+    lib.document.listeners.visibilitychange();
+    assert.equal(el.hasAttribute("paused"), false);
+    // Detached: the observer and the listener go.
+    el.disconnectedCallback();
+    assert.equal(io.disconnected, true);
+    assert.equal(lib.document.listeners.visibilitychange, undefined);
+    el._closePopup();
+  } finally {
+    delete lib.window.IntersectionObserver;
+    lib.document.hidden = false;
+  }
+  // The style pauses every animation of the card under [paused].
+  assert.match(lib.WX_STYLES, /:host\(\[paused\]\) ha-card \*, :host\(\[paused\]\) ha-card \*::before \{ animation-play-state: paused !important; \}/);
+});
+
+test("minute tick: attached again without being detached, the card keeps a single timer", () => {
+  const live = new Set();
+  let next = 1;
+  const { setInterval: si, clearInterval: ci } = lib.window;
+  lib.window.setInterval = () => {
+    const id = next++;
+    live.add(id);
+    return id;
+  };
+  lib.window.clearInterval = (id) => live.delete(id);
+  try {
+    const el = card();
+    el.connectedCallback();
+    el.connectedCallback();
+    assert.equal(live.size, 1);
+    el.disconnectedCallback();
+    assert.equal(live.size, 0);
+    el._closePopup();
+  } finally {
+    lib.window.setInterval = si;
+    lib.window.clearInterval = ci;
+  }
+});
