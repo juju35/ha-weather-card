@@ -8,11 +8,10 @@ const WX_FC_HOURLY = 2;
 const WX_FC_TWICE = 4;
 
 // A twice-daily forecast folded into days: the day's high, the night's low, the daytime condition.
-function wxFoldTwiceDaily(list) {
+function wxFoldTwiceDaily(list, tz) {
   const days = [];
   for (const f of list || []) {
-    const d = new Date(f.datetime);
-    let day = days.find((x) => wxSameDay(new Date(x.datetime), d));
+    let day = days.find((x) => wxSameDay(x.datetime, f.datetime, tz));
     if (!day) {
       day = { ...f, templow: f.templow ?? f.temperature };
       days.push(day);
@@ -245,10 +244,11 @@ class WeatherPlusCard extends WxElement {
     const lon = Number(this._hass.config?.longitude);
     if (!Number.isFinite(lat) || !Number.isFinite(lon) || (lat === 0 && lon === 0)) return null;
     const now = new Date();
-    const key = `${now.toDateString()}:${lat}:${lon}`;
+    const tz = wxTimeOpts(this._hass).timeZone;
+    const key = `${wxDayKey(now, tz)}:${tz}:${lat}:${lon}`;
     if (this._astroKey !== key) {
       this._astroKey = key;
-      this._astroCache = { sun: wxSunTimes(now, lat, lon), moon: wxMoonTimes(now, lat, lon) };
+      this._astroCache = { sun: wxSunTimes(now, lat, lon, tz), moon: wxMoonTimes(now, lat, lon, tz) };
     }
     return this._astroCache;
   }
@@ -561,22 +561,18 @@ class WeatherPlusCard extends WxElement {
       .filter((x) => new Date(x.datetime).getTime() > now - 3600000)
       .slice(0, Math.max(0, Number(this._config.hours) || 0, wide ? 24 : 0))
       .map((x) => ({ ...x, night: x.is_daytime != null ? !x.is_daytime : isNight(new Date(x.datetime)) }));
-    const dailyAll = fc.daily || (fc.twice_daily ? wxFoldTwiceDaily(fc.twice_daily) : a.forecast || []);
-    // From today's local midnight: a provider serving yesterday's entry (a legacy `forecast` attribute, for one)
-    // must not show it next to "Today".
-    const dayStart = new Date();
-    dayStart.setHours(0, 0, 0, 0);
+    const dailyAll = fc.daily || (fc.twice_daily ? wxFoldTwiceDaily(fc.twice_daily, tf.timeZone) : a.forecast || []);
+    // From today's local midnight (in the server time zone when the profile uses it): a provider serving yesterday's
+    // entry (a legacy `forecast` attribute, for one) must not show it next to "Today".
+    const dayStart = wxDayStart(new Date(), tf.timeZone).getTime();
     const daily = dailyAll
-      .filter((x) => {
-        const d = new Date(x.datetime);
-        return d.getTime() >= dayStart.getTime() || wxSameDay(d, new Date());
-      })
+      .filter((x) => new Date(x.datetime).getTime() >= dayStart || wxSameDay(x.datetime, new Date(), tf.timeZone))
       .slice(0, Math.max(0, Number(this._config.days) || 0, wide ? 10 : 0));
-    const today = dailyAll.find((x) => wxSameDay(new Date(x.datetime), new Date()));
+    const today = dailyAll.find((x) => wxSameDay(x.datetime, new Date(), tf.timeZone));
 
     const uvSensor = this._num(ent.uv);
     const uvV = uvSensor ?? wxNumber(a.uv_index);
-    const hourlyUv = (fc.hourly || []).filter((x) => wxSameDay(new Date(x.datetime), new Date())).map((x) => x.uv_index);
+    const hourlyUv = (fc.hourly || []).filter((x) => wxSameDay(x.datetime, new Date(), tf.timeZone)).map((x) => x.uv_index);
     const uvMax = this._num(ent.uv_max) ?? wxNumber(today?.uv_index) ?? (hourlyUv.some((v) => v != null) ? Math.max(...hourlyUv.filter((v) => v != null)) : null);
     const uv = uvV != null ? { v: uvV, level: wxUvLevel(uvV), max: uvMax, entity: uvSensor != null ? ent.uv : ent.weather } : null;
 
