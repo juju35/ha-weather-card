@@ -5036,14 +5036,21 @@ function wxDayParts(date, tz) {
   for (const x of f.formatToParts(date)) p[x.type] = x.value;
   return p;
 }
+// null for a missing or invalid date (formatToParts would throw), which then matches no day.
 const wxDayKey = (date, tz) => {
-  const p = wxDayParts(new Date(date), tz);
+  const d = new Date(date ?? Number.NaN);
+  if (Number.isNaN(d.getTime())) return null;
+  const p = wxDayParts(d, tz);
   return `${p.year}-${p.month}-${p.day}`;
 };
-const wxSameDay = (a, b, tz) => wxDayKey(a, tz) === wxDayKey(b, tz);
+const wxSameDay = (a, b, tz) => {
+  const k = wxDayKey(a, tz);
+  return k !== null && k === wxDayKey(b, tz);
+};
 // Midnight starting the day of `date` in `tz`, corrected once for a daylight saving change during the night.
 function wxDayStart(date, tz) {
-  const d = new Date(date);
+  const d = new Date(date ?? Number.NaN);
+  if (Number.isNaN(d.getTime())) return d;
   const mins = (t) => {
     const p = wxDayParts(new Date(t), tz);
     return Number(p.hour) * 60 + Number(p.minute);

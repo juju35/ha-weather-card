@@ -165,3 +165,21 @@ test("time: Today, the daily list and the sun's day follow the server time zone"
   assert.equal(lib.wxDayKey(tokyo.astro.sun.dawn, "Asia/Tokyo"), "2026-10-26");
   assert.equal(lib.wxDayKey(west.astro.sun.dawn, "Etc/GMT+12"), "2026-10-25");
 });
+
+test("time: an entry without a valid datetime matches no day and does not break the card", () => {
+  assert.equal(lib.wxDayKey(undefined, "Asia/Tokyo"), null);
+  assert.equal(lib.wxDayKey("not a date"), null);
+  assert.equal(lib.wxSameDay(undefined, undefined, "Asia/Tokyo"), false);
+  assert.ok(Number.isNaN(lib.wxDayStart(undefined, "Asia/Tokyo").getTime()));
+  for (const tz of [undefined, "Asia/Tokyo"]) {
+    const h = makeHass("en");
+    if (tz) {
+      h.locale = { language: "en-GB", time_format: "24", time_zone: "server" };
+      h.config = { ...h.config, time_zone: tz };
+    }
+    h.forecasts.daily = [{ ...h.forecasts.daily[0], datetime: undefined }, ...h.forecasts.daily.slice(1)];
+    h.forecasts.hourly = [{ ...h.forecasts.hourly[0], datetime: undefined }, ...h.forecasts.hourly.slice(1)];
+    const out = html(card({ sections: ["daily", "hourly", "uv"] }, h));
+    assert.match(out, /class="drow"/, "the other days still render");
+  }
+});
