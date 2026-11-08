@@ -5023,7 +5023,38 @@ const wxDay = (lang, date, tf = {}) => {
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-const wxSameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+// Calendar day in `tz` (the server time zone of wxTimeOpts; undefined: the browser's), so that "today" and the
+// day's midnight follow the same clock as the times shown.
+const WX_DAY_FMT = new Map();
+function wxDayParts(date, tz) {
+  let f = WX_DAY_FMT.get(tz);
+  if (!f) {
+    f = new Intl.DateTimeFormat("en-US", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+    WX_DAY_FMT.set(tz, f);
+  }
+  const p = {};
+  for (const x of f.formatToParts(date)) p[x.type] = x.value;
+  return p;
+}
+const wxDayKey = (date, tz) => {
+  const p = wxDayParts(new Date(date), tz);
+  return `${p.year}-${p.month}-${p.day}`;
+};
+const wxSameDay = (a, b, tz) => wxDayKey(a, tz) === wxDayKey(b, tz);
+// Midnight starting the day of `date` in `tz`, corrected once for a daylight saving change during the night.
+function wxDayStart(date, tz) {
+  const d = new Date(date);
+  const mins = (t) => {
+    const p = wxDayParts(new Date(t), tz);
+    return Number(p.hour) * 60 + Number(p.minute);
+  };
+  let t = d.getTime() - d.getSeconds() * 1000 - d.getMilliseconds();
+  t -= mins(t) * 60000;
+  // Now within an hour of midnight: 23:00 (the day before) moves forward, 01:00 back.
+  const m = mins(t);
+  t -= (m > 720 ? m - 1440 : m) * 60000;
+  return new Date(t);
+}
 
 // ── Conditions ───────────────────────────────────────────────────────────────
 const WX_CONDITIONS = {

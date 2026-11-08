@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.2 - 2026-11-08
+
+### Fixes
+- When the Home Assistant profile uses the server time zone, "Today" in the daily forecast, the day the daily list starts from and the day of dawn, dusk, golden hour and moonrise follow that time zone too, instead of the browser's.
+
 ## 1.10.1 - 2026-11-07
 
 ### Fixes

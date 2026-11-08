@@ -131,3 +131,37 @@ test("card picker: names and descriptions come from the dictionaries", () => {
   assert.equal(frPicker["weather-plus-card"].name, "Carte Weather Plus");
   assert.equal(frPicker["weather-plus-mini-card"].name, "Mini carte Weather Plus");
 });
+
+test("time: days and midnight in the server time zone, across a daylight saving change", () => {
+  const t = new Date("2026-10-25T23:30:00Z");
+  assert.equal(lib.wxDayKey(t, "Asia/Tokyo"), "2026-10-26");
+  assert.equal(lib.wxDayKey(t, "America/New_York"), "2026-10-25");
+  assert.equal(lib.wxSameDay(t, new Date("2026-10-25T16:00:00Z"), "Asia/Tokyo"), true);
+  assert.equal(lib.wxSameDay(t, new Date("2026-10-25T14:00:00Z"), "Asia/Tokyo"), false);
+  assert.equal(lib.wxDayStart(t, "Asia/Tokyo").toISOString(), "2026-10-25T15:00:00.000Z");
+  // Paris leaves summer time at 3:00 on 25 October and enters it at 2:00 on 29 March: midnight is still 00:00 local.
+  assert.equal(lib.wxDayStart(new Date("2026-10-25T13:10:00Z"), "Europe/Paris").toISOString(), "2026-10-24T22:00:00.000Z");
+  assert.equal(lib.wxDayStart(new Date("2026-03-29T10:00:00Z"), "Europe/Paris").toISOString(), "2026-03-28T23:00:00.000Z");
+});
+
+test("time: Today, the daily list and the sun's day follow the server time zone", () => {
+  // 23:30 UTC: already the 26th in Tokyo, still the 25th at UTC−12.
+  const now = new Date("2026-10-25T23:30:00Z");
+  const zlib = load(now);
+  // Daily entries at the server's noon, from the 24th; `noon`: the 24th's noon in UTC hours (Tokyo 03:00, UTC−12 24:00).
+  const render = (tz, noon) => {
+    const h = makeHass("en", {}, now);
+    h.locale = { language: "en-GB", time_format: "24", time_zone: "server" };
+    h.config = { ...h.config, time_zone: tz };
+    h.forecasts.daily = h.forecasts.daily.slice(0, 4).map((d, i) => ({ ...d, datetime: new Date(Date.UTC(2026, 9, 24 + i, noon)).toISOString() }));
+    const el = mount(zlib, "weather-plus-card", { sections: ["daily", "sun"], days: 5 }, h);
+    return { days: [...html(el).matchAll(/<span class="day">([^<]*)<\/span>/g)].map((m) => m[1]), astro: el._astro() };
+  };
+  const tokyo = render("Asia/Tokyo", 3);
+  assert.deepEqual(tokyo.days, ["Today", "Tue"], "the 24th and the 25th, before today in Tokyo, are dropped");
+  const west = render("Etc/GMT+12", 24);
+  assert.deepEqual(west.days, ["Today", "Mon", "Tue"], "the 24th is dropped, the 25th is today at UTC−12");
+  // Dawn of the server's day (Paris coordinates): the 26th in Tokyo, the 25th at UTC−12.
+  assert.equal(lib.wxDayKey(tokyo.astro.sun.dawn, "Asia/Tokyo"), "2026-10-26");
+  assert.equal(lib.wxDayKey(west.astro.sun.dawn, "Etc/GMT+12"), "2026-10-25");
+});

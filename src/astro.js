@@ -38,10 +38,9 @@ function wxAltitude(body, date, lat, lon) {
   return Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(hourAngle)) / WX_RAD;
 }
 
-// The times `body` crosses `h0` degrees on the local day of `date`: { up: [dates], down: [dates] }.
-function wxCrossings(body, date, lat, lon, h0) {
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
+// The times `body` crosses `h0` degrees on the local day of `date` (in time zone `tz`): { up: [dates], down: [dates] }.
+function wxCrossings(body, date, lat, lon, h0, tz) {
+  const start = wxDayStart(date, tz);
   const step = 10 * 60000;
   const up = [];
   const down = [];
@@ -62,16 +61,16 @@ function wxCrossings(body, date, lat, lon, h0) {
 
 // Moonrise and moonset of the day (either may be missing: the moon rises about 50 minutes later every day).
 // +0.13°: the moon's parallax, minus refraction and its half-diameter.
-function wxMoonTimes(date, lat, lon) {
-  const c = wxCrossings("moon", date, lat, lon, 0.13);
+function wxMoonTimes(date, lat, lon, tz) {
+  const c = wxCrossings("moon", date, lat, lon, 0.13, tz);
   return { rise: c.up[0] || null, set: c.down[0] || null };
 }
 
 // Dawn and dusk (civil twilight, sun at −6°) and the golden hours (sun below 6°, above the horizon).
-function wxSunTimes(date, lat, lon) {
-  const civil = wxCrossings("sun", date, lat, lon, -6);
-  const golden = wxCrossings("sun", date, lat, lon, 6);
-  const horizon = wxCrossings("sun", date, lat, lon, -0.833);
+function wxSunTimes(date, lat, lon, tz) {
+  const civil = wxCrossings("sun", date, lat, lon, -6, tz);
+  const golden = wxCrossings("sun", date, lat, lon, 6, tz);
+  const horizon = wxCrossings("sun", date, lat, lon, -0.833, tz);
   return {
     dawn: civil.up[0] || null,
     dusk: civil.down[0] || null,

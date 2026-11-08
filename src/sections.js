@@ -340,7 +340,7 @@ function wxSectionDaily(card, m) {
       const left = bar ? ((lo - min) / span) * 100 : 0;
       const width = bar ? Math.max(4, ((hi - lo) / span) * 100) : 0;
       const grad = bar ? `linear-gradient(90deg, ${wxTempColor(wxToC(lo, unit))}, ${wxTempColor(wxToC(hi, unit))})` : "";
-      const today = i === 0 && wxSameDay(new Date(d.datetime), new Date());
+      const today = i === 0 && wxSameDay(d.datetime, new Date(), m.tf.timeZone);
       const now = today && m.temp != null ? `<span class="nowdot" style="left:${(((m.temp - min) / span) * 100).toFixed(1)}%"></span>` : "";
       const p = d.precipitation_probability;
       return (
