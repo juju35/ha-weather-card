@@ -264,11 +264,14 @@ class WeatherPlusCard extends WxElement {
     Promise.resolve(this._hass.callApi("GET", path))
       .then((res) => {
         const pts = (res?.[0] || []).map((x) => wxNumber(weather ? x.attributes?.pressure : x.state)).filter((v) => v != null);
+        // The delta is in the unit of its source: the weather entity's pressure_unit, or the pressure sensor's own.
+        const a = this._hass.states[id]?.attributes || {};
+        const unit = (weather ? a.pressure_unit : a.unit_of_measurement) || "hPa";
         const prev = this._trend;
-        this._trend = pts.length >= 2 ? { delta: pts.at(-1) - pts[0], id } : null;
+        this._trend = pts.length >= 2 ? { delta: pts.at(-1) - pts[0], unit, id } : null;
         // The trend is not in the signature: rebuild only when it changed, so the 15-minute refresh does not restart
         // every animation and rewrite the full screen detail for nothing.
-        if (prev?.delta !== this._trend?.delta || prev?.id !== this._trend?.id) {
+        if (prev?.delta !== this._trend?.delta || prev?.unit !== this._trend?.unit || prev?.id !== this._trend?.id) {
           this._sig = null;
           this._update();
         }
@@ -295,7 +298,7 @@ class WeatherPlusCard extends WxElement {
     // (restarting every animation); the sun moves along its arc and the rain counts down in place.
     const rain = this._rainModel(ent);
     const rainSig = rain && [rain.raining, rain.next != null];
-    const sig = JSON.stringify([this._fmtLang(), this._zoomed, !!this._popup, this._fcv, Math.floor(Date.now() / 3600000), rainSig, states]);
+    const sig = JSON.stringify([this._fmtLang(), wxTimeOpts(hass), this._zoomed, !!this._popup, this._fcv, Math.floor(Date.now() / 3600000), rainSig, states]);
     if (sig === this._sig) {
       this._patchSun(this._sunModel(ent));
       this._patchRain(rain);
@@ -540,6 +543,7 @@ class WeatherPlusCard extends WxElement {
     const hass = this._hass;
     const ent = this._entities();
     const lang = this._lang();
+    const tf = wxTimeOpts(hass);
     const st = this._st(ent.weather);
     const a = st.attributes;
     const sun = this._sunModel(ent);
@@ -601,6 +605,7 @@ class WeatherPlusCard extends WxElement {
     return {
       lang,
       fmt: this._fmtLang(),
+      tf,
       ent,
       st,
       a,
@@ -622,13 +627,13 @@ class WeatherPlusCard extends WxElement {
       warnings: wxWarnings(hass, ent.warnings),
       vigieau: this._droughtModel(ent),
       lightning,
-      storm: storm ? wxTime(lang, storm.datetime, true) : null,
+      storm: storm ? wxTime(this._fmtLang(), storm.datetime, true, tf) : null,
       pollen: this._pollenModel(ent),
       sun,
       moon: this._moonModel(ent),
       totals: this._rainTotals(ent, fc.hourly || [], a.precipitation_unit || "mm"),
       clouds: this._num(ent.cloud_cover) ?? wxNumber(a.cloud_coverage),
-      trend: this._trend?.id === (ent.pressure || ent.weather) ? this._trend.delta : null,
+      trend: this._trend?.id === (ent.pressure || ent.weather) ? this._trend : null,
       sunTimes: this._astro()?.sun || null,
     };
   }
@@ -751,9 +756,13 @@ class WeatherPlusCard extends WxElement {
     }
     if (a.pressure != null) {
       const unit = a.pressure_unit || "hPa";
-      const d = m.trend;
-      const dir = d == null ? null : d >= 1 ? "up" : d <= -1 ? "down" : "steady";
-      const delta = d == null ? "" : `${d > 0 ? "+" : d < 0 ? "−" : ""}${wxFmtNum(m.fmt, Math.abs(d), 1)} ${unit}`;
+      // Rising or falling past 1 hPa in 3 hours, the delta read in the unit of its source (a pressure sensor's unit
+      // may not be the weather entity's).
+      const d = m.trend?.delta ?? null;
+      const hpa = d == null ? null : wxToHpa(d, m.trend.unit);
+      const dir = hpa == null ? null : hpa >= 1 ? "up" : hpa <= -1 ? "down" : "steady";
+      const digits = /^(inhg|psi)$/i.test(m.trend?.unit || "") ? 2 : 1;
+      const delta = d == null ? "" : `${d > 0 ? "+" : d < 0 ? "−" : ""}${wxFmtNum(m.fmt, Math.abs(d), digits)} ${m.trend.unit}`;
       const icon = { up: "mdi:trending-up", down: "mdi:trending-down", steady: "mdi:trending-neutral" }[dir] || "mdi:gauge";
       out.push(
         wxChip(icon, `${wxFmtNum(m.fmt, Number(a.pressure), 0)} ${unit}`, {
@@ -876,6 +885,7 @@ class WeatherPlusCard extends WxElement {
     });
     this._onPopupKey = (ev) => {
       if (ev.key === "Escape") this._closePopup();
+      else if (ev.key === "Tab") this._trapFocus(ev);
       else if ((ev.key === "Enter" || ev.key === " ") && ev.composedPath?.()[0]?.dataset?.more) this._onClick(ev);
     };
     // A popstate that lands back on its own entry comes from a dialog opened over it and closed (Home Assistant's
@@ -895,6 +905,22 @@ class WeatherPlusCard extends WxElement {
     this._popupParts = null;
     this._renderPopup();
     root.querySelector?.(".close")?.focus?.({ preventScroll: true });
+  }
+
+  // Tab and Shift+Tab go round the full screen detail's controls and never reach the page behind it: past the last
+  // one back to the first, before the first one to the last, from outside the detail into it.
+  _trapFocus(ev) {
+    const root = this._popup?.shadowRoot;
+    const items = Array.from(root?.querySelectorAll?.('button:not([disabled]), a[href], [tabindex="0"]') || []).filter((n) => !n.getClientRects || n.getClientRects().length);
+    if (!items.length) return;
+    const active = root.activeElement;
+    let next = null;
+    if (!active) next = ev.shiftKey ? items.at(-1) : items[0];
+    else if (!ev.shiftKey && active === items.at(-1)) next = items[0];
+    else if (ev.shiftKey && active === items[0]) next = items.at(-1);
+    if (!next) return;
+    ev.preventDefault();
+    next.focus({ preventScroll: true });
   }
 
   // `fromBack`: the back button already left the history entry the popup added.
@@ -1013,5 +1039,5 @@ class WeatherPlusCard extends WxElement {
 
 class WeatherPlusMiniCard extends wxMini(WeatherPlusCard) {}
 
-wxRegister("weather-plus-card", WeatherPlusCard, "Weather Plus Card", "Animated weather with forecasts, rain in the next hour, alerts, UV, pollen and drought restrictions");
-wxRegister("weather-plus-mini-card", WeatherPlusMiniCard, "Weather Plus Mini Card", "Compact animated weather that unfolds into the full card");
+wxRegister("weather-plus-card", WeatherPlusCard, "picker_card");
+wxRegister("weather-plus-mini-card", WeatherPlusMiniCard, "picker_mini");

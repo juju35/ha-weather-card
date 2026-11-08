@@ -208,6 +208,10 @@ const WX_I18N = {
     refreshing: "Refreshing…",
     zoom_out: "Back to the compact view",
     today: "Today",
+    picker_card: "Weather Plus Card",
+    picker_card_desc: "Animated weather with forecasts, rain in the next hour, alerts, UV, pollen and drought restrictions",
+    picker_mini: "Weather Plus Mini Card",
+    picker_mini_desc: "Compact animated weather that unfolds into the full card",
     // Editor
     ed_entity: "Weather entity",
     ed_entity_helper: "Leave empty to use the first one found",
@@ -428,6 +432,10 @@ const WX_I18N = {
     refreshing: "Actualisation…",
     zoom_out: "Revenir à la vue compacte",
     today: "Aujourd'hui",
+    picker_card: "Carte Weather Plus",
+    picker_card_desc: "Météo animée avec prévisions, pluie dans l'heure, vigilances, UV, pollens et restrictions d'eau",
+    picker_mini: "Mini carte Weather Plus",
+    picker_mini_desc: "Météo animée compacte qui se déplie en carte complète",
     ed_entity: "Entité météo",
     ed_entity_helper: "Laisser vide pour la première trouvée",
     ed_name: "Nom",
@@ -647,6 +655,10 @@ const WX_I18N = {
     refreshing: "Wird aktualisiert…",
     zoom_out: "Zurück zur kompakten Ansicht",
     today: "Heute",
+    picker_card: "Weather Plus Karte",
+    picker_card_desc: "Animiertes Wetter mit Vorhersagen, Regen in der nächsten Stunde, Warnungen, UV, Pollen und Wassereinschränkungen",
+    picker_mini: "Weather Plus Minikarte",
+    picker_mini_desc: "Kompaktes animiertes Wetter, das sich zur vollständigen Karte aufklappt",
     ed_entity: "Wetter-Entität",
     ed_entity_helper: "Leer lassen, um die erste gefundene zu verwenden",
     ed_name: "Name",
@@ -866,6 +878,10 @@ const WX_I18N = {
     refreshing: "Actualizando…",
     zoom_out: "Volver a la vista compacta",
     today: "Hoy",
+    picker_card: "Tarjeta Weather Plus",
+    picker_card_desc: "Tiempo animado con previsiones, lluvia en la próxima hora, avisos, UV, polen y restricciones de agua",
+    picker_mini: "Minitarjeta Weather Plus",
+    picker_mini_desc: "Tiempo animado compacto que se despliega en la tarjeta completa",
     ed_entity: "Entidad meteorológica",
     ed_entity_helper: "Déjalo vacío para usar la primera encontrada",
     ed_name: "Nombre",
@@ -1085,6 +1101,10 @@ const WX_I18N = {
     refreshing: "Освежавање…",
     zoom_out: "Назад на компактан приказ",
     today: "Данас",
+    picker_card: "Картица временске прогнозе",
+    picker_card_desc: "Анимирано време са прогнозама, кишом у наредном сату, упозорењима, УВ индексом, поленом и ограничењима воде",
+    picker_mini: "Мини картица временске прогнозе",
+    picker_mini_desc: "Компактно анимирано време које се отвара у целу картицу",
     ed_entity: "Ентитет за време",
     ed_entity_helper: "Оставите празно да се користи први пронађени",
     ed_name: "Назив",
@@ -1304,6 +1324,10 @@ const WX_I18N = {
     refreshing: "Osvežavanje…",
     zoom_out: "Nazad na kompaktan prikaz",
     today: "Danas",
+    picker_card: "Kartica Weather Plus",
+    picker_card_desc: "Animirano vreme sa prognozama, kišom u narednom satu, upozorenjima, UV indeksom, polenom i ograničenjima vode",
+    picker_mini: "Mini kartica Weather Plus",
+    picker_mini_desc: "Kompaktno animirano vreme koje se otvara u celu karticu",
     ed_entity: "Entitet za vreme",
     ed_entity_helper: "Ostavite prazno da se koristi prvi pronađeni",
     ed_name: "Naziv",
@@ -1523,6 +1547,10 @@ const WX_I18N = {
     refreshing: "Aggiornamento…",
     zoom_out: "Torna alla vista compatta",
     today: "Oggi",
+    picker_card: "Scheda Weather Plus",
+    picker_card_desc: "Meteo animato con previsioni, pioggia nella prossima ora, allerte, UV, pollini e restrizioni idriche",
+    picker_mini: "Mini scheda Weather Plus",
+    picker_mini_desc: "Meteo animato compatto che si apre nella scheda completa",
     ed_entity: "Entità meteo",
     ed_entity_helper: "Lasciare vuoto per usare la prima trovata",
     ed_name: "Nome",
@@ -1742,6 +1770,10 @@ const WX_I18N = {
     refreshing: "Vernieuwen…",
     zoom_out: "Terug naar de compacte weergave",
     today: "Vandaag",
+    picker_card: "Weather Plus-kaart",
+    picker_card_desc: "Geanimeerd weer met verwachtingen, regen in het komende uur, waarschuwingen, UV, pollen en waterbeperkingen",
+    picker_mini: "Weather Plus-minikaart",
+    picker_mini_desc: "Compact geanimeerd weer dat uitklapt tot de volledige kaart",
     ed_entity: "Weerentiteit",
     ed_entity_helper: "Leeg laten om de eerst gevonden entiteit te gebruiken",
     ed_name: "Naam",
@@ -1961,6 +1993,10 @@ const WX_I18N = {
     refreshing: "A atualizar…",
     zoom_out: "Voltar à vista compacta",
     today: "Hoje",
+    picker_card: "Cartão Weather Plus",
+    picker_card_desc: "Meteorologia animada com previsões, chuva na próxima hora, avisos, UV, pólen e restrições de água",
+    picker_mini: "Minicartão Weather Plus",
+    picker_mini_desc: "Meteorologia animada compacta que se abre no cartão completo",
     ed_entity: "Entidade meteorológica",
     ed_entity_helper: "Deixar vazio para usar a primeira encontrada",
     ed_name: "Nome",
@@ -2180,6 +2216,10 @@ const WX_I18N = {
     refreshing: "Odświeżanie…",
     zoom_out: "Powrót do widoku kompaktowego",
     today: "Dziś",
+    picker_card: "Karta Weather Plus",
+    picker_card_desc: "Animowana pogoda z prognozami, deszczem w ciągu godziny, ostrzeżeniami, UV, pyłkami i ograniczeniami wody",
+    picker_mini: "Minikarta Weather Plus",
+    picker_mini_desc: "Kompaktowa animowana pogoda, która rozwija się do pełnej karty",
     ed_entity: "Encja pogody",
     ed_entity_helper: "Pozostaw puste, aby użyć pierwszej znalezionej",
     ed_name: "Nazwa",
@@ -2399,6 +2439,10 @@ const WX_I18N = {
     refreshing: "Se reîmprospătează…",
     zoom_out: "Înapoi la vizualizarea compactă",
     today: "Azi",
+    picker_card: "Card Weather Plus",
+    picker_card_desc: "Vreme animată cu prognoze, ploaie în următoarea oră, avertizări, UV, polen și restricții de apă",
+    picker_mini: "Mini card Weather Plus",
+    picker_mini_desc: "Vreme animată compactă care se desfășoară în cardul complet",
     ed_entity: "Entitate meteo",
     ed_entity_helper: "Lăsați gol pentru a folosi prima găsită",
     ed_name: "Nume",
@@ -2618,6 +2662,10 @@ const WX_I18N = {
     refreshing: "Opdaterer…",
     zoom_out: "Tilbage til kompakt visning",
     today: "I dag",
+    picker_card: "Weather Plus-kort",
+    picker_card_desc: "Animeret vejr med prognoser, regn den næste time, varsler, UV, pollen og vandrestriktioner",
+    picker_mini: "Weather Plus-minikort",
+    picker_mini_desc: "Kompakt animeret vejr, der folder sig ud til det fulde kort",
     ed_entity: "Vejrentitet",
     ed_entity_helper: "Lad stå tom for at bruge den første fundne",
     ed_name: "Navn",
@@ -2837,6 +2885,10 @@ const WX_I18N = {
     refreshing: "Uppdaterar…",
     zoom_out: "Tillbaka till kompakt vy",
     today: "I dag",
+    picker_card: "Weather Plus-kort",
+    picker_card_desc: "Animerat väder med prognoser, regn nästa timme, varningar, UV, pollen och vattenrestriktioner",
+    picker_mini: "Weather Plus-minikort",
+    picker_mini_desc: "Kompakt animerat väder som fälls ut till hela kortet",
     ed_entity: "Väderentitet",
     ed_entity_helper: "Lämna tomt för att använda den första som hittas",
     ed_name: "Namn",
@@ -3056,6 +3108,10 @@ const WX_I18N = {
     refreshing: "Обновяване…",
     zoom_out: "Обратно към компактния изглед",
     today: "Днес",
+    picker_card: "Карта Weather Plus",
+    picker_card_desc: "Анимирано време с прогнози, дъжд през следващия час, предупреждения, UV, полени и ограничения за вода",
+    picker_mini: "Мини карта Weather Plus",
+    picker_mini_desc: "Компактно анимирано време, което се разгръща в пълната карта",
     ed_entity: "Обект за времето",
     ed_entity_helper: "Оставете празно, за да се използва първият открит",
     ed_name: "Име",
@@ -3275,6 +3331,10 @@ const WX_I18N = {
     refreshing: "Обновление…",
     zoom_out: "Вернуться к компактному виду",
     today: "Сегодня",
+    picker_card: "Карточка Weather Plus",
+    picker_card_desc: "Анимированная погода с прогнозами, дождём в ближайший час, предупреждениями, УФ, пыльцой и ограничениями воды",
+    picker_mini: "Мини-карточка Weather Plus",
+    picker_mini_desc: "Компактная анимированная погода, разворачивающаяся в полную карточку",
     ed_entity: "Объект погоды",
     ed_entity_helper: "Оставьте пустым, чтобы использовать первый найденный",
     ed_name: "Название",
@@ -3494,6 +3554,10 @@ const WX_I18N = {
     refreshing: "Оновлення…",
     zoom_out: "Повернутися до компактного вигляду",
     today: "Сьогодні",
+    picker_card: "Картка Weather Plus",
+    picker_card_desc: "Анімована погода з прогнозами, дощем найближчої години, попередженнями, УФ, пилком і обмеженнями води",
+    picker_mini: "Міні-картка Weather Plus",
+    picker_mini_desc: "Компактна анімована погода, що розгортається в повну картку",
     ed_entity: "Сутність погоди",
     ed_entity_helper: "Залиште порожнім, щоб використати першу знайдену",
     ed_name: "Назва",
@@ -3713,6 +3777,10 @@ const WX_I18N = {
     refreshing: "Frissítés…",
     zoom_out: "Vissza a kompakt nézethez",
     today: "Ma",
+    picker_card: "Weather Plus kártya",
+    picker_card_desc: "Animált időjárás előrejelzéssel, a következő óra esőjével, figyelmeztetésekkel, UV-vel, pollennel és vízkorlátozásokkal",
+    picker_mini: "Weather Plus mini kártya",
+    picker_mini_desc: "Kompakt animált időjárás, amely a teljes kártyává nyílik ki",
     ed_entity: "Időjárás-entitás",
     ed_entity_helper: "Hagyja üresen az elsőként talált használatához",
     ed_name: "Név",
@@ -3932,6 +4000,10 @@ const WX_I18N = {
     refreshing: "Obnovuje sa…",
     zoom_out: "Späť na kompaktné zobrazenie",
     today: "Dnes",
+    picker_card: "Karta Weather Plus",
+    picker_card_desc: "Animované počasie s predpoveďami, dažďom v najbližšej hodine, výstrahami, UV, peľom a obmedzeniami vody",
+    picker_mini: "Minikarta Weather Plus",
+    picker_mini_desc: "Kompaktné animované počasie, ktoré sa rozbalí na celú kartu",
     ed_entity: "Entita počasia",
     ed_entity_helper: "Nechajte prázdne pre prvú nájdenú",
     ed_name: "Názov",
@@ -4151,6 +4223,10 @@ const WX_I18N = {
     refreshing: "Obnovování…",
     zoom_out: "Zpět na kompaktní zobrazení",
     today: "Dnes",
+    picker_card: "Karta Weather Plus",
+    picker_card_desc: "Animované počasí s předpověďmi, deštěm v příští hodině, výstrahami, UV, pylem a omezeními vody",
+    picker_mini: "Minikarta Weather Plus",
+    picker_mini_desc: "Kompaktní animované počasí, které se rozbalí na celou kartu",
     ed_entity: "Entita počasí",
     ed_entity_helper: "Ponechte prázdné pro první nalezenou",
     ed_name: "Název",
@@ -4370,6 +4446,10 @@ const WX_I18N = {
     refreshing: "Osveževanje…",
     zoom_out: "Nazaj na strnjen pogled",
     today: "Danes",
+    picker_card: "Kartica Weather Plus",
+    picker_card_desc: "Animirano vreme z napovedmi, dežjem v naslednji uri, opozorili, UV, cvetnim prahom in omejitvami vode",
+    picker_mini: "Mini kartica Weather Plus",
+    picker_mini_desc: "Kompaktno animirano vreme, ki se razpre v celotno kartico",
     ed_entity: "Entiteta vremena",
     ed_entity_helper: "Pustite prazno za prvo najdeno",
     ed_name: "Ime",
@@ -4589,6 +4669,10 @@ const WX_I18N = {
     refreshing: "Atsvaidzina…",
     zoom_out: "Atpakaļ uz kompakto skatu",
     today: "Šodien",
+    picker_card: "Weather Plus kartīte",
+    picker_card_desc: "Animēti laikapstākļi ar prognozēm, lietu nākamajā stundā, brīdinājumiem, UV, ziedputekšņiem un ūdens ierobežojumiem",
+    picker_mini: "Weather Plus mini kartīte",
+    picker_mini_desc: "Kompakti animēti laikapstākļi, kas izvēršas pilnā kartītē",
     ed_entity: "Laikapstākļu vienība",
     ed_entity_helper: "Atstājiet tukšu, lai izmantotu pirmo atrasto",
     ed_name: "Nosaukums",
@@ -4808,6 +4892,10 @@ const WX_I18N = {
     refreshing: "Ανανέωση…",
     zoom_out: "Επιστροφή στη συμπαγή προβολή",
     today: "Σήμερα",
+    picker_card: "Κάρτα Weather Plus",
+    picker_card_desc: "Κινούμενος καιρός με προγνώσεις, βροχή την επόμενη ώρα, προειδοποιήσεις, UV, γύρη και περιορισμούς νερού",
+    picker_mini: "Μίνι κάρτα Weather Plus",
+    picker_mini_desc: "Συμπαγής κινούμενος καιρός που ανοίγει στην πλήρη κάρτα",
     ed_entity: "Οντότητα καιρού",
     ed_entity_helper: "Αφήστε κενό για την πρώτη που θα βρεθεί",
     ed_name: "Όνομα",
@@ -4887,17 +4975,51 @@ function wxFmtNum(lang, v, digits = 1) {
   return v.toLocaleString(lang, { maximumFractionDigits: digits, useGrouping: false });
 }
 
-// "14:30" / "2 p.m." in the Home Assistant time format; `hour` alone gives "14 h" / "2 PM".
-function wxTime(lang, date, hourOnly = false) {
-  const d = date instanceof Date ? date : new Date(date);
-  if (Number.isNaN(d.getTime())) return "";
-  if (hourOnly && /^fr\b/i.test(lang)) return `${d.getHours()} h`;
-  return d.toLocaleTimeString(lang, hourOnly ? { hour: "numeric" } : { hour: "2-digit", minute: "2-digit" });
+// Pressures and precipitation in the units the card's scales are written in (hPa, mm), from the unit their source
+// speaks; an unknown unit is taken as already in hPa / mm.
+const WX_HPA = { hpa: 1, mbar: 1, mb: 1, pa: 0.01, kpa: 10, cbar: 10, bar: 1000, inhg: 33.8639, mmhg: 1.33322, psi: 68.9476 };
+const wxToHpa = (v, unit) => v * (WX_HPA[String(unit || "").toLowerCase()] ?? 1);
+const WX_MM = { mm: 1, cm: 10, in: 25.4, inch: 25.4, inches: 25.4 };
+const wxToMm = (v, unit) => v * (WX_MM[String(unit || "").toLowerCase()] ?? 1);
+
+// The clock of Home Assistant's profile: its 12/24 h choice (time_format "12" / "24"; "system" asks the browser,
+// "language" leaves it to the language) and, with time_zone "server", the server's time zone.
+function wxTimeOpts(hass) {
+  const o = {};
+  const loc = hass?.locale || {};
+  // hourCycle rather than hour12: hour12 false gives "24:05" after midnight in some browsers.
+  let fmt = loc.time_format;
+  if (fmt === "system") {
+    try {
+      fmt = /h1[12]/.test(new Intl.DateTimeFormat(undefined, { hour: "numeric" }).resolvedOptions().hourCycle || "") ? "12" : "24";
+    } catch {}
+  }
+  if (fmt === "12") o.hourCycle = "h12";
+  else if (fmt === "24") o.hourCycle = "h23";
+  const tz = hass?.config?.time_zone;
+  if (loc.time_zone === "server" && tz) {
+    try {
+      new Intl.DateTimeFormat("en", { timeZone: tz });
+      o.timeZone = tz;
+    } catch {}
+  }
+  return o;
 }
 
-const wxDay = (lang, date) => {
+// "14:30" / "2:30 PM" in the Home Assistant time format (`tf` from wxTimeOpts); `hour` alone gives "14 h" / "2 PM".
+function wxTime(lang, date, hourOnly = false, tf = {}) {
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return "";
+  if (hourOnly && /^fr\b/i.test(lang) && tf.hourCycle !== "h12") {
+    const h = new Intl.DateTimeFormat("fr", { hour: "numeric", hourCycle: "h23", timeZone: tf.timeZone }).formatToParts(d).find((p) => p.type === "hour");
+    return `${Number(h?.value ?? d.getHours())} h`;
+  }
+  return d.toLocaleTimeString(lang, { ...(hourOnly ? { hour: "numeric" } : { hour: "2-digit", minute: "2-digit" }), ...tf });
+}
+
+const wxDay = (lang, date, tf = {}) => {
   const d = new Date(date);
-  const s = d.toLocaleDateString(lang, { weekday: "short" }).replace(/\.$/, "");
+  const s = d.toLocaleDateString(lang, { weekday: "short", timeZone: tf.timeZone }).replace(/\.$/, "");
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
@@ -5530,8 +5652,10 @@ function wxCleanConfig(value, defaults, type) {
 }
 
 // Defines a card and its editor (`<type>-editor`) and lists the card in the card picker.
-function wxRegister(type, cls, name, description) {
+// The card picker's name and description, in the language of the page (Home Assistant sets it on <html>).
+function wxRegister(type, cls, key) {
   if (customElements.get(type)) return;
+  const lang = wxLang(null, null);
   const editor = class extends WxCardEditor {
     static mini = !!cls.mini;
   };
@@ -5539,7 +5663,7 @@ function wxRegister(type, cls, name, description) {
   customElements.define(`${type}-editor`, editor);
   cls.tag = type;
   window.customCards = window.customCards || [];
-  window.customCards.push({ type, name, description, preview: true, documentationURL: WX_REPO });
+  window.customCards.push({ type, name: wxT(lang, key), description: wxT(lang, `${key}_desc`), preview: true, documentationURL: WX_REPO });
 }
 
 if (!customElements.get("weather-plus-card")) {

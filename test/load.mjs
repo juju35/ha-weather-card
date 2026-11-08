@@ -30,7 +30,8 @@ export const fakeNode = () => ({
 });
 
 // `now` freezes the sandbox's clock (Date.now() and new Date()), so that the tests do not depend on the time of day.
-export const load = (now = null) => {
+// `lang`: the page's <html lang>, as Home Assistant sets it.
+export const load = (now = null, { lang } = {}) => {
   const registry = new Map();
   const winListeners = {};
   class HTMLElement {
@@ -84,6 +85,7 @@ export const load = (now = null) => {
           el.isConnected = false;
         },
       },
+      documentElement: lang ? { lang } : undefined,
       listeners: {},
       addEventListener(type, fn) {
         this.listeners[type] = fn;
@@ -152,7 +154,7 @@ export const load = (now = null) => {
   return vm.runInContext(
     `${code}
     ({ WX_I18N, WX_CARDINALS, wxWarnings, wxLang, wxIntlLang, wxResolve, wxFindWeather, wxPollenLevel, wxAlertLevel, wxDroughtLevel, wxRainLevel, wxUvLevel, wxBearing, wxCleanConfig,
-       wxSceneSvg, wxCondIcon, wxTempColor, document, wxSunTimes, wxMoonTimes, wxAltitude, wxMoonAge, wxMoonPhase, wxMoonLight, wxMoonLit, wxWeatherName, WX_CONDITIONS,
+       wxSceneSvg, wxCondIcon, wxTempColor, document, wxSunTimes, wxMoonTimes, wxAltitude, wxMoonAge, wxMoonPhase, wxMoonLight, wxMoonLit, wxWeatherName, WX_CONDITIONS, wxToHpa, wxToMm, wxTime, wxTimeOpts,
        WX_UV, WX_ALERT_COLORS, WX_VG_COLORS, WX_AQ_COLORS, WX_LEVEL_COLORS, WX_RAIN_COLORS, WX_STYLES, WX_POPUP_STYLES, customElements, window, timers,
        cards: Object.fromEntries(${JSON.stringify(tags)}.map((t) => [t, customElements.get(t)])) })`,
     ctx,

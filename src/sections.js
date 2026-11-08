@@ -276,7 +276,7 @@ function wxSectionHourly(card, m) {
   const top = h
     .map(
       (x, i) =>
-        `<div class="hcol${i === 0 ? " now" : ""}"><span class="t">${wxEsc(i === 0 ? card._t("now") : wxTime(m.fmt, x.datetime, true))}</span>` +
+        `<div class="hcol${i === 0 ? " now" : ""}"><span class="t">${wxEsc(i === 0 ? card._t("now") : wxTime(m.fmt, x.datetime, true, m.tf))}</span>` +
         `<ha-icon icon="${wxCondIcon(x.condition, x.night)}" style="color:${wxCondColor(x.condition, x.night)}"></ha-icon></div>`,
     )
     .join("");
@@ -303,11 +303,13 @@ function wxSectionHourly(card, m) {
         })
         .join("")
     : "";
+  // A full bar at 4 mm an hour, whatever unit the provider speaks.
+  const punit = m.a.precipitation_unit || "mm";
   const bottom = h
     .map((x) => {
       const p = x.precipitation_probability;
       const amount = x.precipitation;
-      const pct = p != null ? p : amount != null ? Math.min(100, amount * 25) : 0;
+      const pct = p != null ? p : amount != null ? Math.min(100, wxToMm(amount, punit) * 25) : 0;
       const txt = p != null ? (p ? `${wxFmtNum(m.fmt, p, 0)} %` : "") : amount ? `${wxFmtNum(m.fmt, amount, 1)}` : "";
       return `<div class="pcol"><div class="pbar"><span style="height:${Math.max(0, Math.min(100, pct))}%"></span></div><span class="pv">${wxEsc(txt)}</span></div>`;
     })
@@ -342,7 +344,7 @@ function wxSectionDaily(card, m) {
       const now = today && m.temp != null ? `<span class="nowdot" style="left:${(((m.temp - min) / span) * 100).toFixed(1)}%"></span>` : "";
       const p = d.precipitation_probability;
       return (
-        `<div class="drow" style="--d:${(i * 0.06).toFixed(2)}s"><span class="day">${wxEsc(today ? card._t("today") : wxDay(m.fmt, d.datetime))}</span>` +
+        `<div class="drow" style="--d:${(i * 0.06).toFixed(2)}s"><span class="day">${wxEsc(today ? card._t("today") : wxDay(m.fmt, d.datetime, m.tf))}</span>` +
         `<ha-icon icon="${wxCondIcon(d.condition, false)}" style="color:${wxCondColor(d.condition, false)}"></ha-icon>` +
         `<span class="pp">${p ? `${wxFmtNum(m.fmt, p, 0)} %` : ""}</span>` +
         `<span class="lo">${wxFmtNum(m.fmt, lo, 0)}°</span>` +
@@ -479,9 +481,9 @@ function wxSectionSun(card, m) {
   return (
     `<div class="section s-sun">${wxSectionTitle(card, "sun")}<div class="sun${s.up ? " up" : ""}" data-more="${wxEsc(m.ent.sun)}" role="button" tabindex="0">` +
     `<svg viewBox="0 0 400 64" preserveAspectRatio="xMidYMid meet"><path class="horizon" d="M0 56H400"/><path class="arc" d="${arc}"/>${done}${dot}</svg>` +
-    `<div class="suntimes"><span><ha-icon icon="mdi:weather-sunset-up"></ha-icon>${wxEsc(wxTime(m.fmt, s.rise))}</span>` +
+    `<div class="suntimes"><span><ha-icon icon="mdi:weather-sunset-up"></ha-icon>${wxEsc(wxTime(m.fmt, s.rise, false, m.tf))}</span>` +
     `<span class="dl">${wxEsc(card._t("daylight", { h: Math.floor(dl / 60), m: String(dl % 60).padStart(2, "0") }))}</span>` +
-    `<span><ha-icon icon="mdi:weather-sunset-down"></ha-icon>${wxEsc(wxTime(m.fmt, s.set))}</span></div>${wxSunExtras(card, m)}</div></div>`
+    `<span><ha-icon icon="mdi:weather-sunset-down"></ha-icon>${wxEsc(wxTime(m.fmt, s.set, false, m.tf))}</span></div>${wxSunExtras(card, m)}</div></div>`
   );
 }
 
@@ -489,18 +491,18 @@ function wxSectionSun(card, m) {
 function wxSunExtras(card, m) {
   const t = m.sunTimes;
   if (!t) return "";
-  const range = (r) => (r ? `${wxTime(m.fmt, r[0])}–${wxTime(m.fmt, r[1])}` : "");
+  const range = (r) => (r ? `${wxTime(m.fmt, r[0], false, m.tf)}–${wxTime(m.fmt, r[1], false, m.tf)}` : "");
   const golden = t.goldenEvening || t.goldenMorning;
   const items = [
-    t.dawn ? wxChip("mdi:weather-sunset-up", `${card._t("dawn")} ${wxTime(m.fmt, t.dawn)}`) : "",
+    t.dawn ? wxChip("mdi:weather-sunset-up", `${card._t("dawn")} ${wxTime(m.fmt, t.dawn, false, m.tf)}`) : "",
     golden
-      ? wxChip("mdi:camera-iris", `${card._t("golden_hour")} ${wxTime(m.fmt, golden[0])}`, {
+      ? wxChip("mdi:camera-iris", `${card._t("golden_hour")} ${wxTime(m.fmt, golden[0], false, m.tf)}`, {
           color: "#ffb300",
           cls: "tint",
           title: [range(t.goldenMorning), range(t.goldenEvening)].filter(Boolean).join(" · "),
         })
       : "",
-    t.dusk ? wxChip("mdi:weather-sunset-down", `${card._t("dusk")} ${wxTime(m.fmt, t.dusk)}`) : "",
+    t.dusk ? wxChip("mdi:weather-sunset-down", `${card._t("dusk")} ${wxTime(m.fmt, t.dusk, false, m.tf)}`) : "",
   ].filter(Boolean);
   return items.length ? `<div class="chips sunextra">${items.join("")}</div>` : "";
 }
@@ -509,7 +511,7 @@ function wxSunExtras(card, m) {
 function wxSectionMoon(card, m) {
   const mo = m.moon;
   if (!mo) return "";
-  const date = (d) => d.toLocaleDateString(m.fmt, { weekday: "short", day: "numeric", month: "short" });
+  const date = (d) => d.toLocaleDateString(m.fmt, { weekday: "short", day: "numeric", month: "short", timeZone: m.tf.timeZone });
   const next = [
     ["next_full", mo.nextFull, "mdi:moon-full"],
     ["next_new", mo.nextNew, "mdi:moon-new"],
@@ -526,8 +528,8 @@ function wxSectionMoon(card, m) {
     `<div class="mdisc">${svg}</div><div class="uvtxt"><b>${wxEsc(card._t(`mp_${mo.phase}`))}</b>` +
     `<span>${wxEsc(card._t("moon_lit", { v: Math.round(mo.light * 100), d: Math.floor(mo.age) + 1 }))}</span>${
       mo.times
-        ? `<span class="mtimes"><span title="${wxEsc(card._t("moonrise"))}"><ha-icon icon="mdi:arrow-up-thin"></ha-icon>${wxEsc(mo.times.rise ? wxTime(m.fmt, mo.times.rise) : "—")}</span>` +
-          `<span title="${wxEsc(card._t("moonset"))}"><ha-icon icon="mdi:arrow-down-thin"></ha-icon>${wxEsc(mo.times.set ? wxTime(m.fmt, mo.times.set) : "—")}</span></span>`
+        ? `<span class="mtimes"><span title="${wxEsc(card._t("moonrise"))}"><ha-icon icon="mdi:arrow-up-thin"></ha-icon>${wxEsc(mo.times.rise ? wxTime(m.fmt, mo.times.rise, false, m.tf) : "—")}</span>` +
+          `<span title="${wxEsc(card._t("moonset"))}"><ha-icon icon="mdi:arrow-down-thin"></ha-icon>${wxEsc(mo.times.set ? wxTime(m.fmt, mo.times.set, false, m.tf) : "—")}</span></span>`
         : ""
     }</div>` +
     `<div class="mnexts">${next}</div></div></div>`
