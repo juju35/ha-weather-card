@@ -117,8 +117,8 @@ Or manually:
 
 ### Manual
 
-1. Download `ha-weather-card.js` from the [latest release](https://github.com/juju35/ha-weather-card/releases/latest)
-2. Copy it to `config/www/ha-weather-card.js`
+1. Download `ha-weather-card.js` and the `ha-weather-card.i18n.*.js` translation files from the [latest release](https://github.com/juju35/ha-weather-card/releases/latest)
+2. Copy them all to `config/www/` (without the translation files, the cards show in English)
 3. Add the resource in **Settings → Dashboards → Resources**: URL `/local/ha-weather-card.js`, type **JavaScript module**
 
 ## Configuration
