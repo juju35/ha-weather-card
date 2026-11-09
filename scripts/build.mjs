@@ -4,6 +4,7 @@
 // whole bundle, so nothing leaks into the page.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { splitDist } from "./i18n-split.mjs";
 
 export const PARTS = ["shared", "astro", "scene", "sections"];
 export const CARDS = ["weather-plus-card"];
@@ -25,3 +26,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   writeFileSync(`${root}dist/ha-weather-card.js`, out);
   console.log(`Built dist/ha-weather-card.js (${(out.length / 1024).toFixed(1)} KB)`);
 }
+
+// Translations: English stays in the bundle, each other language goes to dist/ha-weather-card.i18n.<lang>.js,
+// fetched when a card needs it (scripts/i18n-split.mjs).
+if (process.argv[1] === fileURLToPath(import.meta.url)) splitDist(`${root}dist`, "ha-weather-card.js", { version: pkg.version });
