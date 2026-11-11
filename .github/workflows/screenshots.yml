@@ -7,6 +7,7 @@ on:
     paths:
       - "src/**"
       - "scripts/**"
+      - ".github/workflows/screenshots.yml"
       # A Playwright bump changes the rendering: refresh the screenshots with it.
       - "package.json"
       - "package-lock.json"
