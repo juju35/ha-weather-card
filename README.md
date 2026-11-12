@@ -156,6 +156,8 @@ entity: weather.paris
 |---|---|---|---|
 | `entity` | string | first `weather.*` | The weather entity |
 | `name` | string | its name | Card title |
+| `show_title` | boolean | `true` | Show the title in the header (e.g. `false` under a section heading of your own) |
+| `show_subtitle` | boolean | `true` | Show the subtitle under the title |
 | `sections` | list | `[alerts, rain, hourly, daily, air, uv, pollen, sun, moon]` | Sections shown, in this order |
 | `hours` | number | `12` | Hours of the hourly forecast |
 | `days` | number | `5` | Days of the daily forecast |
