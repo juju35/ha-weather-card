@@ -572,6 +572,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   /* The title takes the room the pill leaves (base 0, so the pill keeps its whole text while there is room for both),
      and keeps 4 characters and its ellipsis whatever the pill's length. */
   .titles { flex: 1 1 0; min-width: 5ch; cursor: pointer; }
+  :host([hide-title]) .titles > .name, :host([hide-subtitle]) .titles > .sub { display: none; }
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* The pill gives way only when the title is down to its 4 characters: then it ellipsizes its text, and on the

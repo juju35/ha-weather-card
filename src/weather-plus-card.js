@@ -84,6 +84,9 @@ class WeatherPlusCard extends WxElement {
     if (!config) throw new Error("Invalid configuration");
     if (config.sections != null && !Array.isArray(config.sections)) throw new Error("sections must be a list");
     this._config = { ...this.constructor.defaults, ...config };
+    // show_title / show_subtitle: the header's title / subtitle, hidden by the stylesheet
+    this.toggleAttribute?.("hide-title", config.show_title === false);
+    this.toggleAttribute?.("hide-subtitle", config.show_subtitle === false);
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
       this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
