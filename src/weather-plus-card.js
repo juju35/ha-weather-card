@@ -46,11 +46,12 @@ const WX_REFRESH_MIN = 600;
 const wxEntIds = (ent) => [...Object.values(ent), ...Object.values(ent.air || {})].flat().filter((id) => typeof id === "string");
 
 // Runs `write` (which replaces the markup under `scope`) keeping what the viewer was doing: the scroll of `scope`, of
-// the hourly strips, and the focused control (found again by its action or entity).
-function wxKeepView(root, scope, write) {
+// the hourly strips, and the focused control (found again by its action or entity) when `keepFocus` (the keyboard:
+// put back after a mouse click or a tap, the focus would draw the focus ring).
+function wxKeepView(root, scope, write, keepFocus = true) {
   const top = scope.scrollTop;
   const strips = [...(root.querySelectorAll?.(".hscroll") || [])].map((el) => el.scrollLeft);
-  const a = root.activeElement;
+  const a = keepFocus ? root.activeElement : null;
   const key = a?.dataset && (a.dataset.action || a.dataset.more) ? [a.localName, a.className, a.dataset.action, a.dataset.more] : null;
   write();
   if (top) scope.scrollTop = top;
@@ -90,7 +91,9 @@ class WeatherPlusCard extends WxElement {
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
       this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
+      this._watchPress(this.shadowRoot);
       this.shadowRoot.addEventListener("keydown", (ev) => {
+        this._byPointer = false;
         if ((ev.key === "Enter" || ev.key === " ") && ev.target?.dataset?.more) {
           ev.preventDefault();
           this._onClick(ev);
@@ -132,6 +135,11 @@ class WeatherPlusCard extends WxElement {
   disconnectedCallback() {
     clearInterval(this._tick);
     this._tick = null;
+    this._pressing = false;
+    if (this._onPressEnd) {
+      window.removeEventListener("pointerup", this._onPressEnd, true);
+      window.removeEventListener("pointercancel", this._onPressEnd, true);
+    }
     this._unwatchVisibility();
     this._unsubscribe();
     // The masonry view detaches every card and attaches it again when its column count changes (a phone turned to
@@ -283,8 +291,34 @@ class WeatherPlusCard extends WxElement {
   }
 
   // ── Model ──
+  // No rewrite of the card (or of its full screen detail) between the press and the release: Home Assistant updates
+  // the card several times a second, and a rewrite under the pointer replaces the element pressed, so that the click
+  // lands on the card itself and does nothing. The pending render is done once released (after the click). The focus
+  // is only kept across rewrites for the keyboard (see wxKeepView).
+  _watchPress(root) {
+    this._onPressEnd ??= () => {
+      window.removeEventListener("pointerup", this._onPressEnd, true);
+      window.removeEventListener("pointercancel", this._onPressEnd, true);
+      setTimeout(() => {
+        this._pressing = false;
+        if (this._dirty) this._update();
+      }, 0);
+    };
+    root.addEventListener("pointerdown", () => {
+      this._byPointer = true;
+      this._pressing = true;
+      window.addEventListener("pointerup", this._onPressEnd, true);
+      window.addEventListener("pointercancel", this._onPressEnd, true);
+    });
+  }
+
   _update() {
     if (!this._config || !this._hass || !this.shadowRoot) return;
+    if (this._pressing) {
+      this._dirty = true;
+      return;
+    }
+    this._dirty = false;
     const ent = this._entities();
     const hass = this._hass;
     // sun.sun: only what the card shows of it. Its elevation and azimuth change every few minutes and would rebuild
@@ -687,9 +721,14 @@ class WeatherPlusCard extends WxElement {
         buttons: `${this._compact() ? "" : this._refreshButton()}${this._popupButton()}${this._zoomButton()}`,
       });
     const body = `${head}${this._warningBanner(m, this._compact() ? 1 : 4)}${this._compact() ? this._miniBody(m) : this._fullBody(m)}</ha-card>`;
-    wxKeepView(this.shadowRoot, this.shadowRoot, () => {
-      this.shadowRoot.innerHTML = body;
-    });
+    wxKeepView(
+      this.shadowRoot,
+      this.shadowRoot,
+      () => {
+        this.shadowRoot.innerHTML = body;
+      },
+      !this._byPointer,
+    );
     if (this._popup) this._renderPopup();
   }
 
@@ -874,7 +913,9 @@ class WeatherPlusCard extends WxElement {
     const host = document.createElement("div");
     host.className = "weather-plus-popup";
     const root = host.attachShadow({ mode: "open" });
+    this._watchPress(root);
     root.addEventListener("click", (ev) => {
+      this._pressing = false;
       const path = ev.composedPath();
       if (path.some((n) => n.dataset?.action === "close") || !path.some((n) => n.classList?.contains?.("sheet"))) {
         this._closePopup();
@@ -883,6 +924,7 @@ class WeatherPlusCard extends WxElement {
       this._onClick(ev);
     });
     this._onPopupKey = (ev) => {
+      this._byPointer = false;
       if (ev.key === "Escape") this._closePopup();
       else if (ev.key === "Tab") this._trapFocus(ev);
       else if ((ev.key === "Enter" || ev.key === " ") && ev.composedPath?.()[0]?.dataset?.more) this._onClick(ev);
@@ -967,9 +1009,14 @@ class WeatherPlusCard extends WxElement {
       p.color.textContent = color;
       p.sheet.setAttribute("aria-label", m.name);
       p.card.className = cls;
-      wxKeepView(root, p.sheet, () => {
-        p.card.innerHTML = content;
-      });
+      wxKeepView(
+        root,
+        p.sheet,
+        () => {
+          p.card.innerHTML = content;
+        },
+        !this._byPointer,
+      );
       return;
     }
     root.innerHTML =
@@ -996,6 +1043,8 @@ class WeatherPlusCard extends WxElement {
 
   // ── Actions ──
   _onClick(ev) {
+    this._pressing = false;
+    if (ev.detail === 0) this._byPointer = false;
     const el = ev.composedPath().find((n) => n.dataset && (n.dataset.action || n.dataset.more));
     if (!el) return;
     if (el.dataset.action === "zoom") {
