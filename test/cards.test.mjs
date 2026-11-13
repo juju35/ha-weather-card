@@ -275,6 +275,18 @@ test("mini card: compact, unfolds into the full card", () => {
   el._onUnzoom({ composedPath: () => [] });
   assert.equal(el._zoomed, false);
   assert.equal(el.hasAttribute("zoomed"), false);
+  // A press in the card released outside does not fold it; a tap elsewhere (iOS sends no click for it) does.
+  el._onClick({ detail: 1, composedPath: () => [{ dataset: { action: "zoom" } }] });
+  el._unzoom.tap({ composedPath: () => [el] });
+  assert.equal(el._zoomed, true);
+  el._unzoom.tap({ composedPath: () => [] });
+  assert.equal(el._zoomed, false);
+  // Left unfolded and back: compact.
+  el._onClick({ detail: 1, composedPath: () => [{ dataset: { action: "zoom" } }] });
+  el.disconnectedCallback();
+  assert.equal(el._zoomed, false);
+  assert.equal(el.hasAttribute("zoomed"), false);
+  el.connectedCallback();
   el._closePopup();
   assert.doesNotMatch(html(mount(lib, "weather-plus-mini-card", { zoom: false }, makeHass())), /data-action="zoom"/);
 });

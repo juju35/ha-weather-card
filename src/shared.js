@@ -5536,6 +5536,41 @@ class WxElement extends HTMLElement {
 // card to the full card and back, and a click anywhere else on the page (but in its full screen detail) folds it again.
 const wxInDialog = (ev) => ev.composedPath().some((n) => ["ha-more-info-dialog", "ha-dialog", "dialog"].includes(n.localName));
 
+// "A click elsewhere" is caught on the pointer, not only on the click event: on iOS (Safari and the companion app)
+// a tap on something that is not clickable (the background, an empty spot, a card with no action) sends no click to
+// the page. It counts when the press and the release are both outside the card (`isOutside`), and a scroll does not
+// count (the browser cancels the pointer). Keyboard clicks still go through the click event.
+const wxWatchOutside = (isOutside, handler) => {
+  let downOutside = false;
+  const onDown = (ev) => {
+    downOutside = isOutside(ev);
+  };
+  const onUp = (ev) => {
+    if (downOutside && isOutside(ev)) handler(ev);
+    downOutside = false;
+  };
+  const onClick = (ev) => {
+    if (ev.detail === 0 && isOutside(ev)) handler(ev);
+  };
+  return {
+    on() {
+      document.addEventListener("pointerdown", onDown, true);
+      document.addEventListener("pointerup", onUp, true);
+      document.addEventListener("click", onClick, true);
+    },
+    // A tap (press and release at the same spot), for the tests.
+    tap(ev) {
+      onDown(ev);
+      onUp(ev);
+    },
+    off() {
+      document.removeEventListener("pointerdown", onDown, true);
+      document.removeEventListener("pointerup", onUp, true);
+      document.removeEventListener("click", onClick, true);
+    },
+  };
+};
+
 const wxMini = (Base) =>
   class extends Base {
     static get mini() {
@@ -5544,20 +5579,30 @@ const wxMini = (Base) =>
 
     constructor() {
       super();
-      this._onUnzoom = (ev) => {
+      const outside = (ev) => {
         const path = ev.composedPath();
-        if (this._zoomed && !path.includes(this) && !(this._popup && path.includes(this._popup)) && !wxInDialog(ev)) this._setZoom(false);
+        return !path.includes(this) && !(this._popup && path.includes(this._popup)) && !wxInDialog(ev);
       };
+      this._onUnzoom = (ev) => {
+        if (this._zoomed && outside(ev)) this._setZoom(false);
+      };
+      this._unzoom = wxWatchOutside(outside, (ev) => this._onUnzoom(ev));
     }
 
     connectedCallback() {
       super.connectedCallback?.();
-      document.addEventListener("click", this._onUnzoom, true);
+      this._unzoom.on();
     }
 
     disconnectedCallback() {
       super.disconnectedCallback?.();
-      document.removeEventListener("click", this._onUnzoom, true);
+      this._unzoom.off();
+      // Left (another dashboard view, a conditional card hidden): back to the compact view, not unfolded on return.
+      if (this._zoomed) {
+        this._zoomed = false;
+        this.toggleAttribute("zoomed", false);
+        this._update();
+      }
     }
 
     getCardSize() {
