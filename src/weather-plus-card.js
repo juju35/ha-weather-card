@@ -488,23 +488,41 @@ class WeatherPlusCard extends WxElement {
   }
 
   // The moon: its phase drawn from its age, named by the Moon integration when it is there (same phase, its words);
-  // mirrored in the southern hemisphere.
+  // mirrored in the southern hemisphere. Lunar Phase, when it is there, gives the age, the light, moonrise / moonset
+  // and the next full and new moons; what it lacks is computed as without it.
   _moonModel(ent) {
     const now = new Date();
-    const age = wxMoonAge(now);
+    const lp = this._st(ent.lunar_phase);
+    const lunar = wxUnavailable(lp) ? null : lp.attributes;
+    const num = (v) => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
+    const date = (v) => {
+      const d = v ? new Date(v) : null;
+      return d && !Number.isNaN(d.getTime()) ? d : null;
+    };
+    const lunarAge = num(lunar?.moon_age);
+    const age = lunarAge != null && lunarAge >= 0 && lunarAge < WX_SYNODIC ? lunarAge : wxMoonAge(now);
     const st = this._st(ent.moon);
+    const lunarPhase = lunar ? wxNorm(lp.state) : null;
     const named = wxUnavailable(st) ? null : wxNorm(st.state);
-    const phase = WX_MOON_PHASES.includes(named) ? named : wxMoonPhase(age);
+    const phase = WX_MOON_PHASES.includes(lunarPhase) ? lunarPhase : WX_MOON_PHASES.includes(named) ? named : wxMoonPhase(age);
+    const lit = num(lunar?.illumination_fraction);
     const inDays = (d) => new Date(now.getTime() + d * 864e5);
+    const future = (v) => {
+      const d = date(v);
+      return d && d.getTime() > now.getTime() - 864e5 ? d : null;
+    };
+    const computed = this._astro()?.moon || null;
+    const rise = date(lunar?.moonrise);
+    const set = date(lunar?.moonset);
     return {
       age,
       phase,
-      light: wxMoonLight(age),
+      light: lit != null && lit >= 0 && lit <= 100 ? lit / 100 : wxMoonLight(age),
       flip: Number(this._hass.config?.latitude) < 0,
-      nextFull: inDays((WX_SYNODIC / 2 - age + WX_SYNODIC) % WX_SYNODIC),
-      nextNew: inDays(WX_SYNODIC - age),
-      entity: ent.moon,
-      times: this._astro()?.moon || null,
+      nextFull: future(lunar?.next_full_moon) || inDays((WX_SYNODIC / 2 - age + WX_SYNODIC) % WX_SYNODIC),
+      nextNew: future(lunar?.next_new_moon) || inDays(WX_SYNODIC - age),
+      entity: lunar ? ent.lunar_phase : ent.moon,
+      times: rise || set ? { rise: rise || computed?.rise || null, set: set || computed?.set || null } : computed,
     };
   }
 

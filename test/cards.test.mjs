@@ -436,6 +436,49 @@ test("moon: section and night scene follow today's phase; the Moon integration n
   assert.match(night, /class="earthshine"/);
 });
 
+test("moon: Lunar Phase gives the phase, the light, the day, moonrise / moonset and the next moons", () => {
+  const day = (h) => {
+    const d = new Date(NOON);
+    d.setHours(h, 7, 0, 0);
+    return d.toISOString();
+  };
+  const inDays = (n) => new Date(NOON.getTime() + n * 864e5).toISOString();
+  const id = "sensor.maison_phase_de_la_lune";
+  const h = makeHass("fr", {
+    "sensor.moon_phase": { state: "full_moon" },
+    [id]: {
+      state: "waxing_crescent",
+      friendly_name: "Maison Phase de la lune",
+      device_class: "enum",
+      moon_age: 4.27,
+      illumination_fraction: 19.25,
+      moonrise: day(12),
+      moonset: day(20),
+      next_full_moon: inDays(11),
+      next_new_moon: inDays(3),
+    },
+  });
+  h.entities["sensor.moon_phase"] = { entity_id: "sensor.moon_phase", translation_key: "phase" };
+  h.entities[id] = { entity_id: id, platform: "lunar_phase", translation_key: "moon_phase" };
+  const out = html(card({}, h));
+  const moon = out.slice(out.indexOf("s-moon"));
+  assert.match(moon, /<b>Premier croissant<\/b><span>Éclairée à 19 % · jour 5 sur 29/, "Lunar Phase wins over Moon");
+  assert.match(moon, new RegExp(`data-more="${id}"`));
+  assert.match(moon, /title="Lever"><ha-icon icon="mdi:arrow-up-thin"><\/ha-icon>12:07<\/span><span title="Coucher"><ha-icon icon="mdi:arrow-down-thin"><\/ha-icon>20:07</);
+  assert.ok(moon.indexOf("Nouvelle lune") < moon.indexOf("Pleine lune"), "the next moons from Lunar Phase, the nearest first");
+});
+
+test("moon: Lunar Phase unavailable or set by `entities`, computed values otherwise", () => {
+  const id = "sensor.lune";
+  const attrs = { moon_age: 20.5, illumination_fraction: 70 };
+  const h = makeHass("en", { [id]: { state: "unavailable", ...attrs } });
+  const off = html(card({}, h));
+  assert.doesNotMatch(off.slice(off.indexOf("s-moon")), /data-more="sensor.lune"/);
+  const h2 = makeHass("en", { [id]: { state: "waning_gibbous", ...attrs } });
+  const set = html(card({ entities: { lunar_phase: id } }, h2));
+  assert.match(set.slice(set.indexOf("s-moon")), /<b>Waning gibbous<\/b><span>70 % lit · day 21 of 29/);
+});
+
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
 test("hourly wind: arrow, speed, gusts on hover, strong gusts highlighted", () => {

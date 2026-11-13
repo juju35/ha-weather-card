@@ -5389,6 +5389,14 @@ const WX_ROLES = {
     test: (st) => st.attributes.eclairs_20_min != null,
   },
   moon: { keys: ["phase"], id: /(^|_)moon_phase$|phase_(de_la_)?lune/ },
+  // Lunar Phase (custom lunar_phase): its phase sensor carries the age, the light, moonrise / moonset and the next
+  // full and new moons in its attributes.
+  lunar_phase: {
+    keys: ["moon_phase"],
+    id: /(^|_)moon_phase$|phase_(de_la_)?lune/,
+    need: (st) => st.attributes.moon_age != null && st.attributes.illumination_fraction != null,
+    test: (st) => st.attributes.moon_age != null && st.attributes.illumination_fraction != null,
+  },
   cloud_cover: { keys: ["cloud_cover"], id: /cloud_cover(age)?$|couverture_nuageuse$|nebulosite$/ },
   daily_precipitation: { keys: ["daily_precipitation"], id: /daily_precipitation$|precipitation_(du_jour|today)$|cumul_de_pluie_du_jour$/ },
   // Atmospheric pressure, for its trend: the weather entity's device first.

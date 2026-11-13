@@ -54,17 +54,41 @@ export const conditionCards = (lang, still = true, list = CONDITIONS) =>
   });
 export { CONDITIONS };
 
+// Lunar Phase (custom lunar_phase): its phase sensor, with the moon's age, light, moonrise / moonset and the next
+// full and new moons in its attributes, kept out of the mock home so that the other captures stay as they are.
+const at = (now, h, m, days = 0) => {
+  const d = new Date(now);
+  d.setDate(d.getDate() + days);
+  d.setHours(h, m, 0, 0);
+  return d.toISOString();
+};
+const LUNAR = "sensor.home_moon_phase";
+const lunar = (now) => ({
+  [LUNAR]: {
+    state: "waxing_gibbous",
+    friendly_name: "Home Moon phase",
+    device_class: "enum",
+    moon_age: 10.4,
+    illumination_fraction: 78.6,
+    moonrise: at(now, 14, 32),
+    moonset: at(now, 3, 18),
+    next_full_moon: at(now, 15, 51, 4),
+    next_new_moon: at(now, 23, 47, 19),
+  },
+});
+
 const SETUPS = {
   card: card("weather-plus-card"),
   mini: card("weather-plus-mini-card"),
   storm: card("weather-plus-card", { sections: ["alerts", "rain", "hourly"] }, STORM),
   night: card("weather-plus-card", { sections: ["hourly", "daily", "sun", "moon"] }, { "weather.paris": { state: "clear-night", temperature: 11.2 } }, NIGHT),
   conditions: (lang) => ({ cards: conditionCards(lang), cols: 2 }),
+  "lunar-phase": card("weather-plus-card", { sections: ["sun", "moon"], entities: { lunar_phase: LUNAR } }, lunar(NIGHT), NIGHT),
 };
 
 if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   await shoot({
-    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 })],
+    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 }), ...pair("lunar-phase", { now: NIGHT })],
     setup: (s, lang) => SETUPS[s.file.replace(/-dark$/, "")](lang),
   });
 
