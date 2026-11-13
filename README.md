@@ -20,7 +20,8 @@
   <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/google_air_quality.png" alt="Google Air Quality" width="64">&nbsp;&nbsp;
   <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteoalarm.png" alt="Meteoalarm" width="64">&nbsp;&nbsp;
   <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/dwd_weather_warnings.png" alt="DWD Weather Warnings" width="64">&nbsp;&nbsp;
-  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/nws_alerts.png" alt="NWS Alerts" width="64">
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/nws_alerts.png" alt="NWS Alerts" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/lunar_phase.png" alt="Lunar Phase" width="64">
 </p>
 
 An animated weather card for Home Assistant that brings together everything the weather integrations of your instance know: the weather now and its forecasts, **rain in the next hour**, **weather warnings**, **thunderstorms and lightning nearby**, **air quality and pollutants**, **UV index**, **pollen** and **VigiEau drought restrictions**, with a mini card. Add it, it finds the weather entity and the sensors around it by itself. The sky comes alive: the sun turns, clouds drift, rain and snow fall, lightning flashes.
@@ -69,7 +70,7 @@ Sections, in the order of `sections` (a section with no data hides itself):
 | `uv` | The UV index on its scale, its level and the advice that goes with it, today's peak | A UV sensor (Météo-France, OpenUV…), else the weather entity's `uv_index` |
 | `pollen` | The overall pollen risk (1 very low … 6 extremely high) with its advice and main species, and tomorrow's next to the title, then one row per species on six levels, the most present first; a high risk (4 and up) also shows in the alerts | Pollens (RNSA), Atmo France, Google Pollen, or any pollen sensor |
 | `sun` | The sun's course over the day, sunrise, sunset and the daylight length; dawn, golden hour and dusk | `sun.sun`, and Home Assistant's location |
-| `moon` | Today's moon drawn as it looks (mirrored south of the equator), its phase, how much of it is lit and its day in the cycle, moonrise and moonset, the next full and new moons | Computed from the date; the phase name from the [Moon](https://www.home-assistant.io/integrations/moon/) integration when it is set up |
+| `moon` | Today's moon drawn as it looks (mirrored south of the equator), its phase, how much of it is lit and its day in the cycle, moonrise and moonset, the next full and new moons | Computed from the date; the phase name from the [Moon](https://www.home-assistant.io/integrations/moon/) integration when it is set up; with [Lunar Phase](https://github.com/ngocjohn/lunar-phase), its phase, light, age, moonrise, moonset and next full and new moons |
 
 ### Mini card
 
@@ -108,6 +109,7 @@ The other sections read the sensors of these integrations, found by their transl
 | Tomorrow's air and pollen | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/atmofrance.png" alt="" width="16"> Atmo France's *-J+1* sensors next to the ones in use | — |
 | Warning banner | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteoalarm.png" alt="" width="16"> [Meteoalarm](https://www.home-assistant.io/integrations/meteoalarm/) (`binary_sensor`, *awareness level* and *headline*), <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/dwd_weather_warnings.png" alt="" width="16"> [DWD Weather Warnings](https://www.home-assistant.io/integrations/dwd_weather_warnings/) (current and advance warning level sensors), <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/nws_alerts.png" alt="" width="16"> [NWS Alerts](https://github.com/finity69x2/nws_alerts) (`Alerts` list, by severity), <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteo_france.png" alt="" width="16"> Météo-France *weather alert* | `warning_entities` option |
 | Moon phase | [Moon](https://www.home-assistant.io/integrations/moon/) (`sensor.moon_phase`), optional | `moon` |
+| Moon phase, light, age, moonrise / moonset, next full and new moons | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/lunar_phase.png" alt="" width="16"> [Lunar Phase](https://github.com/ngocjohn/lunar-phase) (its *Moon phase* sensor and its attributes), optional; it comes before Moon and the computed values, which fill in what it lacks | `lunar_phase` |
 
 ## Prerequisites
 

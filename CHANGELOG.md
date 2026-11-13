@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.13.0 - 2026-11-13
+
+### Features
+- **Lunar Phase** ([ngocjohn/lunar-phase](https://github.com/ngocjohn/lunar-phase)): when its *Moon phase* sensor is there (found by its translation key or its attributes, or set with `entities: { lunar_phase: … }`), the moon section and the night scene take its phase, its illuminated fraction, its age (the day in the cycle), its moonrise and moonset and its next full and new moons. It comes before the Moon integration; what it lacks or reports unavailable is computed as before.
+
 ## 1.12.1 - 2026-11-13
 
 ### Fixes
