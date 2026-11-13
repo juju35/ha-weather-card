@@ -275,6 +275,31 @@ test("mini card: compact, unfolds into the full card", () => {
   el._onUnzoom({ composedPath: () => [] });
   assert.equal(el._zoomed, false);
   assert.equal(el.hasAttribute("zoomed"), false);
+  // A press in the card released outside does not fold it; a tap elsewhere (iOS sends no click for it) does.
+  el._onClick({ detail: 1, composedPath: () => [{ dataset: { action: "zoom" } }] });
+  el._unzoom.tap({ composedPath: () => [el] });
+  assert.equal(el._zoomed, true);
+  el._unzoom.tap({ composedPath: () => [] });
+  assert.equal(el._zoomed, false);
+  // No rewrite under a press: a fold asked meanwhile is drawn on release; a click renders at once.
+  el._onClick({ detail: 1, composedPath: () => [{ dataset: { action: "zoom" } }] });
+  const open = html(el);
+  el._pressing = el._byPointer = true;
+  el._unzoom.tap({ composedPath: () => [] });
+  assert.equal(html(el), open, "no rewrite under the pointer");
+  el._onPressEnd();
+  lib.timers.run();
+  assert.notEqual(html(el), open, "drawn once released");
+  el._pressing = el._byPointer = true;
+  const before = html(el);
+  el._onClick({ detail: 1, composedPath: () => [{ dataset: { action: "zoom" } }] });
+  assert.notEqual(html(el), before, "the click renders at once");
+  assert.equal(el._pressing, false);
+  // Left unfolded and back: compact.
+  el.disconnectedCallback();
+  assert.equal(el._zoomed, false);
+  assert.equal(el.hasAttribute("zoomed"), false);
+  el.connectedCallback();
   el._closePopup();
   assert.doesNotMatch(html(mount(lib, "weather-plus-mini-card", { zoom: false }, makeHass())), /data-action="zoom"/);
 });
