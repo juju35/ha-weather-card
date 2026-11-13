@@ -1,6 +1,7 @@
 // Renders the weather cards with the mock home and saves the README screenshots.
 // Usage: npm install && npm run build && node scripts/screenshots/weather.mjs
 // (CHROMIUM_PATH=/path/to/chromium to use a browser of your own)
+import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { addCards, DAY, launch, NIGHT, openPage, pair, root, saveFramed, shoot } from "./harness.mjs";
 import { mockHass } from "./mock.mjs";
@@ -61,7 +62,7 @@ const SETUPS = {
   conditions: (lang) => ({ cards: conditionCards(lang), cols: 2 }),
 };
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   await shoot({
     shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 })],
     setup: (s, lang) => SETUPS[s.file.replace(/-dark$/, "")](lang),
