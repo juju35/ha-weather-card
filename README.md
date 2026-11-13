@@ -8,6 +8,19 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/juju35/ha-weather-card/blob/main/LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/julienstep9)
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteo_france.png" alt="Météo-France" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/blitzortung.png" alt="Blitzortung" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/vigieau.png" alt="VigiEau" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/openuv.png" alt="OpenUV" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/atmofrance.png" alt="Atmo France" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/waqi.png" alt="WAQI" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/google_air_quality.png" alt="Google Air Quality" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteoalarm.png" alt="Meteoalarm" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/dwd_weather_warnings.png" alt="DWD Weather Warnings" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/nws_alerts.png" alt="NWS Alerts" width="64">
+</p>
+
 An animated weather card for Home Assistant that brings together everything the weather integrations of your instance know: the weather now and its forecasts, **rain in the next hour**, **weather warnings**, **thunderstorms and lightning nearby**, **air quality and pollutants**, **UV index**, **pollen** and **VigiEau drought restrictions**, with a mini card. Add it, it finds the weather entity and the sensors around it by itself. The sky comes alive: the sun turns, clouds drift, rain and snow fall, lightning flashes.
 
 [![Open your Home Assistant instance and open a repository inside the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=juju35&repository=ha-weather-card&category=plugin)
@@ -77,21 +90,21 @@ The other sections read the sensors of these integrations, found by their transl
 
 | Data | Integrations | Role in `entities` |
 |---|---|---|
-| Rain in the next hour | [Météo-France](https://www.home-assistant.io/integrations/meteo_france/) (`sensor.*_next_rain`) | `next_rain` |
-| Rain, snow, frost chances | Météo-France | `rain_chance`, `snow_chance`, `freeze_chance` |
-| Weather warnings | Météo-France (`sensor.*_weather_alert`), Niak Weather (*Vigilance officielle*), or any sensor with a green / yellow / orange / red level per phenomenon | `alert` |
-| Thunderstorms | [Blitzortung](https://github.com/mrk-its/homeassistant-blitzortung) (`lightning_counter`, `lightning_distance`), Niak Weather (*Orage proche*), and the forecast | `lightning_counter`, `lightning_distance` |
-| Drought restrictions | VigiEau, Niak Weather (*Restrictions d'eau*, with the restricted uses), or any sensor with a *vigilance / alerte / alerte renforcée / crise* level | `vigieau` |
-| UV index | Météo-France, [OpenUV](https://www.home-assistant.io/integrations/openuv/), OpenWeatherMap, Pirate Weather…, else the weather entity | `uv`, `uv_max` |
-| Pollen | Pollens (RNSA), Atmo France, Google Pollen, any sensor named after a pollen species (levels 0–5 or 0–6, or words in French or English) | `pollen` (a list), `pollen_risk` |
-| Air quality index | Atmo France *qualité globale*, or any outdoor `aqi` sensor (WAQI, AirVisual…); else the worst pollutant | `aqi` |
-| Pollutants | Atmo France, WAQI, AirVisual, Google Air Quality, Airly, sensor.community… (an indoor purifier's PM2.5 is left out; Atmo's day-ahead *-J+1* copies too) | `air` (a map: `pm25`, `pm10`, `o3`, `no2`, `so2`) |
+| Rain in the next hour | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteo_france.png" alt="" width="16"> [Météo-France](https://www.home-assistant.io/integrations/meteo_france/) (`sensor.*_next_rain`) | `next_rain` |
+| Rain, snow, frost chances | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteo_france.png" alt="" width="16"> Météo-France | `rain_chance`, `snow_chance`, `freeze_chance` |
+| Weather warnings | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteo_france.png" alt="" width="16"> Météo-France (`sensor.*_weather_alert`), Niak Weather (*Vigilance officielle*), or any sensor with a green / yellow / orange / red level per phenomenon | `alert` |
+| Thunderstorms | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/blitzortung.png" alt="" width="16"> [Blitzortung](https://github.com/mrk-its/homeassistant-blitzortung) (`lightning_counter`, `lightning_distance`), Niak Weather (*Orage proche*), and the forecast | `lightning_counter`, `lightning_distance` |
+| Drought restrictions | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/vigieau.png" alt="" width="16"> VigiEau, Niak Weather (*Restrictions d'eau*, with the restricted uses), or any sensor with a *vigilance / alerte / alerte renforcée / crise* level | `vigieau` |
+| UV index | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteo_france.png" alt="" width="16"> Météo-France, <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/openuv.png" alt="" width="16"> [OpenUV](https://www.home-assistant.io/integrations/openuv/), <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/openweathermap.png" alt="" width="16"> OpenWeatherMap, <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/pirateweather.png" alt="" width="16"> Pirate Weather…, else the weather entity | `uv`, `uv_max` |
+| Pollen | Pollens (RNSA), <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/atmofrance.png" alt="" width="16"> Atmo France, <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/google_pollen.png" alt="" width="16"> Google Pollen, any sensor named after a pollen species (levels 0–5 or 0–6, or words in French or English) | `pollen` (a list), `pollen_risk` |
+| Air quality index | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/atmofrance.png" alt="" width="16"> Atmo France *qualité globale*, or any outdoor `aqi` sensor (<img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/waqi.png" alt="" width="16"> WAQI, AirVisual…); else the worst pollutant | `aqi` |
+| Pollutants | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/atmofrance.png" alt="" width="16"> Atmo France, <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/waqi.png" alt="" width="16"> WAQI, AirVisual, <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/google_air_quality.png" alt="" width="16"> Google Air Quality, <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/airly.png" alt="" width="16"> Airly, <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/luftdaten.png" alt="" width="16"> sensor.community… (an indoor purifier's PM2.5 is left out; Atmo's day-ahead *-J+1* copies too) | `air` (a map: `pm25`, `pm10`, `o3`, `no2`, `so2`) |
 | Sun | `sun.sun` | `sun` |
-| Cloud cover | Météo-France *cloud cover*, else the weather entity's `cloud_coverage` | `cloud_cover` |
+| Cloud cover | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteo_france.png" alt="" width="16"> Météo-France *cloud cover*, else the weather entity's `cloud_coverage` | `cloud_cover` |
 | Pressure trend | The weather entity's pressure sensor (else the entity itself), read from the recorder's history | `pressure` |
-| Today's rainfall | Météo-France *daily precipitation* | `daily_precipitation` |
-| Tomorrow's air and pollen | Atmo France's *-J+1* sensors next to the ones in use | — |
-| Warning banner | [Meteoalarm](https://www.home-assistant.io/integrations/meteoalarm/) (`binary_sensor`, *awareness level* and *headline*), [DWD Weather Warnings](https://www.home-assistant.io/integrations/dwd_weather_warnings/) (current and advance warning level sensors), [NWS Alerts](https://github.com/finity69x2/nws_alerts) (`Alerts` list, by severity), Météo-France *weather alert* | `warning_entities` option |
+| Today's rainfall | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteo_france.png" alt="" width="16"> Météo-France *daily precipitation* | `daily_precipitation` |
+| Tomorrow's air and pollen | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/atmofrance.png" alt="" width="16"> Atmo France's *-J+1* sensors next to the ones in use | — |
+| Warning banner | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteoalarm.png" alt="" width="16"> [Meteoalarm](https://www.home-assistant.io/integrations/meteoalarm/) (`binary_sensor`, *awareness level* and *headline*), <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/dwd_weather_warnings.png" alt="" width="16"> [DWD Weather Warnings](https://www.home-assistant.io/integrations/dwd_weather_warnings/) (current and advance warning level sensors), <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/nws_alerts.png" alt="" width="16"> [NWS Alerts](https://github.com/finity69x2/nws_alerts) (`Alerts` list, by severity), <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteo_france.png" alt="" width="16"> Météo-France *weather alert* | `warning_entities` option |
 | Moon phase | [Moon](https://www.home-assistant.io/integrations/moon/) (`sensor.moon_phase`), optional | `moon` |
 
 ## Prerequisites
