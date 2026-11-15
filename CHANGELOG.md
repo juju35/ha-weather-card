@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.13.1 - 2026-11-16
+
+### Fixes
+- The scene's glow is no longer clipped into a flat edge along the top of its box. It was a radial gradient sized to the farthest corner, so on the wider-than-tall box it still showed colour at the top edge and was cut off square there; it is now an ellipse sized as a share of the box, fading out before every edge at all scene sizes (card, mini, popup), for every condition, day and night.
+
 ## 1.13.0 - 2026-11-13
 
 ### Features
