@@ -152,9 +152,12 @@ function wxScene(cond, night, still, moon) {
 }
 
 const WX_SCENE_STYLES = `
+  /* The glow is an ellipse sized as a share of the box so it fades out before the edges at every scene size
+     (card, mini, popup); a circle sized to the farthest corner reached the top edge with colour still showing and
+     was clipped into a flat line there. */
   .scene { position: relative; flex-shrink: 0; width: 120px; height: 96px; border-radius: 16px;
-           background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--wx-color) 22%, transparent), transparent 70%); }
-  .scene.night { background: radial-gradient(circle at 50% 40%, color-mix(in srgb, #3949ab 34%, transparent), transparent 72%); }
+           background: radial-gradient(ellipse 58% 52% at 50% 50%, color-mix(in srgb, var(--wx-color) 22%, transparent), transparent 72%); }
+  .scene.night { background: radial-gradient(ellipse 60% 54% at 50% 48%, color-mix(in srgb, #3949ab 34%, transparent), transparent 74%); }
   .scene svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 3px 5px rgba(0,0,0,.16)); }
   .scene .rays { stroke: #ffb300; stroke-width: 2.6; stroke-linecap: round; transform-box: fill-box; transform-origin: center;
                  animation: wx-spin 30s linear infinite; }
