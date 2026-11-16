@@ -815,6 +815,8 @@ const WX_POPUP_STYLES = `
   .close:hover { background: color-mix(in srgb, var(--primary-text-color) 14%, transparent); }
   .close:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 2px; }
   .popup .section { gap: 8px; }
+  /* The full screen detail gives the weather scene more room than the card's 120×96 (ratio kept at 1.25). */
+  .popup .scene { width: 160px; height: 128px; border-radius: 20px; }
 
   /* Phone: one column, as in the card. */
   .popup .top, .popup .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
@@ -825,7 +827,7 @@ const WX_POPUP_STYLES = `
   @media (min-width: 760px) {
     ha-card.popup { gap: 22px; padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
     .popup .top { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px 40px; align-items: start; }
-    .popup .scene { width: 160px; height: 128px; border-radius: 20px; }
+    .popup .scene { width: 200px; height: 160px; border-radius: 24px; }
     .popup .big .val { font-size: 56px; }
     .popup .big .val small { font-size: 22px; }
     .popup .flow { display: block; columns: 2 340px; column-gap: 40px; }
