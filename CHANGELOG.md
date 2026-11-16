@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.13.2 - 2026-11-16
+
+### Changes
+- The weather scene is larger in the full-screen detail: 160×128 on phones (up from the card's 120×96) and 200×160 on wider screens (up from 160×128), keeping its 1.25 ratio.
+
 ## 1.13.1 - 2026-11-16
 
 ### Fixes
