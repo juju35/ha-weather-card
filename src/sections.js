@@ -827,7 +827,7 @@ const WX_POPUP_STYLES = `
   @media (min-width: 760px) {
     ha-card.popup { gap: 22px; padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
     .popup .top { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px 40px; align-items: start; }
-    .popup .scene { width: 200px; height: 160px; border-radius: 24px; }
+    .popup .scene { width: 280px; height: 224px; border-radius: 28px; }
     .popup .big .val { font-size: 56px; }
     .popup .big .val small { font-size: 22px; }
     .popup .flow { display: block; columns: 2 340px; column-gap: 40px; }
