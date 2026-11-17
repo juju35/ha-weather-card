@@ -774,14 +774,14 @@ class WeatherPlusCard extends WxElement {
     return this._config.illustration !== false;
   }
 
-  // Night picture of the banner: forced by `illustration_theme`, else the sun (sun.sun), else Home Assistant's dark
-  // theme or a clear night.
+  // Night picture of the banner: forced by `illustration_theme`, else Home Assistant's dark theme or the night (the
+  // sun down by sun.sun, or a clear night without it).
   _bannerNight(m) {
     const theme = this._config.illustration_theme;
     if (theme === "night") return true;
     if (theme === "day") return false;
-    if (m?.sun) return !m.sun.up;
-    return !!this._hass?.themes?.darkMode || m?.st?.state === "clear-night";
+    if (this._hass?.themes?.darkMode) return true;
+    return m?.sun ? !m.sun.up : m?.st?.state === "clear-night";
   }
 
   // The banner of the card from its model: the weather now as the sky of the banner shows it (day or night), the

@@ -45,12 +45,14 @@ const QUIET = {
   "sensor.alert_level_in_paris": { state: "aucune" },
   "sensor.paris_next_rain": { "1_hour_forecast": { "0 min": "Temps sec", "55 min": "Temps sec" } },
 };
-// One mini card per condition, with nothing to report but the weather.
+// One mini card per condition, with nothing to report but the weather. A catalogue of the day and night scenes: each
+// keeps its own picture in the dark theme too (illustration_theme), where `auto` would turn every banner to night.
 export const conditionCards = (lang, still = true, list = CONDITIONS) =>
   list.map(([state, temperature, now]) => {
     const hass = mockHass(lang, { ...QUIET, "weather.paris": { state, temperature } }, now);
     hass.forecasts.hourly = [];
-    return { tag: "weather-plus-mini-card", config: { animations: !still, zoom: false }, hass };
+    const illustration_theme = now === NIGHT ? "night" : "day";
+    return { tag: "weather-plus-mini-card", config: { animations: !still, zoom: false, illustration_theme }, hass };
   });
 export { CONDITIONS };
 

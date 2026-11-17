@@ -3,7 +3,7 @@
 ## 1.14.0 - 2026-11-17
 
 ### Features
-- Illustrated header on the full and the mini card: a 90px banner with the title and the temperature on a day or night sky, the card's animated weather scene at the right (nothing clipped at the top) above a 10px lawn strip running edge to edge, the round icon tinted by the status (the warning's or nearby lightning's colour, else the condition's) and a warning pill under the title. The sky follows `sun.sun` (Home Assistant's dark theme without it); `illustration_theme: day | night` forces it and `illustration: false` keeps the classic header with the scene in the body. Both options are in the visual editor of the card and the mini card, translated in every language. The scene's gradient ids are unique per card.
+- Illustrated header on the full and the mini card: a 90px banner with the title and the temperature on a day or night sky, the card's animated weather scene at the right (nothing clipped at the top) above a 10px lawn strip running edge to edge, the round icon tinted by the status (the warning's or nearby lightning's colour, else the condition's) and a warning pill under the title. The sky is night when `sun.sun` is below the horizon or Home Assistant's theme is dark; `illustration_theme: day | night` forces it and `illustration: false` keeps the classic header with the scene in the body. Both options are in the visual editor of the card and the mini card, translated in every language. The scene's gradient ids are unique per card.
 ## 1.13.3 - 2026-11-16
 
 ### Changes

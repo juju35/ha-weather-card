@@ -59,7 +59,7 @@ customElements.define("ha-icon", class extends HTMLElement {
   }
 });`;
 
-const pageHtml = (theme, width) => `<!doctype html><html><head><meta charset="utf-8">
+const pageHtml = (theme, width) => `<!doctype html><html data-theme="${theme}"><head><meta charset="utf-8">
 <style>
   :root { ${Object.entries({ ...THEMES[theme], ...COMMON }).map(([k, v]) => `${k}:${v};`).join("")} }
   body { margin: 0; padding: 16px; background: var(--primary-background-color); color: var(--primary-text-color);
@@ -72,7 +72,7 @@ export const launch = () =>
 
 // A page with the theme, the stand-ins and the card script, its clock set to `now`.
 export const openPage = async (browser, { theme = "light", width = 460, now = DAY, icons = [] } = {}) => {
-  const page = await browser.newPage({ deviceScaleFactor: 2, timezoneId: TZ, viewport: { width: width + 32, height: 2400 } });
+  const page = await browser.newPage({ deviceScaleFactor: 2, timezoneId: TZ, viewport: { width: width + 32, height: 2400 }, colorScheme: theme });
   page.on("pageerror", (err) => console.error(`pageerror: ${err.message}`));
   await page.clock.setFixedTime(now);
   await page.setContent(pageHtml(theme, width));
@@ -132,6 +132,8 @@ export const addCards = (page, cards, cols = 1) =>
         root.appendChild(el);
         el.hass = {
           ...hass,
+          // Home Assistant's dark mode: the dark theme variables of the page, and themes.darkMode (night banner).
+          themes: { darkMode: document.documentElement.dataset.theme === "dark" },
           callService: async () => {},
           // The pressure 3 hours ago, then now: a rising trend.
           callApi: async () => [[{ state: "1011.2" }, { state: String(hass.states["sensor.paris_pressure"]?.state ?? 1014) }]],

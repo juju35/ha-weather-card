@@ -181,7 +181,7 @@ entity: weather.paris
 | `days` | number | `5` | Days of the daily forecast |
 | `animations` | boolean | `true` | Animate the scene and the sections |
 | `illustration` | boolean | `true` | Illustrated 90px header (full and mini card): the title on a day or night sky, the animated weather scene at the right, a lawn strip along the bottom, the icon in the status colour (warning, lightning, else the condition). `false` keeps the classic header with the scene in the body |
-| `illustration_theme` | string | `auto` | Sky of the illustrated header: `auto` (night when `sun.sun` is below the horizon, else Home Assistant's dark theme), `day` or `night` |
+| `illustration_theme` | string | `auto` | Sky of the illustrated header: `auto` (night when `sun.sun` is below the horizon or Home Assistant's theme is dark), `day` or `night` |
 | `popup` | boolean | `true` | Full screen button that opens the detail over the whole screen |
 | `refresh` | boolean | `true` | Refresh button that asks the integrations for fresh data (hidden on the folded mini card, unless the weather is unavailable) |
 | `zoom` | boolean | `true` | Mini card: detail button to unfold the full card |
