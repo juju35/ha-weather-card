@@ -6,6 +6,8 @@
 const WX_FC_DAILY = 1;
 const WX_FC_HOURLY = 2;
 const WX_FC_TWICE = 4;
+// Each card's own number, suffixed to the ids of its banner's gradients so that several cards never share one.
+let wxUid = 0;
 
 // A twice-daily forecast folded into days: the day's high, the night's low, the daytime condition.
 function wxFoldTwiceDaily(list, tz) {
@@ -43,6 +45,33 @@ function wxStatesCount(states) {
 const WX_REFRESH_MIN = 600;
 
 // Every entity id the card tracks.
+// The status pill's place, decided by measurement after each render and each new width (the same rule on every
+// card): on the title row, right after the title, only when the whole title and the pill's whole label fit there;
+// otherwise on its own line under the subtitle (clamped to one line), the title whole on its row (cut only when it
+// does not fit alone). When the label is still cut there, or the text block leaves the banner or runs over its lawn
+// strip, the pill keeps its dot alone, on the title row (its label stays in title and aria-label). A card of 200 px
+// or less shows the dot alone anyway (CSS), beside the title.
+const wxPlacePill = (head, row, ground) => {
+  if (!head) return;
+  head.removeAttribute("data-wrap");
+  head.removeAttribute("data-dot");
+  const pill = row.querySelector(":scope > .st");
+  const text = pill?.querySelector(".stt");
+  if (!text?.getBoundingClientRect || text.getBoundingClientRect().width <= 1) return;
+  const name = row.querySelector(".name");
+  const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+  const title = name && getComputedStyle(name).display !== "none" ? (name.scrollWidth > name.clientWidth ? name.scrollWidth : name.getBoundingClientRect().width) + gap : 0;
+  if (title + pill.getBoundingClientRect().width <= row.getBoundingClientRect().width + 0.5) return;
+  head.setAttribute("data-wrap", "");
+  const box = row.parentElement.getBoundingClientRect();
+  const frame = head.getBoundingClientRect();
+  const out = ground && (box.bottom > ground.getBoundingClientRect().top + 0.5 || box.top < frame.top - 0.5);
+  if (text.scrollWidth > text.clientWidth + 0.5 || out) {
+    head.removeAttribute("data-wrap");
+    head.setAttribute("data-dot", "");
+  }
+};
+
 const wxEntIds = (ent) => [...Object.values(ent), ...Object.values(ent.air || {})].flat().filter((id) => typeof id === "string");
 
 // Runs `write` (which replaces the markup under `scope`) keeping what the viewer was doing: the scroll of `scope`, of
@@ -130,11 +159,23 @@ class WeatherPlusCard extends WxElement {
     clearInterval(this._tick);
     this._tick = setInterval(() => this._update(), 60000);
     this._watchVisibility();
+    // A new width (the card's or its detail's, or the web font loaded): the status pill is fitted again, in the next
+    // frame.
+    if (typeof ResizeObserver === "function") {
+      this._resize ??= new ResizeObserver(() => {
+        if (this._fitFrame) cancelAnimationFrame(this._fitFrame);
+        this._fitFrame = requestAnimationFrame(() => this._fitPill());
+      });
+      this._resize.observe(this);
+    }
+    if (typeof document !== "undefined") document.fonts?.ready?.then(() => this._fitPill());
   }
 
   disconnectedCallback() {
     clearInterval(this._tick);
     this._tick = null;
+    this._resize?.disconnect();
+    if (this._fitFrame) cancelAnimationFrame(this._fitFrame);
     this._pressing = false;
     if (this._onPressEnd) {
       window.removeEventListener("pointerup", this._onPressEnd, true);
@@ -335,7 +376,7 @@ class WeatherPlusCard extends WxElement {
     // (restarting every animation); the sun moves along its arc and the rain counts down in place.
     const rain = this._rainModel(ent);
     const rainSig = rain && [rain.raining, rain.next != null];
-    const sig = JSON.stringify([this._fmtLang(), wxTimeOpts(hass), this._zoomed, !!this._popup, this._fcv, Math.floor(Date.now() / 3600000), rainSig, states]);
+    const sig = JSON.stringify([this._fmtLang(), wxTimeOpts(hass), this._zoomed, !!this._popup, !!hass.themes?.darkMode, this._fcv, Math.floor(Date.now() / 3600000), rainSig, states]);
     if (sig === this._sig) {
       this._patchSun(this._sunModel(ent));
       this._patchRain(rain);
@@ -719,10 +760,17 @@ class WeatherPlusCard extends WxElement {
       return;
     }
     if (wxUnavailable(st)) {
-      this.shadowRoot.innerHTML =
-        `<style>${WX_STYLES}</style><style>:host{--wx-color:${WX_IDLE}}</style>${haCard}<div class="header"><div class="badge"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon></div>` +
-        `<div class="titles" data-more="${wxEsc(ent.weather)}"><div class="name">${wxEsc(c.name || wxWeatherName(st) || this._t("title"))}</div></div>` +
-        `<span class="st" title="${wxEsc(this._t("unavailable"))}"><span class="dot"></span><span class="stt">${wxEsc(this._t("unavailable"))}</span></span>${this._refreshButton()}${this._zoomButton()}</div></ha-card>`;
+      const name = c.name || wxWeatherName(st) || this._t("title");
+      const off = this._t("unavailable");
+      const header = this._illustrated()
+        ? this._banner(
+            { name, ent, still, cond: "unknown", night: this._bannerNight(null), icon: "mdi:weather-cloudy-alert", color: WX_IDLE, status: { text: off, color: WX_IDLE, alert: false, show: true } },
+            `${this._refreshButton()}${this._zoomButton()}`,
+          )
+        : `<div class="header"><div class="badge"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon></div>` +
+          this._titles(wxEsc(ent.weather), name, "", { text: off, color: WX_IDLE, alert: false }) +
+          `${this._refreshButton()}${this._zoomButton()}</div>`;
+      this.shadowRoot.innerHTML = `<style>${WX_STYLES}</style><style>:host{--wx-color:${WX_IDLE}}</style>${haCard}${header}</ha-card>`;
       this._closePopup();
       return;
     }
@@ -730,14 +778,13 @@ class WeatherPlusCard extends WxElement {
     m.name = c.name || wxWeatherName(st) || this._t("title");
     m.status = this._status(m);
     m.still = still;
+    m.illustrated = this._illustrated();
+    // The compact mini card keeps its two buttons; refresh shows once it is unfolded.
+    const buttons = `${this._compact() ? "" : this._refreshButton()}${this._popupButton()}${this._zoomButton()}`;
     const head =
       `<style>${WX_STYLES}</style><style>:host{--wx-color:${m.color}}</style>` +
       haCard +
-      this._header(m, {
-        sub: m.status.alert && !this._compact(),
-        // The compact mini card keeps its two buttons; refresh shows once it is unfolded.
-        buttons: `${this._compact() ? "" : this._refreshButton()}${this._popupButton()}${this._zoomButton()}`,
-      });
+      (m.illustrated ? this._bannerOf(m, buttons) : this._header(m, { sub: m.status.alert && !this._compact(), buttons }));
     const body = `${head}${this._warningBanner(m, this._compact() ? 1 : 4)}${this._compact() ? this._miniBody(m) : this._fullBody(m)}</ha-card>`;
     wxKeepView(
       this.shadowRoot,
@@ -747,7 +794,22 @@ class WeatherPlusCard extends WxElement {
       },
       !this._byPointer,
     );
+    this._fitPill();
     if (this._popup) this._renderPopup();
+  }
+
+  // The status pill: a dot and the status text, in the status colour (a warning's, the lightning's, else the condition's).
+  _pill(status) {
+    return `<span class="st${status.alert ? " alert" : ""}" style="--st-color:${status.color}" title="${wxEsc(status.text)}" aria-label="${wxEsc(status.text)}"><span class="dot"></span><span class="stt">${wxEsc(status.text)}</span></span>`;
+  }
+
+  // The titles: the name and the status pill on the title row (the pill right after the name), the subtitle under
+  // them. Where the pill goes is measured after each render (see wxPlacePill).
+  _titles(more, name, sub, status) {
+    return (
+      `<div class="titles" data-more="${more}"><div class="trow"><div class="name">${wxEsc(name)}</div>${status ? this._pill(status) : ""}</div>` +
+      `${sub ? `<div class="sub" title="${wxEsc(sub)}">${wxEsc(sub)}</div>` : ""}</div>`
+    );
   }
 
   // The header shared by the card and its full screen detail: badge, titles (the condition as a subtitle when
@@ -755,8 +817,66 @@ class WeatherPlusCard extends WxElement {
   _header(m, { sub = false, buttons = "" } = {}) {
     return (
       `<div class="header"><div class="badge" data-more="${wxEsc(m.ent.weather)}"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon></div>` +
-      `<div class="titles" data-more="${wxEsc(m.ent.weather)}"><div class="name">${wxEsc(m.name)}</div>${sub ? `<div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div>` : ""}</div>` +
-      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}" title="${wxEsc(m.status.text)}"><span class="dot"></span><span class="stt">${wxEsc(m.status.text)}</span></span>${buttons}</div>`
+      // The condition as a subtitle only when the pill shows a warning (else the pill already names it).
+      this._titles(wxEsc(m.ent.weather), m.name, sub && m.status.alert ? wxCondLabel(m.lang, m.cond) : "", m.status) +
+      `${buttons}</div>`
+    );
+  }
+
+  // ── Illustrated header ──
+  // `illustration: false` keeps the classic header (and the scene in the body).
+  _illustrated() {
+    return this._config.illustration !== false;
+  }
+
+  // Night picture of the banner: forced by `illustration_theme`, else Home Assistant's dark theme or the night (the
+  // sun down by sun.sun, or a clear night without it).
+  _bannerNight(m) {
+    const theme = this._config.illustration_theme;
+    if (theme === "night") return true;
+    if (theme === "day") return false;
+    if (this._hass?.themes?.darkMode) return true;
+    return m?.sun ? !m.sun.up : m?.st?.state === "clear-night";
+  }
+
+  // The banner of the card from its model: the weather now as the sky of the banner shows it (day or night), the
+  // icon in the status colour (a warning's or the lightning's when there is one, else the condition's).
+  _bannerOf(m, buttons) {
+    const night = this._bannerNight(m);
+    const cond = wxDayCond(m.st.state, night);
+    // The body shows the temperature big (every layout): the subtitle tells the feels-like instead, after the
+    // condition when a warning takes the pill (else the pill names the condition).
+    const feels = m.feels != null ? this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }) : "";
+    return this._banner(
+      {
+        name: m.name,
+        sub: [m.status.alert ? wxCondLabel(m.lang, cond) : "", feels].filter(Boolean).join(" · "),
+        ent: m.ent,
+        still: m.still,
+        moon: m.moon,
+        cond,
+        night,
+        icon: wxCondIcon(cond, night),
+        color: m.status.alert ? m.status.color : wxCondColor(cond, night),
+        status: m.status,
+      },
+      buttons,
+    );
+  }
+
+  // The 90px banner: the title, its status pill and the subtitle on the sky at the left, the card's animated scene at
+  // the right, a lawn strip edge to edge at the bottom, the buttons on one line in the top right corner.
+  _banner(b, buttons) {
+    this._uid ||= ++wxUid;
+    const more = wxEsc(b.ent.weather);
+    const scene = wxScene(b.cond, b.night, b.still, b.moon).replace(/(id="|url\(#)wx-/g, `$1wx${this._uid}-`);
+    return (
+      `<div class="banner${b.night ? " night" : ""}" style="--wx-icon:${b.color}">` +
+      `<div class="bscene" data-more="${more}">${scene}</div>` +
+      `<div class="htext"><div class="badge" data-more="${more}"><ha-icon icon="${b.icon}"></ha-icon></div>` +
+      `${this._titles(more, b.name, b.sub, b.status)}</div>` +
+      (buttons ? `<div class="hbtns">${buttons}</div>` : "") +
+      '<div class="ground"></div></div>'
     );
   }
 
@@ -777,13 +897,14 @@ class WeatherPlusCard extends WxElement {
   }
 
   // The hero shared by the card and its full screen detail: the scene, the big temperature, the feels-like
-  // (always in the detail; only when it differs on the card) and the chips.
-  _hero(m, { feelsAlways = false } = {}) {
-    const show = m.feels != null && (feelsAlways || Math.round(m.feels) !== Math.round(m.temp ?? m.feels));
+  // (always in the detail; on the card only when it differs, and not under the illustrated header, whose subtitle
+  // tells it) and the chips.
+  _hero(m, { feelsAlways = false, scene = true } = {}) {
+    const show = m.feels != null && (feelsAlways || (!m.illustrated && Math.round(m.feels) !== Math.round(m.temp ?? m.feels)));
     const feels = show ? `<div class="feels">${wxEsc(this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }))}</div>` : "";
     const chips = this._heroChips(m);
     return (
-      `<div class="hero"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
+      `<div class="hero">${scene ? `<div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` : ""}` +
       `<div class="info">${this._bigTemp(m)}${feels}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>`
     );
   }
@@ -855,7 +976,8 @@ class WeatherPlusCard extends WxElement {
 
   _fullBody(m) {
     this._shown ||= new Set();
-    return this._hero(m) + this._sections(m, this._shown);
+    // The illustrated header already shows the scene.
+    return this._hero(m, { scene: !m.illustrated }) + this._sections(m, this._shown);
   }
 
   // A section's entry animations (bars growing, the curve drawing itself) play when it first shows in `shown`, not
@@ -1035,6 +1157,7 @@ class WeatherPlusCard extends WxElement {
         },
         !this._byPointer,
       );
+      this._fitPill();
       return;
     }
     root.innerHTML =
@@ -1043,18 +1166,32 @@ class WeatherPlusCard extends WxElement {
       `<ha-card class="${cls}">${content}</ha-card></div></div>`;
     const parts = { color: root.querySelector?.("style.wx-color"), sheet: root.querySelector?.(".sheet"), card: root.querySelector?.("ha-card.popup") };
     this._popupParts = parts.color && parts.sheet && parts.card ? parts : null;
+    this._fitPill();
+    if (parts.card) this._resize?.observe(parts.card);
+  }
+
+  // The status pill's place on the card's header and on the detail's (see wxPlacePill).
+  _fitPill() {
+    if (typeof getComputedStyle !== "function") return;
+    for (const root of [this.shadowRoot, this._popup?.shadowRoot]) {
+      for (const row of root?.querySelectorAll?.(".trow") || []) {
+        const banner = row.closest(".banner");
+        wxPlacePill(banner || row.closest(".header"), row, banner?.querySelector(".ground"));
+      }
+    }
   }
 
   _miniBody(m) {
     const lines = [];
     if (m.rain && (m.rain.raining || m.rain.next != null)) lines.push(`<div class="line"><ha-icon icon="mdi:weather-rainy"></ha-icon><span class="rain-text">${wxEsc(m.rain.headline)}</span></div>`);
-    else {
+    // The illustrated header already tells the condition (its pill, or its subtitle with a warning) and the feels-like.
+    else if (!m.illustrated) {
       const feels = m.feels != null ? ` · ${this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) })}` : "";
       lines.push(`<div class="line"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon><span>${wxEsc(wxCondLabel(m.lang, m.cond) + feels)}</span></div>`);
     }
     const chips = wxAlertChips(this, m, { onlyActive: true }).slice(0, 2);
     return (
-      `<div class="content"><div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>` +
+      `<div class="content">${m.illustrated ? "" : `<div data-more="${wxEsc(m.ent.weather)}">${wxScene(m.cond, m.night, m.still, m.moon)}</div>`}` +
       `<div class="info">${this._bigTemp(m)}${lines.join("")}${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}</div></div>`
     );
   }

@@ -43,7 +43,6 @@ const render = async ({ lang = "en", theme = "light", cards, before }) => {
       const box = document.createElement("div");
       const { width, wrap, div, zoom } = cards[i];
       el.dataset.card = "";
-      if (zoom) el._setZoom(true);
       box.style.cssText =
         wrap === "inline-block"
           ? "display:inline-block"
@@ -56,6 +55,8 @@ const render = async ({ lang = "en", theme = "light", cards, before }) => {
       root.insertBefore(box, el);
       box.appendChild(div ? document.createElement("div") : el);
       if (div) box.firstChild.appendChild(el);
+      // Unfolded once in its box: moved in the page, the mini card folds back (as when it leaves a dashboard view).
+      if (zoom) el._setZoom(true);
       // A 1fr 1fr grid (grid card, layout-card, horizontal stack): another card in the second column.
       if (wrap === "grid-1fr") box.appendChild(document.createElement("div")).className = "twin";
     });

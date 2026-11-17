@@ -75,9 +75,15 @@ test("narrow header: the title keeps a few characters, the pill gives way, the b
   assert.ok(m && Number(m[1]) >= 4 && Number(m[1]) <= 5, `the title keeps 4 characters and its ellipsis: ${titles["min-width"]}`);
   assert.equal(base(".name")["text-overflow"], "ellipsis");
   const st = base(".st");
-  assert.equal(st.flex, "0 1 auto");
+  // The pill right after the name on the title row with its whole label, only when the whole name fits beside it
+  // (measured by the card, which sets data-wrap): otherwise on its own line under the subtitle, never by a width tier.
+  assert.equal(st.flex, "none");
   assert.equal(st["min-width"], "0");
-  assert.equal(st["max-width"], undefined, "no cap: the pill is cut only when the title is down to its 4 characters");
+  assert.equal(st["max-width"], undefined);
+  assert.equal(base(".trow .name").flex, "0 1 auto");
+  assert.equal(narrow(".trow").length, 0, "no width tier moves the pill");
+  assert.equal(base("[data-wrap] .trow").display, "contents", "data-wrap puts the pill on its own line");
+  assert.equal(base("[data-dot] .st .stt")["clip-path"], "inset(50%)", "data-dot keeps the dot alone");
   assert.equal(base(".st .stt")["text-overflow"], "ellipsis");
   for (const sel of [".badge", ".zoom"]) assert.equal(base(sel).flex, "none", sel);
   assert.equal(rules(lib.WX_STYLES + lib.WX_POPUP_STYLES).find((r) => r.sel === ".close" && !r.at).decl.flex, "none", ".close");
@@ -85,16 +91,20 @@ test("narrow header: the title keeps a few characters, the pill gives way, the b
   const dotOnly = narrow(".st .stt");
   assert.ok(dotOnly.length, "a narrow card hides the pill's text");
   for (const [w, d] of dotOnly) {
-    // A 245px card (221px of content) still reads its pill; the narrowest mini cards show the dot.
-    assert.ok(w < 221 && w >= 180, `the pill turns to a dot below ${w}px`);
+    // A card of 200 px or less (176 px of content) shows the dot.
+    assert.ok(w <= 176, `the pill turns to a dot from ${w}px of content (a 200 px card) only`);
     assert.notEqual(d.display, "none", "the text stays readable to screen readers");
     assert.match(`${d["clip-path"]}${d.clip}`, /inset\(50%\)|rect\(0/);
   }
 });
 
 test("narrow header: every status pill carries its text in a title, the unavailable one too", () => {
-  const unavailable = mount(lib, "weather-plus-card", {}, makeHass("en", { "weather.paris": { state: "unavailable" } }));
-  assert.match(html(unavailable), /<span class="st" title="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
+  const off = { "weather.paris": { state: "unavailable" } };
+  const classic = mount(lib, "weather-plus-card", { illustration: false }, makeHass("en", off));
+  assert.match(html(classic), /<span class="st" style="--st-color:var\(--disabled-text-color, #9e9e9e\)" title="Unavailable" aria-label="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
+  // On the illustrated header the unavailable pill sits under the title, grey and still.
+  const banner = mount(lib, "weather-plus-card", {}, makeHass("en", off));
+  assert.match(html(banner), /<span class="st" style="--st-color:var\(--disabled-text-color, #9e9e9e\)" title="Unavailable" aria-label="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
   for (const tag of ["weather-plus-card", "weather-plus-mini-card"]) {
     const out = html(mount(lib, tag, {}, makeHass()));
     const pill = out.match(/<span class="st[^"]*"[^>]*>/)[0];
@@ -104,13 +114,19 @@ test("narrow header: every status pill carries its text in a title, the unavaila
 
 test("narrow mini card: unavailable, unknown or missing, the mini card keeps its narrow header (no badge below 190px)", () => {
   const states = { unavailable: { "weather.paris": { state: "unavailable" } }, unknown: { "weather.paris": { state: "unknown" } } };
-  for (const [name, changes] of Object.entries(states)) {
-    const mini = mount(lib, "weather-plus-mini-card", {}, makeHass("en", changes));
-    assert.match(html(mini), /^<ha-card class="mini"><div class="header">/, name);
-    // Unfolded, it is the full card again.
-    mini._onClick({ detail: 1, composedPath: () => [{ dataset: { action: "zoom" } }] });
-    assert.match(html(mini), /^<ha-card><div class="header">/, `${name}, unfolded`);
-    assert.match(html(mount(lib, "weather-plus-card", {}, makeHass("en", changes))), /^<ha-card><div class="header">/, `${name}, full card`);
+  // The illustrated header (default) or the classic one (illustration: false).
+  for (const [config, head] of [
+    [{}, "banner"],
+    [{ illustration: false }, "header"],
+  ]) {
+    for (const [name, changes] of Object.entries(states)) {
+      const mini = mount(lib, "weather-plus-mini-card", config, makeHass("en", changes));
+      assert.match(html(mini), new RegExp(`^<ha-card class="mini"><div class="${head}"`), name);
+      // Unfolded, it is the full card again.
+      mini._onClick({ detail: 1, composedPath: () => [{ dataset: { action: "zoom" } }] });
+      assert.match(html(mini), new RegExp(`^<ha-card><div class="${head}"`), `${name}, unfolded`);
+      assert.match(html(mount(lib, "weather-plus-card", config, makeHass("en", changes))), new RegExp(`^<ha-card><div class="${head}"`), `${name}, full card`);
+    }
   }
   const missing = mount(lib, "weather-plus-mini-card", { entity: "weather.nowhere" }, makeHass());
   assert.match(html(missing), /^<ha-card class="mini"><div class="empty">/);
@@ -181,4 +197,22 @@ test("narrow card: the full card asks for 9 columns at least, the mini card keep
   assert.deepEqual({ ...mini.getGridOptions() }, { columns: 6, min_columns: 6, rows: "auto" });
   mini._setZoom(true);
   assert.deepEqual({ ...mini.getGridOptions() }, { columns: 12, min_columns: 9, rows: "auto" });
+});
+
+test("banner buttons: one line in the top right corner, the detail button at the corner, 24px frosted day and night", () => {
+  const h = base(".hbtns");
+  assert.equal(h.top, "5px");
+  assert.equal(h.right, "5px");
+  assert.equal(h["flex-direction"], "row");
+  assert.equal(h.gap, "4px");
+  const z = base(".banner .zoom");
+  assert.equal(z.width, "24px");
+  assert.equal(z.height, "24px");
+  assert.equal(z.background, "rgba(255,255,255,.55)");
+  assert.equal(base(".banner.night .zoom").background, "rgba(255,255,255,.12)");
+  // The mini card: popup then detail button, the detail button last (at the corner); unfolded, the refresh first.
+  const mini = mount(lib, "weather-plus-mini-card", {}, makeHass());
+  assert.match(html(mini), /<div class="hbtns"><button class="zoom" data-action="popup"[^>]*>[\s\S]*?<\/button><button class="zoom" data-action="zoom"[^>]*><ha-icon icon="mdi:arrow-expand">/);
+  mini._setZoom(true);
+  assert.match(html(mini), /<div class="hbtns"><button class="zoom refresh"[\s\S]*?data-action="popup"[\s\S]*?<button class="zoom" data-action="zoom"[^>]*><ha-icon icon="mdi:arrow-collapse">/);
 });

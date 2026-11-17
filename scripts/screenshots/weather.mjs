@@ -45,12 +45,14 @@ const QUIET = {
   "sensor.alert_level_in_paris": { state: "aucune" },
   "sensor.paris_next_rain": { "1_hour_forecast": { "0 min": "Temps sec", "55 min": "Temps sec" } },
 };
-// One mini card per condition, with nothing to report but the weather.
+// One mini card per condition, with nothing to report but the weather. A catalogue of the day and night scenes: each
+// keeps its own picture in the dark theme too (illustration_theme), where `auto` would turn every banner to night.
 export const conditionCards = (lang, still = true, list = CONDITIONS) =>
   list.map(([state, temperature, now]) => {
     const hass = mockHass(lang, { ...QUIET, "weather.paris": { state, temperature } }, now);
     hass.forecasts.hourly = [];
-    return { tag: "weather-plus-mini-card", config: { animations: !still, zoom: false }, hass };
+    const illustration_theme = now === NIGHT ? "night" : "day";
+    return { tag: "weather-plus-mini-card", config: { animations: !still, zoom: false, illustration_theme }, hass };
   });
 export { CONDITIONS };
 
@@ -80,6 +82,8 @@ const lunar = (now) => ({
 const SETUPS = {
   card: card("weather-plus-card"),
   mini: card("weather-plus-mini-card"),
+  // The mini card expanded with its top right button: the full card, at the full card's width.
+  "mini-zoom": (lang) => ({ cards: card("weather-plus-mini-card")(lang).cards.map((c) => ({ ...c, open: '[data-action="zoom"]' })) }),
   storm: card("weather-plus-card", { sections: ["alerts", "rain", "hourly"] }, STORM),
   night: card("weather-plus-card", { sections: ["hourly", "daily", "sun", "moon"] }, { "weather.paris": { state: "clear-night", temperature: 11.2 } }, NIGHT),
   conditions: (lang) => ({ cards: conditionCards(lang), cols: 2 }),
@@ -88,7 +92,7 @@ const SETUPS = {
 
 if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   await shoot({
-    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 }), ...pair("lunar-phase", { now: NIGHT })],
+    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("mini-zoom"), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 }), ...pair("lunar-phase", { now: NIGHT })],
     setup: (s, lang) => SETUPS[s.file.replace(/-dark$/, "")](lang),
   });
 

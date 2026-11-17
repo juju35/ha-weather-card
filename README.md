@@ -55,6 +55,7 @@ Like the other `ha-*` cards: header with a status pill, illustration next to the
 - The **status pill** shows the highest weather warning (*Orange warning*, the banner's included), else lightning nearby (*Lightning 6 km away*), else the condition
 - Every chip, row and reading opens the more-info dialog of its entity
 - **Full screen** button (top right, `popup: false` removes it): the detail over the whole screen and its width, sections side by side as the width allows, with 24 hours and 10 days of forecast; the keyboard focus stays inside it (Tab goes round its controls); it closes with its button, Escape, a click outside or the back button on a phone, and gives the focus back to its button
+- **Illustrated header**: a 90px banner on the full and the mini card, the title and the temperature on a day or night sky, the animated scene at the right above a lawn strip, the icon tinted by the status (a warning or nearby lightning, else the condition); `illustration_theme: day | night` forces the sky, `illustration: false` keeps the classic header
 - **Refresh** button (top right, `refresh: false` removes it): asks the integrations behind the card — weather, rain, alerts, sensors — for fresh data right away; the icon turns while they answer, even with `animations: false` (not with the system's *reduce motion* setting)
 - In a Sections view the card takes the full width (12 columns) and goes down to 9; on a narrow card the scene gets smaller, the status pill shortens its text only when the title is down to a few letters (and on the narrowest cards shows its coloured dot only, its text in the tooltip) and the daily rows leave out their range bar
 
@@ -76,7 +77,7 @@ Sections, in the order of `sections` (a section with no data hides itself):
 
 `custom:weather-plus-mini-card` — The weather on two lines, for a compact dashboard.
 
-- The animated scene, the temperature with today's high and low, the rain to come in the hour (or the condition and feels-like temperature), and the active warnings; the highest warning of the banner under the header
+- The animated scene, the temperature with today's high and low, the rain to come in the hour (the condition and feels-like temperature in the subtitle; without the illustration, in the body), and the active warnings; the highest warning of the banner under the header
 - In a Sections view its height follows its content (`rows: auto`)
 - The **detail** button (top right) unfolds the full card, and back, as does a click anywhere else (`zoom: false` removes it); the unfolded card has the **Refresh** and **Full screen** buttons. When the weather is unavailable, the folded card shows the **Refresh** button too, to retry
 - In a Sections view it takes 6 columns (half a section); on the narrowest sections its status pill shows its dot only, then the badge and the scene step aside for the title and the temperature
@@ -179,6 +180,8 @@ entity: weather.paris
 | `hours` | number | `12` | Hours of the hourly forecast |
 | `days` | number | `5` | Days of the daily forecast |
 | `animations` | boolean | `true` | Animate the scene and the sections |
+| `illustration` | boolean | `true` | Illustrated 90px header (full and mini card): the title on a day or night sky, the animated weather scene at the right, a lawn strip along the bottom, the icon in the status colour (warning, lightning, else the condition). `false` keeps the classic header with the scene in the body |
+| `illustration_theme` | string | `auto` | Sky of the illustrated header: `auto` (night when `sun.sun` is below the horizon or Home Assistant's theme is dark), `day` or `night` |
 | `popup` | boolean | `true` | Full screen button that opens the detail over the whole screen |
 | `refresh` | boolean | `true` | Refresh button that asks the integrations for fresh data (hidden on the folded mini card, unless the weather is unavailable) |
 | `zoom` | boolean | `true` | Mini card: detail button to unfold the full card |
@@ -197,6 +200,7 @@ entity: weather.paris
 | Full screen | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup.png" alt="" width="700"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-dark.png" alt="" width="700"> |
 | Full screen, phone | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone.png" alt="" width="241"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone-dark.png" alt="" width="241"> |
 | Mini card | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini.png" alt="" width="400"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini-dark.png" alt="" width="400"> |
+| Mini card, expanded | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini-zoom.png" alt="Mini card expanded to the full card" width="169"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini-zoom-dark.png" alt="Mini card expanded to the full card, dark theme" width="169"> |
 | Conditions | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions.png" alt="" width="329"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions-dark.png" alt="" width="329"> |
 
 ### Animated scenes
