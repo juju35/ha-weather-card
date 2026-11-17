@@ -804,13 +804,13 @@ class WeatherPlusCard extends WxElement {
   _bannerOf(m, buttons) {
     const night = this._bannerNight(m);
     const cond = wxDayCond(m.st.state, night);
-    const temp = m.temp != null ? `${wxFmtNum(m.fmt, m.temp, 1)} ${m.tempUnit}` : "";
-    // The pill names the condition (no warning): the subtitle keeps the temperature; with a warning in the pill, the
-    // subtitle keeps the temperature and the condition.
+    // The body shows the temperature big (every layout): the subtitle tells the feels-like instead, after the
+    // condition when a warning takes the pill (else the pill names the condition).
+    const feels = m.feels != null ? this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }) : "";
     return this._banner(
       {
         name: m.name,
-        sub: m.status.alert ? [temp, wxCondLabel(m.lang, cond)].filter(Boolean).join(" · ") : temp,
+        sub: [m.status.alert ? wxCondLabel(m.lang, cond) : "", feels].filter(Boolean).join(" · "),
         ent: m.ent,
         still: m.still,
         moon: m.moon,
@@ -857,9 +857,10 @@ class WeatherPlusCard extends WxElement {
   }
 
   // The hero shared by the card and its full screen detail: the scene, the big temperature, the feels-like
-  // (always in the detail; only when it differs on the card) and the chips.
+  // (always in the detail; on the card only when it differs, and not under the illustrated header, whose subtitle
+  // tells it) and the chips.
   _hero(m, { feelsAlways = false, scene = true } = {}) {
-    const show = m.feels != null && (feelsAlways || Math.round(m.feels) !== Math.round(m.temp ?? m.feels));
+    const show = m.feels != null && (feelsAlways || (!m.illustrated && Math.round(m.feels) !== Math.round(m.temp ?? m.feels)));
     const feels = show ? `<div class="feels">${wxEsc(this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) }))}</div>` : "";
     const chips = this._heroChips(m);
     return (
@@ -1129,7 +1130,8 @@ class WeatherPlusCard extends WxElement {
   _miniBody(m) {
     const lines = [];
     if (m.rain && (m.rain.raining || m.rain.next != null)) lines.push(`<div class="line"><ha-icon icon="mdi:weather-rainy"></ha-icon><span class="rain-text">${wxEsc(m.rain.headline)}</span></div>`);
-    else {
+    // The illustrated header already tells the condition (its pill, or its subtitle with a warning) and the feels-like.
+    else if (!m.illustrated) {
       const feels = m.feels != null ? ` · ${this._t("feels_like", { v: this._fmtTemp(m, m.feels, 0) })}` : "";
       lines.push(`<div class="line"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon><span>${wxEsc(wxCondLabel(m.lang, m.cond) + feels)}</span></div>`);
     }

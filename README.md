@@ -77,7 +77,7 @@ Sections, in the order of `sections` (a section with no data hides itself):
 
 `custom:weather-plus-mini-card` — The weather on two lines, for a compact dashboard.
 
-- The animated scene, the temperature with today's high and low, the rain to come in the hour (or the condition and feels-like temperature), and the active warnings; the highest warning of the banner under the header
+- The animated scene, the temperature with today's high and low, the rain to come in the hour (the condition and feels-like temperature in the subtitle; without the illustration, in the body), and the active warnings; the highest warning of the banner under the header
 - In a Sections view its height follows its content (`rows: auto`)
 - The **detail** button (top right) unfolds the full card, and back, as does a click anywhere else (`zoom: false` removes it); the unfolded card has the **Refresh** and **Full screen** buttons. When the weather is unavailable, the folded card shows the **Refresh** button too, to retry
 - In a Sections view it takes 6 columns (half a section); on the narrowest sections its status pill shows its dot only, then the badge and the scene step aside for the title and the temperature
