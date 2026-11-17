@@ -82,6 +82,8 @@ const lunar = (now) => ({
 const SETUPS = {
   card: card("weather-plus-card"),
   mini: card("weather-plus-mini-card"),
+  // The mini card expanded with its top right button: the full card, at the full card's width.
+  "mini-zoom": (lang) => ({ cards: card("weather-plus-mini-card")(lang).cards.map((c) => ({ ...c, open: '[data-action="zoom"]' })) }),
   storm: card("weather-plus-card", { sections: ["alerts", "rain", "hourly"] }, STORM),
   night: card("weather-plus-card", { sections: ["hourly", "daily", "sun", "moon"] }, { "weather.paris": { state: "clear-night", temperature: 11.2 } }, NIGHT),
   conditions: (lang) => ({ cards: conditionCards(lang), cols: 2 }),
@@ -90,7 +92,7 @@ const SETUPS = {
 
 if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   await shoot({
-    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 }), ...pair("lunar-phase", { now: NIGHT })],
+    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("mini-zoom"), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 }), ...pair("lunar-phase", { now: NIGHT })],
     setup: (s, lang) => SETUPS[s.file.replace(/-dark$/, "")](lang),
   });
 

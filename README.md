@@ -200,6 +200,7 @@ entity: weather.paris
 | Full screen | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup.png" alt="" width="700"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-dark.png" alt="" width="700"> |
 | Full screen, phone | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone.png" alt="" width="241"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone-dark.png" alt="" width="241"> |
 | Mini card | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini.png" alt="" width="400"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini-dark.png" alt="" width="400"> |
+| Mini card, expanded | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini-zoom.png" alt="Mini card expanded to the full card" width="169"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/mini-zoom-dark.png" alt="Mini card expanded to the full card, dark theme" width="169"> |
 | Conditions | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions.png" alt="" width="329"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/conditions-dark.png" alt="" width="329"> |
 
 ### Animated scenes
