@@ -49,7 +49,9 @@ test("status pill: whole title beside it, whole label or dot alone, inside the b
       );
       // The translations come in, the cards draw again; the mini cards unfold.
       await page.waitForTimeout(400);
-      await page.evaluate((cards) => [...document.getElementById("root").children].forEach((el, i) => cards[i].zoom && el._setZoom(true)), cards);
+      await page.evaluate((cards) => {
+        for (const [i, el] of [...document.getElementById("root").children].entries()) if (cards[i].zoom) el._setZoom(true);
+      }, cards);
       await page.waitForTimeout(300);
       const res = await page.evaluate(
         ({ cards, width }) =>
