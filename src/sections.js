@@ -617,6 +617,10 @@ const WX_STYLES = `${WX_SCENE_STYLES}
                     background: repeating-linear-gradient(90deg, #5aa83d 0 22px, #6cbb4c 22px 44px); }
   .banner.night .ground { background: repeating-linear-gradient(90deg, #1f4a2a 0 22px, #245433 22px 44px); }
   .banner { --wx-sw: min(108px, 34cqw); --wx-br: 8px; }
+  /* Narrower cards: the weather scene is drawn smaller (60 px, then 48 px wide), so that the title stays whole and the
+     status pill keeps its label beside it. */
+  @container (max-width: 280px) { .banner { --wx-sw: 60px; } }
+  @container (max-width: 240px) { .banner { --wx-sw: 48px; } }
   .bscene { position: absolute; right: var(--wx-br); bottom: 4px; width: var(--wx-sw); aspect-ratio: 5 / 4; }
   .banner .bscene > .scene { width: 100%; height: 100%; border-radius: 0; background: none; }
   .htext { position: absolute; left: 12px; top: 0; bottom: 10px; right: calc(var(--wx-sw) + var(--wx-br) + 4px); z-index: 2;
