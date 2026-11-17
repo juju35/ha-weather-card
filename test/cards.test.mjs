@@ -94,7 +94,12 @@ test("card: the weather now, the warning in the status pill, the hero chips", ()
   assert.match(out, /↑<b>18°<\/b> ↓<b>9°<\/b>/);
   assert.match(out, /Feels like 16°/);
   assert.match(out, /class="st alert" style="--st-color:#fdd835" title="Yellow warning"><span class="dot"><\/span><span class="stt">Yellow warning<\/span>/);
-  assert.match(out, /<div class="sub">Partly cloudy<\/div>/);
+  // The illustrated header: the temperature and the condition under the title, the icon in the warning's colour.
+  assert.match(out, /<div class="banner" style="--wx-icon:#fdd835">/);
+  assert.match(out, /<div class="sub">17\.4 °C · Partly cloudy<\/div>/);
+  assert.match(out, /<div class="ground"><\/div>/);
+  // The classic header keeps the condition as its subtitle.
+  assert.match(html(card({ illustration: false })), /<div class="sub">Partly cloudy<\/div>/);
   assert.match(out, /rotate\(45deg\).*18 km\/h SW/);
   assert.match(out, /1014 hPa/);
   assert.match(out, /UV 3/);
@@ -190,8 +195,38 @@ test("card: no warning, rain now, clear night, no animation", () => {
   assert.match(out, /class="scene c-clear-night night still"/);
   assert.match(out, /No weather warning/);
   assert.match(out, /Light rain now, stopping in 10 min/);
-  assert.match(out, /class="st" style="--st-color:#5c6bc0" title="Clear night"><span class="dot"><\/span><span class="stt">Clear night<\/span>/);
+  // No warning: no pill on the illustrated header, the night sky, the icon in the condition's colour.
+  assert.match(out, /<div class="banner night" style="--wx-icon:#5c6bc0">/);
+  assert.doesNotMatch(out, /class="st[ "]/);
   assert.match(out, /<ha-card class="still">/);
+  const classic = html(
+    card(
+      { animations: false, illustration: false },
+      makeHass("en", {
+        "weather.paris": { state: "clear-night" },
+        "sun.sun": { state: "below_horizon" },
+        "sensor.75_weather_alert": { state: "Vert", "Vent violent": "Vert", Orages: "Vert" },
+        "sensor.blitzortung_lightning_counter": { state: 0 },
+      }),
+    ),
+  );
+  assert.match(classic, /class="st" style="--st-color:#5c6bc0" title="Clear night"><span class="dot"><\/span><span class="stt">Clear night<\/span>/);
+});
+
+test("card: the illustrated header follows illustration_theme, falls back to the dark theme, and only one scene shows", () => {
+  const day = html(card({ illustration_theme: "day" }, makeHass("en", { "weather.paris": { state: "clear-night" }, "sun.sun": { state: "below_horizon" } })));
+  assert.match(day, /<div class="banner" /);
+  assert.match(day, /class="scene c-sunny day"/);
+  const night = html(card({ illustration_theme: "night" }));
+  assert.match(night, /<div class="banner night" /);
+  assert.match(night, /icon="mdi:weather-night-partly-cloudy"/);
+  // One scene per card (in the banner), its gradient ids suffixed with the card's number.
+  assert.equal((night.match(/class="scene /g) || []).length, 1);
+  assert.match(night, /id="wx\d+-sun"/);
+  assert.doesNotMatch(night, /id="wx-sun"/);
+  const classic = html(card({ illustration: false }));
+  assert.doesNotMatch(classic, /class="banner/);
+  assert.equal((classic.match(/class="scene /g) || []).length, 1);
 });
 
 test("card: a clear night reported while the sun is up reads as sunny", () => {

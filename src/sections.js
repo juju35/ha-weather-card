@@ -565,7 +565,7 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .empty { display: flex; align-items: center; gap: 10px; color: var(--secondary-text-color); }
   /* The body starts 8px under the header, like the other ha-* cards (the card's gap is 12px, 8px on the mini card). */
   .header { display: flex; align-items: center; gap: 10px; margin-bottom: -4px; }
-  ha-card.mini .header { margin-bottom: 0; }
+  ha-card.mini .header, ha-card.mini .banner { margin-bottom: 0; }
   .badge { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
            background: color-mix(in srgb, var(--wx-color) 16%, transparent); color: var(--wx-color); transition: background .4s, color .4s; }
   .badge ha-icon { --mdc-icon-size: 24px; }
@@ -595,6 +595,35 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .zoom:hover { background: color-mix(in srgb, var(--secondary-text-color) 16%, transparent); color: var(--primary-text-color); }
   .zoom:focus-visible, [role=button]:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 1px; }
   [data-more] { cursor: pointer; }
+
+  /* Illustrated header (illustration: true, the default): a 90px banner edge to edge, the title on the sky at the
+     left, the card's animated scene at the right (up to 108 × 86, its top inside the banner, its bottom on the lawn),
+     a 10px lawn strip under the whole width, the buttons in a column at the right edge. Day or night sky. */
+  .banner { position: relative; flex: none; height: 90px; margin: -12px -12px -2px; overflow: hidden; color: #0d2a45;
+            background: linear-gradient(90deg, #f1f8ff 0%, #e2f1fd 34%, #b9def8 70%, #9fd0f3 100%); }
+  .banner.night { color: #fff; background: linear-gradient(90deg, #1b2f52 0%, #15284a 36%, #0f1f3d 72%, #0a1830 100%); }
+  .banner .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 10px; z-index: 1;
+                    background: repeating-linear-gradient(90deg, #5aa83d 0 22px, #6cbb4c 22px 44px); }
+  .banner.night .ground { background: repeating-linear-gradient(90deg, #1f4a2a 0 22px, #245433 22px 44px); }
+  .banner { --wx-sw: min(108px, 34cqw); --wx-br: 8px; }
+  .banner:has(.hbtns) { --wx-br: 36px; }
+  .bscene { position: absolute; right: var(--wx-br); bottom: 4px; width: var(--wx-sw); aspect-ratio: 5 / 4; }
+  .banner .bscene > .scene { width: 100%; height: 100%; border-radius: 0; background: none; }
+  .htext { position: absolute; left: 12px; top: 0; bottom: 10px; right: calc(var(--wx-sw) + var(--wx-br) + 4px); z-index: 2;
+           display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .banner .badge { background: rgba(255,255,255,.62); box-shadow: inset 0 0 0 1px rgba(47,128,237,.18); color: var(--wx-icon); }
+  .banner.night .badge { background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+                         color: color-mix(in srgb, var(--wx-icon) 70%, #fff); }
+  .banner .name { color: inherit; }
+  .banner .sub { font-size: 13px; color: #3b5b78; }
+  .banner.night .sub { color: rgba(255,255,255,.78); }
+  .banner .st { max-width: 100%; box-sizing: border-box; margin-top: 4px; background: rgba(255,255,255,.7); color: color-mix(in srgb, var(--st-color) 55%, #0d2a45); }
+  .banner.night .st { background: rgba(10,20,40,.5); color: color-mix(in srgb, var(--st-color) 45%, #fff); }
+  .hbtns { position: absolute; top: 4px; right: 6px; z-index: 2; display: flex; flex-direction: column; gap: 2px; }
+  .banner .zoom { margin: 0; color: #10283f; background: rgba(255,255,255,.55); }
+  .banner.night .zoom { color: #fff; background: rgba(10,20,40,.45); }
+  .banner .zoom:hover { background: rgba(255,255,255,.8); }
+  .banner.night .zoom:hover { background: rgba(10,20,40,.7); }
 
   .hero { display: flex; align-items: center; gap: 14px; }
   .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -789,6 +818,8 @@ const WX_STYLES = `${WX_SCENE_STYLES}
     .line .rain-text { white-space: normal; }
     ha-card.mini .badge { display: none; }
     ha-card.mini .content > div:first-child, .hero > div:first-child { display: none; }
+    /* Under the illustrated header the body has no scene: its first child is the temperature, which stays. */
+    ha-card .hero > div.info, ha-card.mini .content > div.info { display: flex; }
   }
 `;
 

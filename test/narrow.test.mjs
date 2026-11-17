@@ -93,8 +93,12 @@ test("narrow header: the title keeps a few characters, the pill gives way, the b
 });
 
 test("narrow header: every status pill carries its text in a title, the unavailable one too", () => {
-  const unavailable = mount(lib, "weather-plus-card", {}, makeHass("en", { "weather.paris": { state: "unavailable" } }));
-  assert.match(html(unavailable), /<span class="st" title="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
+  const off = { "weather.paris": { state: "unavailable" } };
+  const classic = mount(lib, "weather-plus-card", { illustration: false }, makeHass("en", off));
+  assert.match(html(classic), /<span class="st" title="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
+  // On the illustrated header the unavailable pill sits under the title, grey and still.
+  const banner = mount(lib, "weather-plus-card", {}, makeHass("en", off));
+  assert.match(html(banner), /<span class="st" style="--st-color:var\(--disabled-text-color, #9e9e9e\)" title="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
   for (const tag of ["weather-plus-card", "weather-plus-mini-card"]) {
     const out = html(mount(lib, tag, {}, makeHass()));
     const pill = out.match(/<span class="st[^"]*"[^>]*>/)[0];
@@ -104,13 +108,19 @@ test("narrow header: every status pill carries its text in a title, the unavaila
 
 test("narrow mini card: unavailable, unknown or missing, the mini card keeps its narrow header (no badge below 190px)", () => {
   const states = { unavailable: { "weather.paris": { state: "unavailable" } }, unknown: { "weather.paris": { state: "unknown" } } };
-  for (const [name, changes] of Object.entries(states)) {
-    const mini = mount(lib, "weather-plus-mini-card", {}, makeHass("en", changes));
-    assert.match(html(mini), /^<ha-card class="mini"><div class="header">/, name);
-    // Unfolded, it is the full card again.
-    mini._onClick({ detail: 1, composedPath: () => [{ dataset: { action: "zoom" } }] });
-    assert.match(html(mini), /^<ha-card><div class="header">/, `${name}, unfolded`);
-    assert.match(html(mount(lib, "weather-plus-card", {}, makeHass("en", changes))), /^<ha-card><div class="header">/, `${name}, full card`);
+  // The illustrated header (default) or the classic one (illustration: false).
+  for (const [config, head] of [
+    [{}, "banner"],
+    [{ illustration: false }, "header"],
+  ]) {
+    for (const [name, changes] of Object.entries(states)) {
+      const mini = mount(lib, "weather-plus-mini-card", config, makeHass("en", changes));
+      assert.match(html(mini), new RegExp(`^<ha-card class="mini"><div class="${head}"`), name);
+      // Unfolded, it is the full card again.
+      mini._onClick({ detail: 1, composedPath: () => [{ dataset: { action: "zoom" } }] });
+      assert.match(html(mini), new RegExp(`^<ha-card><div class="${head}"`), `${name}, unfolded`);
+      assert.match(html(mount(lib, "weather-plus-card", config, makeHass("en", changes))), new RegExp(`^<ha-card><div class="${head}"`), `${name}, full card`);
+    }
   }
   const missing = mount(lib, "weather-plus-mini-card", { entity: "weather.nowhere" }, makeHass());
   assert.match(html(missing), /^<ha-card class="mini"><div class="empty">/);

@@ -55,6 +55,7 @@ Like the other `ha-*` cards: header with a status pill, illustration next to the
 - The **status pill** shows the highest weather warning (*Orange warning*, the banner's included), else lightning nearby (*Lightning 6 km away*), else the condition
 - Every chip, row and reading opens the more-info dialog of its entity
 - **Full screen** button (top right, `popup: false` removes it): the detail over the whole screen and its width, sections side by side as the width allows, with 24 hours and 10 days of forecast; the keyboard focus stays inside it (Tab goes round its controls); it closes with its button, Escape, a click outside or the back button on a phone, and gives the focus back to its button
+- **Illustrated header**: a 90px banner on the full and the mini card, the title and the temperature on a day or night sky, the animated scene at the right above a lawn strip, the icon tinted by the status (a warning or nearby lightning, else the condition); `illustration_theme: day | night` forces the sky, `illustration: false` keeps the classic header
 - **Refresh** button (top right, `refresh: false` removes it): asks the integrations behind the card — weather, rain, alerts, sensors — for fresh data right away; the icon turns while they answer, even with `animations: false` (not with the system's *reduce motion* setting)
 - In a Sections view the card takes the full width (12 columns) and goes down to 9; on a narrow card the scene gets smaller, the status pill shortens its text only when the title is down to a few letters (and on the narrowest cards shows its coloured dot only, its text in the tooltip) and the daily rows leave out their range bar
 
@@ -179,6 +180,8 @@ entity: weather.paris
 | `hours` | number | `12` | Hours of the hourly forecast |
 | `days` | number | `5` | Days of the daily forecast |
 | `animations` | boolean | `true` | Animate the scene and the sections |
+| `illustration` | boolean | `true` | Illustrated 90px header (full and mini card): the title on a day or night sky, the animated weather scene at the right, a lawn strip along the bottom, the icon in the status colour (warning, lightning, else the condition). `false` keeps the classic header with the scene in the body |
+| `illustration_theme` | string | `auto` | Sky of the illustrated header: `auto` (night when `sun.sun` is below the horizon, else Home Assistant's dark theme), `day` or `night` |
 | `popup` | boolean | `true` | Full screen button that opens the detail over the whole screen |
 | `refresh` | boolean | `true` | Refresh button that asks the integrations for fresh data (hidden on the folded mini card, unless the weather is unavailable) |
 | `zoom` | boolean | `true` | Mini card: detail button to unfold the full card |
