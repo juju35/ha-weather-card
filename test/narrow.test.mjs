@@ -75,15 +75,15 @@ test("narrow header: the title keeps a few characters, the pill gives way, the b
   assert.ok(m && Number(m[1]) >= 4 && Number(m[1]) <= 5, `the title keeps 4 characters and its ellipsis: ${titles["min-width"]}`);
   assert.equal(base(".name")["text-overflow"], "ellipsis");
   const st = base(".st");
-  // The pill right after the name on the title row, its whole label at most 51% of the row; on a narrow card it
-  // moves to its own line under the subtitle (a container tier) rather than being cut.
+  // The pill right after the name on the title row with its whole label, only when the whole name fits beside it
+  // (measured by the card, which sets data-wrap): otherwise on its own line under the subtitle, never by a width tier.
   assert.equal(st.flex, "none");
   assert.equal(st["min-width"], "0");
-  assert.equal(st["max-width"], "51%");
+  assert.equal(st["max-width"], undefined);
   assert.equal(base(".trow .name").flex, "0 1 auto");
-  assert.equal(base(".trow .name")["min-width"], "4ch");
-  const ownLine = narrow(".trow");
-  assert.ok(ownLine.some(([, d]) => d.display === "contents"), "a narrow card puts the pill on its own line");
+  assert.equal(narrow(".trow").length, 0, "no width tier moves the pill");
+  assert.equal(base("[data-wrap] .trow").display, "contents", "data-wrap puts the pill on its own line");
+  assert.equal(base("[data-dot] .st .stt")["clip-path"], "inset(50%)", "data-dot keeps the dot alone");
   assert.equal(base(".st .stt")["text-overflow"], "ellipsis");
   for (const sel of [".badge", ".zoom"]) assert.equal(base(sel).flex, "none", sel);
   assert.equal(rules(lib.WX_STYLES + lib.WX_POPUP_STYLES).find((r) => r.sel === ".close" && !r.at).decl.flex, "none", ".close");
@@ -91,8 +91,8 @@ test("narrow header: the title keeps a few characters, the pill gives way, the b
   const dotOnly = narrow(".st .stt");
   assert.ok(dotOnly.length, "a narrow card hides the pill's text");
   for (const [w, d] of dotOnly) {
-    // A 245px card (221px of content) still reads its pill; the narrowest mini cards show the dot.
-    assert.ok(w < 221 && w >= 180, `the pill turns to a dot below ${w}px`);
+    // A card of 200 px or less (176 px of content) shows the dot.
+    assert.ok(w <= 176, `the pill turns to a dot from ${w}px of content (a 200 px card) only`);
     assert.notEqual(d.display, "none", "the text stays readable to screen readers");
     assert.match(`${d["clip-path"]}${d.clip}`, /inset\(50%\)|rect\(0/);
   }
@@ -101,10 +101,10 @@ test("narrow header: the title keeps a few characters, the pill gives way, the b
 test("narrow header: every status pill carries its text in a title, the unavailable one too", () => {
   const off = { "weather.paris": { state: "unavailable" } };
   const classic = mount(lib, "weather-plus-card", { illustration: false }, makeHass("en", off));
-  assert.match(html(classic), /<span class="st" style="--st-color:var\(--disabled-text-color, #9e9e9e\)" title="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
+  assert.match(html(classic), /<span class="st" style="--st-color:var\(--disabled-text-color, #9e9e9e\)" title="Unavailable" aria-label="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
   // On the illustrated header the unavailable pill sits under the title, grey and still.
   const banner = mount(lib, "weather-plus-card", {}, makeHass("en", off));
-  assert.match(html(banner), /<span class="st" style="--st-color:var\(--disabled-text-color, #9e9e9e\)" title="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
+  assert.match(html(banner), /<span class="st" style="--st-color:var\(--disabled-text-color, #9e9e9e\)" title="Unavailable" aria-label="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
   for (const tag of ["weather-plus-card", "weather-plus-mini-card"]) {
     const out = html(mount(lib, tag, {}, makeHass()));
     const pill = out.match(/<span class="st[^"]*"[^>]*>/)[0];

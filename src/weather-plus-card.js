@@ -45,6 +45,33 @@ function wxStatesCount(states) {
 const WX_REFRESH_MIN = 600;
 
 // Every entity id the card tracks.
+// The status pill's place, decided by measurement after each render and each new width (the same rule on every
+// card): on the title row, right after the title, only when the whole title and the pill's whole label fit there;
+// otherwise on its own line under the subtitle (clamped to one line), the title whole on its row (cut only when it
+// does not fit alone). When the label is still cut there, or the text block leaves the banner or runs over its lawn
+// strip, the pill keeps its dot alone, on the title row (its label stays in title and aria-label). A card of 200 px
+// or less shows the dot alone anyway (CSS), beside the title.
+const wxPlacePill = (head, row, ground) => {
+  if (!head) return;
+  head.removeAttribute("data-wrap");
+  head.removeAttribute("data-dot");
+  const pill = row.querySelector(":scope > .st");
+  const text = pill?.querySelector(".stt");
+  if (!text?.getBoundingClientRect || text.getBoundingClientRect().width <= 1) return;
+  const name = row.querySelector(".name");
+  const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+  const title = name && getComputedStyle(name).display !== "none" ? (name.scrollWidth > name.clientWidth ? name.scrollWidth : name.getBoundingClientRect().width) + gap : 0;
+  if (title + pill.getBoundingClientRect().width <= row.getBoundingClientRect().width + 0.5) return;
+  head.setAttribute("data-wrap", "");
+  const box = row.parentElement.getBoundingClientRect();
+  const frame = head.getBoundingClientRect();
+  const out = ground && (box.bottom > ground.getBoundingClientRect().top + 0.5 || box.top < frame.top - 0.5);
+  if (text.scrollWidth > text.clientWidth + 0.5 || out) {
+    head.removeAttribute("data-wrap");
+    head.setAttribute("data-dot", "");
+  }
+};
+
 const wxEntIds = (ent) => [...Object.values(ent), ...Object.values(ent.air || {})].flat().filter((id) => typeof id === "string");
 
 // Runs `write` (which replaces the markup under `scope`) keeping what the viewer was doing: the scroll of `scope`, of
@@ -132,11 +159,23 @@ class WeatherPlusCard extends WxElement {
     clearInterval(this._tick);
     this._tick = setInterval(() => this._update(), 60000);
     this._watchVisibility();
+    // A new width (the card's or its detail's, or the web font loaded): the status pill is fitted again, in the next
+    // frame.
+    if (typeof ResizeObserver === "function") {
+      this._resize ??= new ResizeObserver(() => {
+        if (this._fitFrame) cancelAnimationFrame(this._fitFrame);
+        this._fitFrame = requestAnimationFrame(() => this._fitPill());
+      });
+      this._resize.observe(this);
+    }
+    if (typeof document !== "undefined") document.fonts?.ready?.then(() => this._fitPill());
   }
 
   disconnectedCallback() {
     clearInterval(this._tick);
     this._tick = null;
+    this._resize?.disconnect();
+    if (this._fitFrame) cancelAnimationFrame(this._fitFrame);
     this._pressing = false;
     if (this._onPressEnd) {
       window.removeEventListener("pointerup", this._onPressEnd, true);
@@ -755,20 +794,21 @@ class WeatherPlusCard extends WxElement {
       },
       !this._byPointer,
     );
+    this._fitPill();
     if (this._popup) this._renderPopup();
   }
 
   // The status pill: a dot and the status text, in the status colour (a warning's, the lightning's, else the condition's).
   _pill(status) {
-    return `<span class="st${status.alert ? " alert" : ""}" style="--st-color:${status.color}" title="${wxEsc(status.text)}"><span class="dot"></span><span class="stt">${wxEsc(status.text)}</span></span>`;
+    return `<span class="st${status.alert ? " alert" : ""}" style="--st-color:${status.color}" title="${wxEsc(status.text)}" aria-label="${wxEsc(status.text)}"><span class="dot"></span><span class="stt">${wxEsc(status.text)}</span></span>`;
   }
 
   // The titles: the name and the status pill on the title row (the pill right after the name), the subtitle under
-  // them. On a narrow card the pill goes to its own line under the subtitle, see the container tiers.
+  // them. Where the pill goes is measured after each render (see wxPlacePill).
   _titles(more, name, sub, status) {
     return (
       `<div class="titles" data-more="${more}"><div class="trow"><div class="name">${wxEsc(name)}</div>${status ? this._pill(status) : ""}</div>` +
-      `${sub ? `<div class="sub">${wxEsc(sub)}</div>` : ""}</div>`
+      `${sub ? `<div class="sub" title="${wxEsc(sub)}">${wxEsc(sub)}</div>` : ""}</div>`
     );
   }
 
@@ -1117,6 +1157,7 @@ class WeatherPlusCard extends WxElement {
         },
         !this._byPointer,
       );
+      this._fitPill();
       return;
     }
     root.innerHTML =
@@ -1125,6 +1166,19 @@ class WeatherPlusCard extends WxElement {
       `<ha-card class="${cls}">${content}</ha-card></div></div>`;
     const parts = { color: root.querySelector?.("style.wx-color"), sheet: root.querySelector?.(".sheet"), card: root.querySelector?.("ha-card.popup") };
     this._popupParts = parts.color && parts.sheet && parts.card ? parts : null;
+    this._fitPill();
+    if (parts.card) this._resize?.observe(parts.card);
+  }
+
+  // The status pill's place on the card's header and on the detail's (see wxPlacePill).
+  _fitPill() {
+    if (typeof getComputedStyle !== "function") return;
+    for (const root of [this.shadowRoot, this._popup?.shadowRoot]) {
+      for (const row of root?.querySelectorAll?.(".trow") || []) {
+        const banner = row.closest(".banner");
+        wxPlacePill(banner || row.closest(".header"), row, banner?.querySelector(".ground"));
+      }
+    }
   }
 
   _miniBody(m) {

@@ -572,16 +572,25 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   /* The title takes the room the pill leaves (base 0, so the pill keeps its whole text while there is room for both),
      and keeps 4 characters and its ellipsis whatever the pill's length. */
   .titles { flex: 1 1 0; min-width: 5ch; cursor: pointer; display: flex; flex-direction: column; }
-  /* The title row: the name, then the status pill 8px after it, centred on it. The name gives way first (4 characters
-     and its ellipsis kept); the pill keeps its whole label, at most 51% of the row. */
+  /* The title row: the name, then the status pill 8px after it, centred on it, only when the whole name and the
+     pill's whole label fit there (measured by the card, see wxPlacePill). Otherwise the pill goes on its own line
+     under the subtitle (one line then), the name whole on its row; when even that cuts its label or leaves the
+     banner, the pill keeps its dot alone, back on the title row. */
   .trow { display: flex; align-items: center; gap: 8px; min-width: 0; }
-  .trow .name { flex: 0 1 auto; min-width: 4ch; }
+  .trow .name { flex: 0 1 auto; min-width: 0; }
+  [data-wrap] .trow { display: contents; }
+  [data-wrap] .titles > .sub { order: 2; }
+  [data-wrap] .titles .st { order: 3; align-self: flex-start; max-width: 100%; margin-top: 2px; }
+  /* On its own line, under the subtitle, the banner's pill may run a little over the scene's lower left corner. */
+  .banner[data-wrap] .titles .st { max-width: calc(100% + var(--wx-sw) / 2); }
+  [data-dot] .st { padding: 4px; }
+  [data-dot] .st .stt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   :host([hide-title]) .titles .name, :host([hide-subtitle]) .titles > .sub { display: none; }
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* The pill gives way only when the title is down to its 4 characters: then it ellipsizes its text, and on the
      narrowest cards shows its dot only (see @container). */
-  .st { position: relative; display: inline-flex; align-items: center; gap: 4px; flex: none; min-width: 0; max-width: 51%; box-sizing: border-box; overflow: hidden; padding: 1px 8px;
+  .st { position: relative; display: inline-flex; align-items: center; gap: 4px; flex: none; min-width: 0; box-sizing: border-box; overflow: hidden; padding: 1px 8px;
         border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap; background: color-mix(in srgb, var(--st-color, var(--wx-color)) 18%, transparent);
         color: ${wxInk("var(--st-color, var(--wx-color))")}; }
   .st .dot { flex: none; background: var(--st-color, var(--wx-color)); }
@@ -808,21 +817,8 @@ const WX_STYLES = `${WX_SCENE_STYLES}
     .drow { grid-template-columns: minmax(0, 1fr) 24px 38px 30px 30px; }
     .drow .range { display: none; }
   }
-  /* A narrow card: the pill on its own line under the subtitle, where it would not read whole beside the title (the
-     classic header shares its row with two buttons, the banner's title block sits beside its scene). */
-  @container (max-width: 340px) {
-    .trow { display: contents; }
-    .titles > .sub { order: 2; }
-    .titles .st { order: 3; align-self: flex-start; max-width: 100%; margin-top: 2px; }
-  }
-  @container (max-width: 420px) {
-    .banner .trow { display: contents; }
-    .banner .titles > .sub { order: 2; }
-    /* On its own line, under the subtitle, the pill may run a little over the scene's lower left corner. */
-    .banner .titles .st { order: 3; align-self: flex-start; max-width: calc(100% + var(--wx-sw) / 2); margin-top: 2px; }
-  }
-  /* Below this, the pill's text would be down to a letter or two: the pill shows its dot only, its text in its title. */
-  @container (max-width: 180px) {
+  /* A card of 200 px or less (its content box: 176 px): the pill shows its dot only, its text in its title. */
+  @container (max-width: 176px) {
     .st { padding: 4px; }
     .st .stt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   }

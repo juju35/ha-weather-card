@@ -93,17 +93,17 @@ test("card: the weather now, the warning in the status pill, the hero chips", ()
   assert.match(out, /<span class="val">17\.4<small>°C<\/small>/);
   assert.match(out, /↑<b>18°<\/b> ↓<b>9°<\/b>/);
   assert.match(out, /Feels like 16°/);
-  assert.match(out, /class="st alert" style="--st-color:#fdd835" title="Yellow warning"><span class="dot"><\/span><span class="stt">Yellow warning<\/span>/);
+  assert.match(out, /class="st alert" style="--st-color:#fdd835" title="Yellow warning" aria-label="Yellow warning"><span class="dot"><\/span><span class="stt">Yellow warning<\/span>/);
   // The illustrated header: the temperature and the condition under the title, the icon in the warning's colour.
   assert.match(out, /<div class="banner" style="--wx-icon:#fdd835">/);
   // The body shows the temperature big: the subtitle tells the condition (the pill shows the warning) and the
   // feels-like, which the hero no longer repeats.
-  assert.match(out, /<div class="sub">Partly cloudy · Feels like 16°<\/div>/);
-  assert.doesNotMatch(out, /<div class="sub">[^<]*17\.4/);
+  assert.match(out, /<div class="sub" title="[^"]*">Partly cloudy · Feels like 16°<\/div>/);
+  assert.doesNotMatch(out, /<div class="sub"[^>]*>[^<]*17\.4/);
   assert.doesNotMatch(out, /class="feels"/);
   assert.match(out, /<div class="ground"><\/div>/);
   // The classic header keeps the condition as its subtitle.
-  assert.match(html(card({ illustration: false })), /<div class="sub">Partly cloudy<\/div>/);
+  assert.match(html(card({ illustration: false })), /<div class="sub" title="[^"]*">Partly cloudy<\/div>/);
   assert.match(out, /rotate\(45deg\).*18 km\/h SW/);
   assert.match(out, /1014 hPa/);
   assert.match(out, /UV 3/);
@@ -202,7 +202,7 @@ test("card: no warning, rain now, clear night, no animation", () => {
   // No warning: the pill names the condition right after the title, in its colour; the subtitle keeps the temperature
   // (the condition is not repeated). The night sky, the icon in the condition's colour.
   assert.match(out, /<div class="banner night" style="--wx-icon:#5c6bc0">/);
-  assert.match(out, /<div class="trow"><div class="name">Paris<\/div><span class="st" style="--st-color:#5c6bc0" title="Clear night"><span class="dot"><\/span><span class="stt">Clear night<\/span><\/span><\/div><div class="sub">Feels like 16°<\/div>/);
+  assert.match(out, /<div class="trow"><div class="name">Paris<\/div><span class="st" style="--st-color:#5c6bc0" title="Clear night" aria-label="Clear night"><span class="dot"><\/span><span class="stt">Clear night<\/span><\/span><\/div><div class="sub" title="[^"]*">Feels like 16°<\/div>/);
   assert.match(out, /<ha-card class="still">/);
   const classic = html(
     card(
@@ -215,7 +215,7 @@ test("card: no warning, rain now, clear night, no animation", () => {
       }),
     ),
   );
-  assert.match(classic, /class="st" style="--st-color:#5c6bc0" title="Clear night"><span class="dot"><\/span><span class="stt">Clear night<\/span>/);
+  assert.match(classic, /class="st" style="--st-color:#5c6bc0" title="Clear night" aria-label="Clear night"><span class="dot"><\/span><span class="stt">Clear night<\/span>/);
 });
 
 test("card: night picture with the dark theme even while the sun is up; illustration_theme still wins", () => {
@@ -256,7 +256,7 @@ test("card: a clear night reported while the sun is up reads as sunny", () => {
 
 test("card: lightning nearby goes to the status pill when there is no warning", () => {
   const out = html(card({}, makeHass("en", { "sensor.75_weather_alert": { state: "Vert", "Vent violent": "Vert", Orages: "Vert" } })));
-  assert.match(out, /class="st alert" style="--st-color:#7e57c2" title="Lightning 18 km away"><span class="dot"><\/span><span class="stt">Lightning 18 km away<\/span>/);
+  assert.match(out, /class="st alert" style="--st-color:#7e57c2" title="Lightning 18 km away" aria-label="Lightning 18 km away"><span class="dot"><\/span><span class="stt">Lightning 18 km away<\/span>/);
 });
 
 test("card: a section's entry animations play when it first shows only", () => {
@@ -306,7 +306,7 @@ test("mini card: compact, unfolds into the full card", () => {
   assert.match(out, /<ha-card class="mini">/);
   assert.match(out, /Heavy rain in 15 min/);
   // The compact body shows the temperature big too: the subtitle tells the condition and the feels-like instead.
-  assert.match(out, /<div class="sub">Partly cloudy · Feels like 16°<\/div>/);
+  assert.match(out, /<div class="sub" title="[^"]*">Partly cloudy · Feels like 16°<\/div>/);
   assert.match(out, /data-action="zoom"/);
   // Two buttons on the compact card: the full screen one and the detail one.
   assert.equal((out.match(/<button /g) || []).length, 2);

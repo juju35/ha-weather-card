@@ -71,10 +71,23 @@ export const launch = () =>
   chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH, args: ["--no-sandbox", "--disable-gpu"] } : {});
 
 // A page with the theme, the stand-ins and the card script, its clock set to `now`.
-export const openPage = async (browser, { theme = "light", width = 460, now = DAY, icons = [] } = {}) => {
+// `served`: the card script loaded from a (routed) URL instead of inline, so that it fetches its translation files
+// from dist/ like in Home Assistant (the tests in other languages than English).
+export const openPage = async (browser, { theme = "light", width = 460, now = DAY, icons = [], served = false } = {}) => {
   const page = await browser.newPage({ deviceScaleFactor: 2, timezoneId: TZ, viewport: { width: width + 32, height: 2400 }, colorScheme: theme });
   page.on("pageerror", (err) => console.error(`pageerror: ${err.message}`));
   await page.clock.setFixedTime(now);
+  if (served) {
+    await page.route("http://card.test/**", (route) => {
+      const file = new URL(route.request().url()).pathname.slice(1);
+      if (file === "index.html") return route.fulfill({ contentType: "text/html", body: pageHtml(theme, width) });
+      return route.fulfill({ contentType: "text/javascript", body: readFileSync(`${root}dist/${file}`, "utf8") });
+    });
+    await page.goto("http://card.test/index.html");
+    await page.addScriptTag({ content: haElements(iconsFor(icons)) });
+    await page.addScriptTag({ url: "http://card.test/ha-weather-card.js" });
+    return page;
+  }
   await page.setContent(pageHtml(theme, width));
   await page.addScriptTag({ content: haElements(iconsFor(icons)) });
   await page.addScriptTag({ content: cardJs });
