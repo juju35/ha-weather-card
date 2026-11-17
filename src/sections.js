@@ -571,19 +571,21 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .badge ha-icon { --mdc-icon-size: 24px; }
   /* The title takes the room the pill leaves (base 0, so the pill keeps its whole text while there is room for both),
      and keeps 4 characters and its ellipsis whatever the pill's length. */
-  .titles { flex: 1 1 0; min-width: 5ch; cursor: pointer; }
-  :host([hide-title]) .titles > .name, :host([hide-subtitle]) .titles > .sub { display: none; }
+  .titles { flex: 1 1 0; min-width: 5ch; cursor: pointer; display: flex; flex-direction: column; }
+  /* The title row: the name, then the status pill 8px after it, centred on it. The name gives way first (4 characters
+     and its ellipsis kept); the pill keeps its whole label, at most 51% of the row. */
+  .trow { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .trow .name { flex: 0 1 auto; min-width: 4ch; }
+  :host([hide-title]) .titles .name, :host([hide-subtitle]) .titles > .sub { display: none; }
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* The pill gives way only when the title is down to its 4 characters: then it ellipsizes its text, and on the
      narrowest cards shows its dot only (see @container). */
-  .st { position: relative; display: inline-flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 0; overflow: hidden; padding: 1px 8px;
+  .st { position: relative; display: inline-flex; align-items: center; gap: 4px; flex: none; min-width: 0; max-width: 51%; box-sizing: border-box; overflow: hidden; padding: 1px 8px;
         border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap; background: color-mix(in srgb, var(--st-color, var(--wx-color)) 18%, transparent);
         color: ${wxInk("var(--st-color, var(--wx-color))")}; }
   .st .dot { flex: none; background: var(--st-color, var(--wx-color)); }
   .st .stt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  /* With a subtitle the titles span two lines: the pill stays on the title's line, not centred over both. */
-  .header:has(.sub) .st { align-self: flex-start; margin-top: 4px; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   .st.alert .dot { animation: wx-blink 1.4s ease-in-out infinite; }
   button { font: inherit; cursor: pointer; border: none; }
@@ -606,7 +608,6 @@ const WX_STYLES = `${WX_SCENE_STYLES}
                     background: repeating-linear-gradient(90deg, #5aa83d 0 22px, #6cbb4c 22px 44px); }
   .banner.night .ground { background: repeating-linear-gradient(90deg, #1f4a2a 0 22px, #245433 22px 44px); }
   .banner { --wx-sw: min(108px, 34cqw); --wx-br: 8px; }
-  .banner:has(.hbtns) { --wx-br: 36px; }
   .bscene { position: absolute; right: var(--wx-br); bottom: 4px; width: var(--wx-sw); aspect-ratio: 5 / 4; }
   .banner .bscene > .scene { width: 100%; height: 100%; border-radius: 0; background: none; }
   .htext { position: absolute; left: 12px; top: 0; bottom: 10px; right: calc(var(--wx-sw) + var(--wx-br) + 4px); z-index: 2;
@@ -617,13 +618,15 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .banner .name { color: inherit; }
   .banner .sub { font-size: 13px; color: #3b5b78; }
   .banner.night .sub { color: rgba(255,255,255,.78); }
-  .banner .st { max-width: 100%; box-sizing: border-box; margin-top: 4px; background: rgba(255,255,255,.7); color: color-mix(in srgb, var(--st-color) 55%, #0d2a45); }
-  .banner.night .st { background: rgba(10,20,40,.5); color: color-mix(in srgb, var(--st-color) 45%, #fff); }
-  .hbtns { position: absolute; top: 4px; right: 6px; z-index: 2; display: flex; flex-direction: column; gap: 2px; }
-  .banner .zoom { margin: 0; color: #10283f; background: rgba(255,255,255,.55); }
-  .banner.night .zoom { color: #fff; background: rgba(10,20,40,.45); }
-  .banner .zoom:hover { background: rgba(255,255,255,.8); }
-  .banner.night .zoom:hover { background: rgba(10,20,40,.7); }
+  .banner .st { background: color-mix(in srgb, var(--st-color) 18%, rgba(255,255,255,.78)); color: color-mix(in srgb, var(--st-color) 45%, #0d2a45); }
+  .banner.night .st { background: color-mix(in srgb, var(--st-color) 30%, rgba(8,18,38,.55)); color: color-mix(in srgb, var(--st-color) 35%, #ffffff); }
+  /* The buttons on one line in the top right corner: the detail button at the corner, the others at its left. */
+  .hbtns { position: absolute; top: 5px; right: 5px; z-index: 3; display: flex; flex-direction: row; gap: 4px; }
+  .banner .zoom { margin: 0; width: 24px; height: 24px; color: #33506b; background: rgba(255,255,255,.55); box-shadow: inset 0 0 0 1px rgba(255,255,255,.7);
+                  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+  .banner.night .zoom { color: #fff; background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+  .banner .zoom:hover { background: rgba(255,255,255,.75); color: #33506b; }
+  .banner.night .zoom:hover { background: rgba(255,255,255,.22); color: #fff; }
 
   .hero { display: flex; align-items: center; gap: 14px; }
   .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -805,10 +808,25 @@ const WX_STYLES = `${WX_SCENE_STYLES}
     .drow { grid-template-columns: minmax(0, 1fr) 24px 38px 30px 30px; }
     .drow .range { display: none; }
   }
+  /* A narrow card: the pill on its own line under the subtitle, where it would not read whole beside the title (the
+     classic header shares its row with two buttons, the banner's title block sits beside its scene). */
+  @container (max-width: 340px) {
+    .trow { display: contents; }
+    .titles > .sub { order: 2; }
+    .titles .st { order: 3; align-self: flex-start; max-width: 100%; margin-top: 2px; }
+  }
+  @container (max-width: 420px) {
+    .banner .trow { display: contents; }
+    .banner .titles > .sub { order: 2; }
+    /* On its own line, under the subtitle, the pill may run a little over the scene's lower left corner. */
+    .banner .titles .st { order: 3; align-self: flex-start; max-width: calc(100% + var(--wx-sw) / 2); margin-top: 2px; }
+  }
   /* Below this, the pill's text would be down to a letter or two: the pill shows its dot only, its text in its title. */
-  @container (max-width: 220px) {
+  @container (max-width: 180px) {
     .st { padding: 4px; }
     .st .stt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  }
+  @container (max-width: 220px) {
     ha-card.mini .scene { width: 64px; height: 52px; border-radius: 10px; }
     .content { gap: 8px; }
   }

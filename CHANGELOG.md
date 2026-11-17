@@ -4,6 +4,8 @@
 
 ### Features
 - Illustrated header on the full and the mini card: a 90px banner with the title and the temperature on a day or night sky, the card's animated weather scene at the right (nothing clipped at the top) above a 10px lawn strip running edge to edge, the round icon tinted by the status (the warning's or nearby lightning's colour, else the condition's) and a warning pill under the title. The sky is night when `sun.sun` is below the horizon or Home Assistant's theme is dark; `illustration_theme: day | night` forces it and `illustration: false` keeps the classic header with the scene in the body. Both options are in the visual editor of the card and the mini card, translated in every language. The scene's gradient ids are unique per card.
+- Status pill on every header (full and mini card, illustrated or classic, unavailable too), right after the title on its row: the highest warning, else nearby lightning, else the condition, in the colour of the icon, frosted on the banner day and night. The banner's subtitle keeps the temperature (and the condition when the pill shows a warning). On a narrow card the pill moves under the subtitle; it shows its dot alone on the narrowest cards.
+- The banner's buttons sit on one line in its top right corner (24px, frosted): the detail button of the mini card at the corner, refresh and full screen at its left, no longer stacked in a column.
 ## 1.13.3 - 2026-11-16
 
 ### Changes

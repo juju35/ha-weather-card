@@ -195,9 +195,10 @@ test("card: no warning, rain now, clear night, no animation", () => {
   assert.match(out, /class="scene c-clear-night night still"/);
   assert.match(out, /No weather warning/);
   assert.match(out, /Light rain now, stopping in 10 min/);
-  // No warning: no pill on the illustrated header, the night sky, the icon in the condition's colour.
+  // No warning: the pill names the condition right after the title, in its colour; the subtitle keeps the temperature
+  // (the condition is not repeated). The night sky, the icon in the condition's colour.
   assert.match(out, /<div class="banner night" style="--wx-icon:#5c6bc0">/);
-  assert.doesNotMatch(out, /class="st[ "]/);
+  assert.match(out, /<div class="trow"><div class="name">Paris<\/div><span class="st" style="--st-color:#5c6bc0" title="Clear night"><span class="dot"><\/span><span class="stt">Clear night<\/span><\/span><\/div><div class="sub">17\.4 °C<\/div>/);
   assert.match(out, /<ha-card class="still">/);
   const classic = html(
     card(

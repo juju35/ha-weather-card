@@ -75,9 +75,15 @@ test("narrow header: the title keeps a few characters, the pill gives way, the b
   assert.ok(m && Number(m[1]) >= 4 && Number(m[1]) <= 5, `the title keeps 4 characters and its ellipsis: ${titles["min-width"]}`);
   assert.equal(base(".name")["text-overflow"], "ellipsis");
   const st = base(".st");
-  assert.equal(st.flex, "0 1 auto");
+  // The pill right after the name on the title row, its whole label at most 51% of the row; on a narrow card it
+  // moves to its own line under the subtitle (a container tier) rather than being cut.
+  assert.equal(st.flex, "none");
   assert.equal(st["min-width"], "0");
-  assert.equal(st["max-width"], undefined, "no cap: the pill is cut only when the title is down to its 4 characters");
+  assert.equal(st["max-width"], "51%");
+  assert.equal(base(".trow .name").flex, "0 1 auto");
+  assert.equal(base(".trow .name")["min-width"], "4ch");
+  const ownLine = narrow(".trow");
+  assert.ok(ownLine.some(([, d]) => d.display === "contents"), "a narrow card puts the pill on its own line");
   assert.equal(base(".st .stt")["text-overflow"], "ellipsis");
   for (const sel of [".badge", ".zoom"]) assert.equal(base(sel).flex, "none", sel);
   assert.equal(rules(lib.WX_STYLES + lib.WX_POPUP_STYLES).find((r) => r.sel === ".close" && !r.at).decl.flex, "none", ".close");
@@ -95,7 +101,7 @@ test("narrow header: the title keeps a few characters, the pill gives way, the b
 test("narrow header: every status pill carries its text in a title, the unavailable one too", () => {
   const off = { "weather.paris": { state: "unavailable" } };
   const classic = mount(lib, "weather-plus-card", { illustration: false }, makeHass("en", off));
-  assert.match(html(classic), /<span class="st" title="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
+  assert.match(html(classic), /<span class="st" style="--st-color:var\(--disabled-text-color, #9e9e9e\)" title="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
   // On the illustrated header the unavailable pill sits under the title, grey and still.
   const banner = mount(lib, "weather-plus-card", {}, makeHass("en", off));
   assert.match(html(banner), /<span class="st" style="--st-color:var\(--disabled-text-color, #9e9e9e\)" title="Unavailable"><span class="dot"><\/span><span class="stt">Unavailable<\/span><\/span>/);
@@ -191,4 +197,22 @@ test("narrow card: the full card asks for 9 columns at least, the mini card keep
   assert.deepEqual({ ...mini.getGridOptions() }, { columns: 6, min_columns: 6, rows: "auto" });
   mini._setZoom(true);
   assert.deepEqual({ ...mini.getGridOptions() }, { columns: 12, min_columns: 9, rows: "auto" });
+});
+
+test("banner buttons: one line in the top right corner, the detail button at the corner, 24px frosted day and night", () => {
+  const h = base(".hbtns");
+  assert.equal(h.top, "5px");
+  assert.equal(h.right, "5px");
+  assert.equal(h["flex-direction"], "row");
+  assert.equal(h.gap, "4px");
+  const z = base(".banner .zoom");
+  assert.equal(z.width, "24px");
+  assert.equal(z.height, "24px");
+  assert.equal(z.background, "rgba(255,255,255,.55)");
+  assert.equal(base(".banner.night .zoom").background, "rgba(255,255,255,.12)");
+  // The mini card: popup then detail button, the detail button last (at the corner); unfolded, the refresh first.
+  const mini = mount(lib, "weather-plus-mini-card", {}, makeHass());
+  assert.match(html(mini), /<div class="hbtns"><button class="zoom" data-action="popup"[^>]*>[\s\S]*?<\/button><button class="zoom" data-action="zoom"[^>]*><ha-icon icon="mdi:arrow-expand">/);
+  mini._setZoom(true);
+  assert.match(html(mini), /<div class="hbtns"><button class="zoom refresh"[\s\S]*?data-action="popup"[\s\S]*?<button class="zoom" data-action="zoom"[^>]*><ha-icon icon="mdi:arrow-collapse">/);
 });

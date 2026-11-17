@@ -729,8 +729,8 @@ class WeatherPlusCard extends WxElement {
             `${this._refreshButton()}${this._zoomButton()}`,
           )
         : `<div class="header"><div class="badge"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon></div>` +
-          `<div class="titles" data-more="${wxEsc(ent.weather)}"><div class="name">${wxEsc(name)}</div></div>` +
-          `<span class="st" title="${wxEsc(off)}"><span class="dot"></span><span class="stt">${wxEsc(off)}</span></span>${this._refreshButton()}${this._zoomButton()}</div>`;
+          this._titles(wxEsc(ent.weather), name, "", { text: off, color: WX_IDLE, alert: false }) +
+          `${this._refreshButton()}${this._zoomButton()}</div>`;
       this.shadowRoot.innerHTML = `<style>${WX_STYLES}</style><style>:host{--wx-color:${WX_IDLE}}</style>${haCard}${header}</ha-card>`;
       this._closePopup();
       return;
@@ -758,13 +758,28 @@ class WeatherPlusCard extends WxElement {
     if (this._popup) this._renderPopup();
   }
 
+  // The status pill: a dot and the status text, in the status colour (a warning's, the lightning's, else the condition's).
+  _pill(status) {
+    return `<span class="st${status.alert ? " alert" : ""}" style="--st-color:${status.color}" title="${wxEsc(status.text)}"><span class="dot"></span><span class="stt">${wxEsc(status.text)}</span></span>`;
+  }
+
+  // The titles: the name and the status pill on the title row (the pill right after the name), the subtitle under
+  // them. On a narrow card the pill goes to its own line under the subtitle, see the container tiers.
+  _titles(more, name, sub, status) {
+    return (
+      `<div class="titles" data-more="${more}"><div class="trow"><div class="name">${wxEsc(name)}</div>${status ? this._pill(status) : ""}</div>` +
+      `${sub ? `<div class="sub">${wxEsc(sub)}</div>` : ""}</div>`
+    );
+  }
+
   // The header shared by the card and its full screen detail: badge, titles (the condition as a subtitle when
   // `sub`), the status pill, then the caller's buttons (popup/zoom, or close).
   _header(m, { sub = false, buttons = "" } = {}) {
     return (
       `<div class="header"><div class="badge" data-more="${wxEsc(m.ent.weather)}"><ha-icon icon="${wxCondIcon(m.cond, m.night)}"></ha-icon></div>` +
-      `<div class="titles" data-more="${wxEsc(m.ent.weather)}"><div class="name">${wxEsc(m.name)}</div>${sub ? `<div class="sub">${wxEsc(wxCondLabel(m.lang, m.cond))}</div>` : ""}</div>` +
-      `<span class="st${m.status.alert ? " alert" : ""}" style="--st-color:${m.status.color}" title="${wxEsc(m.status.text)}"><span class="dot"></span><span class="stt">${wxEsc(m.status.text)}</span></span>${buttons}</div>`
+      // The condition as a subtitle only when the pill shows a warning (else the pill already names it).
+      this._titles(wxEsc(m.ent.weather), m.name, sub && m.status.alert ? wxCondLabel(m.lang, m.cond) : "", m.status) +
+      `${buttons}</div>`
     );
   }
 
@@ -789,11 +804,13 @@ class WeatherPlusCard extends WxElement {
   _bannerOf(m, buttons) {
     const night = this._bannerNight(m);
     const cond = wxDayCond(m.st.state, night);
-    const temp = m.temp != null ? `${wxFmtNum(m.fmt, m.temp, 1)} ${m.tempUnit} · ` : "";
+    const temp = m.temp != null ? `${wxFmtNum(m.fmt, m.temp, 1)} ${m.tempUnit}` : "";
+    // The pill names the condition (no warning): the subtitle keeps the temperature; with a warning in the pill, the
+    // subtitle keeps the temperature and the condition.
     return this._banner(
       {
         name: m.name,
-        sub: temp + wxCondLabel(m.lang, cond),
+        sub: m.status.alert ? [temp, wxCondLabel(m.lang, cond)].filter(Boolean).join(" · ") : temp,
         ent: m.ent,
         still: m.still,
         moon: m.moon,
@@ -807,21 +824,17 @@ class WeatherPlusCard extends WxElement {
     );
   }
 
-  // The 90px banner: the title and subtitle on the sky at the left, the card's animated scene at the right, a lawn
-  // strip edge to edge at the bottom, the buttons in a column at the right edge. A warning shows as a pill under
-  // the titles.
+  // The 90px banner: the title, its status pill and the subtitle on the sky at the left, the card's animated scene at
+  // the right, a lawn strip edge to edge at the bottom, the buttons on one line in the top right corner.
   _banner(b, buttons) {
     this._uid ||= ++wxUid;
     const more = wxEsc(b.ent.weather);
     const scene = wxScene(b.cond, b.night, b.still, b.moon).replace(/(id="|url\(#)wx-/g, `$1wx${this._uid}-`);
-    const pill = b.status?.alert || b.status?.show
-      ? `<span class="st${b.status.alert ? " alert" : ""}" style="--st-color:${b.status.color}" title="${wxEsc(b.status.text)}"><span class="dot"></span><span class="stt">${wxEsc(b.status.text)}</span></span>`
-      : "";
     return (
       `<div class="banner${b.night ? " night" : ""}" style="--wx-icon:${b.color}">` +
       `<div class="bscene" data-more="${more}">${scene}</div>` +
       `<div class="htext"><div class="badge" data-more="${more}"><ha-icon icon="${b.icon}"></ha-icon></div>` +
-      `<div class="titles" data-more="${more}"><div class="name">${wxEsc(b.name)}</div>${b.sub ? `<div class="sub">${wxEsc(b.sub)}</div>` : ""}${pill}</div></div>` +
+      `${this._titles(more, b.name, b.sub, b.status)}</div>` +
       (buttons ? `<div class="hbtns">${buttons}</div>` : "") +
       '<div class="ground"></div></div>'
     );
