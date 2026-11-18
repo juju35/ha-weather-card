@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.16.0 - 2026-11-18
+
+### Features
+- A section on its own (#59): `show_header: false` removes the header and its buttons, `show_current: false` the weather now (scene, temperature and chips), so that `sections: [sun]` (or the forecast, the wind rose…) makes a card of its own. Without the weather now the card goes down to 6 columns in a Sections view. Both options are in the full card's visual editor, translated in every language; the mini card keeps its header (it holds the detail button).
+
 ## 1.15.0 - 2026-11-18
 
 ### Features

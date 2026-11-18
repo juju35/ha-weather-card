@@ -1645,3 +1645,31 @@ test("wind rose: the weather entity's history without a station; overrides by ro
   assert.equal(ent.wind.gust, "sensor.garden_gust_speed");
   assert.ok(!("wind_speed" in ent));
 });
+
+// ── A section on its own (#59) ───────────────────────────────────────────────
+test("standalone section: no header, no weather now, only the sections asked for", () => {
+  const el = card({ sections: ["sun"], show_header: false, show_current: false });
+  const out = html(el);
+  assert.ok(!/class="banner|class="header|class="hero|data-action="popup"|data-action="refresh"/.test(out), out.slice(0, 400));
+  assert.match(out, /^<ha-card><div class="section (enter )?s-sun">/);
+  assert.deepEqual({ ...el.getGridOptions() }, { columns: 12, min_columns: 6 });
+  // The header alone hidden: the weather now keeps its scene.
+  const hero = html(card({ sections: ["sun"], show_header: false }));
+  assert.match(hero, /^<ha-card><div class="hero"><div data-more="weather\.paris"><div class="scene/);
+  assert.deepEqual({ ...card({ show_header: false }).getGridOptions() }, { columns: 12, min_columns: 9 });
+});
+
+test("standalone section: the mini card keeps its header and its weather now; the editor offers both options", () => {
+  const out = html(mount(lib, "weather-plus-mini-card", { show_header: false, show_current: false }, makeHass()));
+  assert.match(out, /class="banner/);
+  assert.match(out, /data-action="zoom"/);
+  const names = (tag) => {
+    const editor = lib.document.createElement(`${tag}-editor`);
+    editor.setConfig({});
+    editor.hass = makeHass();
+    return JSON.stringify(editor._schema("en"));
+  };
+  assert.match(names("weather-plus-card"), /"show_header".*"show_current"/);
+  assert.ok(!/show_header|show_current/.test(names("weather-plus-mini-card")));
+  assert.deepEqual(JSON.parse(JSON.stringify(lib.wxCleanConfig({ show_header: true, show_current: false }, { show_header: true, show_current: true }))), { show_current: false });
+});
