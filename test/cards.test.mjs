@@ -1624,6 +1624,8 @@ test("wind rose: off by default, from the station's history when the section is 
 
 test("wind rose: the weather entity's history without a station; overrides by role", async () => {
   const h = makeHass("fr");
+  // No station: the mock home's one is taken away.
+  for (const id of Object.keys(h.states)) if (id.startsWith("sensor.garden_")) delete h.states[id];
   h.callApi = (method, path) => {
     h.apiCalls.push([method, path]);
     if (!path.includes("significant_changes_only")) return Promise.resolve([]);
