@@ -888,7 +888,7 @@ class WeatherPlusCard extends WxElement {
     const head =
       `<style>${WX_STYLES}</style><style>:host{--wx-color:${m.color}}</style>` +
       haCard +
-      (m.illustrated ? this._bannerOf(m, buttons) : this._header(m, { sub: m.status.alert && !this._compact(), buttons }));
+      (!this._headerShown() ? "" : m.illustrated ? this._bannerOf(m, buttons) : this._header(m, { sub: m.status.alert && !this._compact(), buttons }));
     const body = `${head}${this._warningBanner(m, this._compact() ? 1 : 4)}${this._compact() ? this._miniBody(m) : this._fullBody(m)}</ha-card>`;
     wxKeepView(
       this.shadowRoot,
@@ -925,6 +925,16 @@ class WeatherPlusCard extends WxElement {
       this._titles(wxEsc(m.ent.weather), m.name, sub && m.status.alert ? wxCondLabel(m.lang, m.cond) : "", m.status) +
       `${buttons}</div>`
     );
+  }
+
+  // show_header: false / show_current: false (full card only): its sections on their own, without the header (and its
+  // buttons) or the weather now. The mini card keeps both: its header holds the detail button.
+  _headerShown() {
+    return this.constructor.mini || this._config.show_header !== false;
+  }
+
+  _currentShown() {
+    return this.constructor.mini || this._config.show_current !== false;
   }
 
   // ── Illustrated header ──
@@ -1081,7 +1091,9 @@ class WeatherPlusCard extends WxElement {
   _fullBody(m) {
     this._shown ||= new Set();
     // The illustrated header already shows the scene.
-    return this._hero(m, { scene: !m.illustrated }) + this._sections(m, this._shown);
+    // Without the header, the scene shows in the hero (when the weather now is shown).
+    const hero = this._currentShown() ? this._hero(m, { scene: !m.illustrated || !this._headerShown() }) : "";
+    return hero + this._sections(m, this._shown);
   }
 
   // A section's entry animations (bars growing, the curve drawing itself) play when it first shows in `shown`, not

@@ -60,6 +60,7 @@ Like the other `ha-*` cards: header with a status pill, illustration next to the
 - **Full screen** button (top right, `popup: false` removes it): the detail over the whole screen and its width, sections side by side as the width allows, with 24 hours and 10 days of forecast; the keyboard focus stays inside it (Tab goes round its controls); it closes with its button, Escape, a click outside or the back button on a phone, and gives the focus back to its button
 - **Illustrated header**: a 90px banner on the full and the mini card, the title and the temperature on a day or night sky, the animated scene at the right above a lawn strip, the icon tinted by the status (a warning or nearby lightning, else the condition); `illustration_theme: day | night` forces the sky, `illustration: false` keeps the classic header
 - **Refresh** button (top right, `refresh: false` removes it): asks the integrations behind the card — weather, rain, alerts, sensors — for fresh data right away; the icon turns while they answer, even with `animations: false` (not with the system's *reduce motion* setting)
+- **A section on its own**: `show_header: false` removes the header and its buttons, `show_current: false` the weather now (scene, temperature and chips); with both, the card is just its `sections` — the sun's course, the forecast or the wind rose as a card of its own, which goes down to 6 columns in a Sections view
 - In a Sections view the card takes the full width (12 columns) and goes down to 9; on a narrow card the scene gets smaller, the status pill shortens its text only when the title is down to a few letters (and on the narrowest cards shows its coloured dot only, its text in the tooltip) and the daily rows leave out their range bar
 
 Sections, in the order of `sections` (a section with no data hides itself):
@@ -177,10 +178,21 @@ type: custom:weather-plus-mini-card
 entity: weather.paris
 ```
 
+A section on its own, without the header and the weather now:
+
+```yaml
+type: custom:weather-plus-card
+sections: [sun]
+show_header: false
+show_current: false
+```
+
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `entity` | string | first `weather.*` | The weather entity |
 | `name` | string | its name | Card title |
+| `show_header` | boolean | `true` | Show the header (title, status pill, refresh and full screen buttons); `false` with `show_current: false` leaves the sections on their own. Full card only |
+| `show_current` | boolean | `true` | Show the weather now under the header (scene, temperature, chips). Full card only |
 | `show_title` | boolean | `true` | Show the title in the header (e.g. `false` under a section heading of your own) |
 | `show_subtitle` | boolean | `true` | Show the subtitle under the title |
 | `sections` | list | `[alerts, rain, hourly, daily, air, uv, pollen, sun, moon]` | Sections shown, in this order |
@@ -205,6 +217,7 @@ entity: weather.paris
 | Storm, orange warning | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm.png" alt="" width="374"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm-dark.png" alt="" width="374"> |
 | Night | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night.png" alt="" width="315"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night-dark.png" alt="" width="315"> |
 | Wind rose from a weather station | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/wind.png" alt="" width="315"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/wind-dark.png" alt="" width="315"> |
+| Sections on their own | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/standalone.png" alt="" width="600"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/standalone-dark.png" alt="" width="600"> |
 | Moon from Lunar Phase | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/lunar-phase.png" alt="" width="315"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/lunar-phase-dark.png" alt="" width="315"> |
 | Full screen | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup.png" alt="" width="700"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-dark.png" alt="" width="700"> |
 | Full screen, phone | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone.png" alt="" width="241"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone-dark.png" alt="" width="241"> |

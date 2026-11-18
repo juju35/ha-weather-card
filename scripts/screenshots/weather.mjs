@@ -84,6 +84,11 @@ const ALL = { sections: ["alerts", "rain", "hourly", "daily", "wind", "air", "uv
 
 const SETUPS = {
   wind: card("weather-plus-card", { sections: ["wind", "sun"] }),
+  // Sections on their own (show_header / show_current: false), side by side like on a dashboard.
+  standalone: (lang) => ({
+    cards: ["sun", "daily"].map((s) => ({ tag: "weather-plus-card", config: { ...config, sections: [s], show_header: false, show_current: false }, hass: mockHass(lang, {}, DAY) })),
+    cols: 2,
+  }),
   card: card("weather-plus-card", ALL),
   mini: card("weather-plus-mini-card"),
   // The mini card expanded with its top right button: the full card, at the full card's width.
@@ -96,7 +101,7 @@ const SETUPS = {
 
 if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   await shoot({
-    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("mini-zoom"), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 }), ...pair("lunar-phase", { now: NIGHT }), ...pair("wind")],
+    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("mini-zoom"), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 }), ...pair("lunar-phase", { now: NIGHT }), ...pair("wind"), ...pair("standalone", { width: 760 })],
     setup: (s, lang) => SETUPS[s.file.replace(/-dark$/, "")](lang),
   });
 
