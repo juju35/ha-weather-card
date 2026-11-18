@@ -74,6 +74,7 @@ const WX_SECTION_ICONS = {
   pollen: "mdi:flower-pollen",
   sun: "mdi:weather-sunset",
   moon: "mdi:moon-waning-crescent",
+  wind: "mdi:compass-rose",
 };
 
 const wxSectionTitle = (card, key, extra = "") =>
@@ -536,6 +537,136 @@ function wxSectionMoon(card, m) {
   );
 }
 
+// ── Wind rose: where the wind came from over the last hours, by speed (a local weather station's history) ──
+// Speeds in km/h for the classes, whatever the unit of the source; Beaufort's steps: 1–2, 3, 4, 5, 6, 7 and up.
+const WX_WIND_TO_KMH = [
+  [/m\/s/i, 3.6],
+  [/mph|mi\/h/i, 1.609344],
+  [/kn|knot|kt/i, 1.852],
+  [/ft\/s/i, 1.09728],
+];
+const wxKmhFactor = (unit) => WX_WIND_TO_KMH.find(([re]) => re.test(unit || ""))?.[1] ?? 1;
+// Below 1 km/h the wind is calm: it has no direction.
+const WX_WIND_CALM = 1;
+const WX_WIND_STEPS = [6, 20, 29, 39, 50];
+const WX_WIND_COLORS = ["#90caf9", "#4dd0e1", "#9ccc65", "#ffca28", "#ff7043", "#e53935"];
+
+// The rose from the history: `dirs` and `speeds` as [time ms, value] in time order (the first one is the state at
+// `start`), each reading held until the next. Returns the share of the time per sector (16, from N clockwise) and per
+// speed class, the calm share, or null when nothing was recorded. No speeds: a single class.
+function wxWindRose(dirs, speeds, start, end, unit) {
+  const k = wxKmhFactor(unit);
+  const cuts = [...new Set([start, ...dirs.map((d) => d[0]), ...(speeds || []).map((d) => d[0]), end])].filter((t) => t >= start && t <= end).sort((a, b) => a - b);
+  const at = (list, t) => {
+    let v = null;
+    for (const [tt, x] of list) {
+      if (tt > t) break;
+      v = x;
+    }
+    return v;
+  };
+  const classes = speeds ? WX_WIND_STEPS.length + 1 : 1;
+  const bins = Array.from({ length: 16 }, () => new Array(classes).fill(0));
+  let calm = 0;
+  let total = 0;
+  for (let i = 0; i < cuts.length - 1; i++) {
+    const dt = cuts[i + 1] - cuts[i];
+    const deg = at(dirs, cuts[i]);
+    const v = speeds ? at(speeds, cuts[i]) : null;
+    if (speeds && v != null && v * k < WX_WIND_CALM) {
+      calm += dt;
+      total += dt;
+      continue;
+    }
+    if (deg == null || (speeds && v == null)) continue;
+    const sector = Math.round((((deg % 360) + 360) % 360) / 22.5) % 16;
+    const c = speeds ? WX_WIND_STEPS.filter((x) => v * k >= x).length : 0;
+    bins[sector][c] += dt;
+    total += dt;
+  }
+  if (!total) return null;
+  return { bins: bins.map((b) => b.map((x) => x / total)), calm: calm / total, speeds: !!speeds };
+}
+
+// A petal's piece: the ring between radii r1 and r2 over the angles a1 → a2 (degrees, from north clockwise).
+function wxWedge(c, r1, r2, a1, a2) {
+  const p = (r, a) => {
+    const t = (a * Math.PI) / 180;
+    return `${(c + r * Math.sin(t)).toFixed(1)} ${(c - r * Math.cos(t)).toFixed(1)}`;
+  };
+  return `M${p(r2, a1)}A${r2.toFixed(1)} ${r2.toFixed(1)} 0 0 1 ${p(r2, a2)}L${p(r1, a2)}A${r1.toFixed(1)} ${r1.toFixed(1)} 0 0 0 ${p(r1, a1)}Z`;
+}
+
+// The speed classes' bounds in the source's unit: "< 6", "6–20" … "50+" km/h.
+function wxWindLegend(fmt, unit) {
+  const k = wxKmhFactor(unit);
+  const n = (x) => wxFmtNum(fmt, x / k, k > 2 ? 1 : 0);
+  const s = WX_WIND_STEPS;
+  return [`< ${n(s[0])}`, ...s.slice(1).map((x, i) => `${n(s[i])}–${n(x)}`), `${n(s.at(-1))}+`];
+}
+
+function wxSectionWind(card, m) {
+  const w = m.wind;
+  if (!w?.rose) return "";
+  const { bins, calm, speeds } = w.rose;
+  const C = 100;
+  const R = 78;
+  const r0 = 10;
+  const totals = bins.map((b) => b.reduce((a, x) => a + x, 0));
+  const max = Math.max(...totals) || 1;
+  const rad = (p) => r0 + ((R - r0) * p) / max;
+  const petals = bins
+    .map((b, i) => {
+      let cum = 0;
+      return b
+        .map((x, c) => {
+          if (!x) return "";
+          const d = wxWedge(C, rad(cum), rad(cum + x), i * 22.5 - 9, i * 22.5 + 9);
+          cum += x;
+          return `<path class="petal" d="${d}" style="fill:${speeds ? WX_WIND_COLORS[c] : "var(--wx-color)"};--d:${(i * 0.03).toFixed(2)}s"/>`;
+        })
+        .join("");
+    })
+    .join("");
+  const rings = [0.25, 0.5, 0.75, 1].map((f) => `<circle class="ring" cx="${C}" cy="${C}" r="${rad(max * f).toFixed(1)}"/>`).join("");
+  const pct = (v) => wxFmtNum(m.fmt, v * 100, 0);
+  const ringLabels = [0.5, 1]
+    .map((f) => `<text class="rl" x="${(C + 3).toFixed(1)}" y="${(C - rad(max * f) + 9).toFixed(1)}">${wxEsc(pct(max * f))} %</text>`)
+    .join("");
+  const names = WX_CARDINALS[m.lang] || WX_CARDINALS.en;
+  const cards = [0, 4, 8, 12]
+    .map((i) => {
+      const t = (i * 22.5 * Math.PI) / 180;
+      return `<text class="cp" x="${(C + 91 * Math.sin(t)).toFixed(1)}" y="${(C - 91 * Math.cos(t)).toFixed(1)}">${wxEsc(names[i])}</text>`;
+    })
+    .join("");
+  const now = w.now;
+  // The current wind: a marker on the rim where it comes from, swaying in the gusts.
+  const mark = now?.b ? `<g class="wmark" transform="rotate(${now.b.deg.toFixed(0)} ${C} ${C})"><path d="M${C} ${C - R + 4}l-6 -11h12z"/></g>` : "";
+  const top = totals.indexOf(max);
+  const lines = [
+    `<b class="wnow">${wxEsc(wxWindNow(m, now))}</b>`,
+    now?.gust != null ? `<span class="wgust">${wxEsc(card._t("gusts", { v: `${wxFmtNum(m.fmt, now.gust, 0)} ${w.unit}` }))}</span>` : "",
+    `<span>${wxEsc(card._t("wind_from", { d: names[top], v: pct(max) }))}</span>`,
+    calm > 0 ? `<span>${wxEsc(card._t("wind_calm", { v: pct(calm) }))}</span>` : "",
+    `<span class="wper">${wxEsc(card._t("wind_period", { n: w.hours }))}</span>`,
+  ].filter(Boolean);
+  const legend = speeds
+    ? `<div class="wlegend">${wxWindLegend(m.fmt, w.unit)
+        .map((t, i) => `<span><i style="background:${WX_WIND_COLORS[i]}"></i>${wxEsc(t)}</span>`)
+        .join("")}<span class="wu">${wxEsc(w.unit)}</span></div>`
+    : "";
+  return (
+    `<div class="section s-wind">${wxSectionTitle(card, "wind")}<div class="windrose" data-more="${wxEsc(w.entity)}" role="button" tabindex="0">` +
+    `<svg class="rose" viewBox="0 0 200 200" aria-hidden="true">${rings}<path class="axis" d="M${C} ${C - R}V${C + R}M${C - R} ${C}H${C + R}"/>${petals}${ringLabels}${cards}${mark}</svg>` +
+    `<div class="wtxt">${lines.join("")}</div></div>${legend}</div>`
+  );
+}
+
+// "23 km/h WSW" (or the direction alone without a speed), patched in place as the station reports.
+const wxWindNow = (m, now) =>
+  !now ? "" : [now.speed != null ? `${wxFmtNum(m.fmt, now.speed, now.speed < 10 && wxKmhFactor(m.wind.unit) > 2 ? 1 : 0)} ${m.wind.unit}` : "", now.b?.label || ""].filter(Boolean).join(" ");
+
 const WX_SECTION_RENDER = {
   alerts: wxSectionAlerts,
   rain: wxSectionRain,
@@ -546,6 +677,7 @@ const WX_SECTION_RENDER = {
   pollen: wxSectionPollen,
   sun: wxSectionSun,
   moon: wxSectionMoon,
+  wind: wxSectionWind,
 };
 
 // ── Styles ───────────────────────────────────────────────────────────────────
@@ -787,6 +919,24 @@ const WX_STYLES = `${WX_SCENE_STYLES}
   .mnext { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--secondary-text-color); white-space: nowrap; }
   .mnext ha-icon { --mdc-icon-size: 14px; }
   .mnext b { font-weight: 500; color: var(--primary-text-color); }
+  .windrose { display: flex; align-items: center; gap: 14px; cursor: pointer; }
+  .rose { width: 136px; height: 136px; flex: none; overflow: visible; }
+  .rose .ring { fill: none; stroke: var(--divider-color, rgba(128,128,128,.25)); stroke-width: 1; stroke-dasharray: 2 3; }
+  .rose .axis { stroke: var(--divider-color, rgba(128,128,128,.25)); stroke-width: 1; }
+  .rose .petal { stroke: var(--card-background-color, #fff); stroke-width: .8; transform-box: view-box; transform-origin: 100px 100px; }
+  .enter .rose .petal { animation: wx-bloom .6s ease-out both; animation-delay: var(--d, 0s); }
+  .rose text { font-size: 11px; fill: var(--secondary-text-color); text-anchor: middle; dominant-baseline: central; }
+  .rose .cp { font-weight: 600; fill: var(--primary-text-color); }
+  .rose .rl { font-size: 8px; text-anchor: start; }
+  .rose .wmark path { fill: var(--primary-text-color); transform-box: view-box; transform-origin: 100px 100px; animation: wx-sway 3.5s ease-in-out infinite; }
+  .wtxt { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--secondary-text-color); min-width: 0; }
+  .wtxt .wnow { font-size: 16px; font-weight: 500; color: var(--primary-text-color); }
+  .wtxt .wper { font-size: 11px; }
+  .wlegend { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11px; color: var(--secondary-text-color); }
+  .wlegend span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .wlegend i { width: 10px; height: 10px; border-radius: 3px; }
+  @keyframes wx-bloom { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes wx-sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
   ha-card.mini { gap: 8px; }
   .content { display: flex; align-items: center; gap: 12px; }
   ha-card.mini .scene { width: 88px; height: 70px; border-radius: 12px; }

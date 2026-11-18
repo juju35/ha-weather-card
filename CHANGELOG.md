@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.15.0 - 2026-11-18
+
+### Features
+- New `wind` section, off by default (#60): a wind rose of the last 24 hours (`wind_hours`, 1 to 168, in the visual editor once the section is on), 16 sectors stacked by speed class on the Beaufort steps (< 6, 6–20, 20–29, 29–39, 39–50, 50+ km/h, shown in the station's unit — m/s, mph, knots too) with its legend, the current wind and gusts beside it, a marker on the rim where it blows from (swaying), the dominant direction and the share of calm. It reads a local weather station's wind direction and speed sensors (Netatmo, Ecowitt, WeatherFlow, Davis… found by device class or name, or `entities: wind_direction / wind_speed / wind_gust`) from the recorder's history, every 15 minutes, time-weighted; without a station, the weather entity's wind. The petals open when the section shows; the station's new readings move the marker and the text in place without rebuilding the card. Translated in every language.
+
 ## 1.14.0 - 2026-11-17
 
 ### Features

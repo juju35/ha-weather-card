@@ -1562,3 +1562,80 @@ test("minute tick: attached again without being detached, the card keeps a singl
     lib.window.clearInterval = ci;
   }
 });
+
+// ── Wind rose ────────────────────────────────────────────────────────────────
+// A weather station's wind sensors (Netatmo-like), kept out of the mock home.
+const STATION = {
+  "sensor.garden_wind_direction": { state: "250", device_class: "wind_direction", unit_of_measurement: "°" },
+  "sensor.garden_wind_speed": { state: "18", device_class: "wind_speed", unit_of_measurement: "km/h" },
+  "sensor.garden_gust_speed": { state: "34", device_class: "wind_speed", unit_of_measurement: "km/h" },
+};
+// The station's history: 6 hours from the WSW at 12 km/h, then 2 calm hours, then 4 hours from the N at 35 km/h.
+const windHistory = (h) => {
+  h.callApi = (method, path) => {
+    h.apiCalls.push([method, path]);
+    if (!path.includes("wind")) return Promise.resolve([[{ state: "1011.2" }, { state: "1014" }]]);
+    const start = Date.parse(decodeURIComponent(path.split("/")[2].split("?")[0]));
+    const at = (hr) => new Date(start + hr * 3600000).toISOString();
+    return Promise.resolve([
+      [{ entity_id: "sensor.garden_wind_speed", state: "12", last_changed: at(-1) }, { state: "0", last_changed: at(6) }, { state: "35", last_changed: at(8) }],
+      [{ entity_id: "sensor.garden_wind_direction", state: "250", last_changed: at(-2) }, { state: "0", last_changed: at(8) }],
+    ]);
+  };
+  return h;
+};
+
+test("wind rose: time-weighted sectors by speed class, calm apart", () => {
+  const H = 3600000;
+  const r = lib.wxWindRose([[0, 250], [8 * H, 0]], [[0, 12], [6 * H, 0], [8 * H, 35]], 0, 12 * H, "km/h");
+  const pct = (x) => Math.round(x * 100);
+  assert.equal(pct(r.calm), 17);
+  // 250° falls in WSW (sector 11), 12 km/h in the 6–20 class; the north at 35 km/h in 29–39.
+  assert.equal(pct(r.bins[11][1]), 50);
+  assert.equal(pct(r.bins[0][3]), 33);
+  assert.equal(r.speeds, true);
+  // m/s: 3.6 km/h each; without speeds, one class and no calm.
+  assert.deepEqual([...lib.wxWindRose([[0, 90]], null, 0, H, "m/s").bins[4]], [1]);
+  assert.equal(lib.wxWindRose([], null, 0, H, "m/s"), null);
+  assert.deepEqual([...lib.wxWindLegend("en", "m/s")], ["< 1.7", "1.7–5.6", "5.6–8.1", "8.1–10.8", "10.8–13.9", "13.9+"]);
+});
+
+test("wind rose: off by default, from the station's history when the section is on", async () => {
+  const off = makeHass("en", STATION);
+  card({}, off);
+  assert.ok(!off.apiCalls.some(([, p]) => p.includes("wind")));
+  const h = windHistory(makeHass("en", STATION));
+  const el = card({ sections: ["wind"], wind_hours: 12 }, h);
+  const call = h.apiCalls.find(([, p]) => p.includes("wind"))[1];
+  assert.match(call, /filter_entity_id=sensor\.garden_wind_direction,sensor\.garden_wind_speed&minimal_response&no_attributes$/);
+  assert.ok(Date.now() - Date.parse(decodeURIComponent(call.split("/")[2].split("?")[0])) >= 12 * 3600000 - 1000);
+  await tick();
+  const out = html(el);
+  assert.match(out, /class="section enter s-wind/);
+  assert.match(out, /<b class="wnow">18 km\/h WSW<\/b><span class="wgust">gusts 34 km\/h<\/span><span>Mostly from WSW · 50 %<\/span><span>Calm 17 %<\/span><span class="wper">Last 12 h<\/span>/);
+  assert.match(out, /data-more="sensor\.garden_wind_direction"/);
+  assert.match(out, /&lt; 6.*6–20.*50\+.*km\/h/);
+  // A new reading does not rebuild the card (the marker and the text are patched in place, see _patchWind).
+  const sig = el._sig;
+  el.hass = { ...h, states: { ...h.states, "sensor.garden_wind_direction": { ...h.states["sensor.garden_wind_direction"], state: "90" } } };
+  assert.equal(el._sig, sig);
+  assert.equal(el._windNow(el._entities()).b.label, "E");
+});
+
+test("wind rose: the weather entity's history without a station; overrides by role", async () => {
+  const h = makeHass("fr");
+  h.callApi = (method, path) => {
+    h.apiCalls.push([method, path]);
+    if (!path.includes("significant_changes_only")) return Promise.resolve([]);
+    return Promise.resolve([[{ entity_id: "weather.paris", last_updated: "2000-01-01T00:00:00Z", attributes: { wind_bearing: 180, wind_speed: 22 } }]]);
+  };
+  const el = card({ sections: ["wind"] }, h);
+  assert.ok(h.apiCalls.some(([, p]) => /filter_entity_id=weather\.paris&significant_changes_only=0$/.test(p)));
+  await tick();
+  assert.match(html(el), /Dominant : S · 100 %.*24 dernières heures/);
+  const ent = lib.wxResolve(makeHass("en", STATION), "weather.paris", { wind_speed: "sensor.garden_gust_speed" }, { wind: true });
+  assert.equal(ent.wind.direction, "sensor.garden_wind_direction");
+  assert.equal(ent.wind.speed, "sensor.garden_gust_speed");
+  assert.equal(ent.wind.gust, "sensor.garden_gust_speed");
+  assert.ok(!("wind_speed" in ent));
+});

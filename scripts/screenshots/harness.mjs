@@ -148,8 +148,9 @@ export const addCards = (page, cards, cols = 1) =>
           // Home Assistant's dark mode: the dark theme variables of the page, and themes.darkMode (night banner).
           themes: { darkMode: document.documentElement.dataset.theme === "dark" },
           callService: async () => {},
-          // The pressure 3 hours ago, then now: a rising trend.
-          callApi: async () => [[{ state: "1011.2" }, { state: String(hass.states["sensor.paris_pressure"]?.state ?? 1014) }]],
+          // The pressure 3 hours ago, then now: a rising trend; the wind rose's history when the mock has one.
+          callApi: async (method, path) =>
+            hass.windHistory && path.includes("wind") ? hass.windHistory : [[{ state: "1011.2" }, { state: String(hass.states["sensor.paris_pressure"]?.state ?? 1014) }]],
           connection: {
             subscribeMessage: async (cb, msg) => {
               cb({ type: msg.forecast_type, forecast: hass.forecasts?.[msg.forecast_type] || [] });

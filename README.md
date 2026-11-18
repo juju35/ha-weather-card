@@ -21,10 +21,13 @@
   <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteoalarm.png" alt="Meteoalarm" width="64">&nbsp;&nbsp;
   <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/dwd_weather_warnings.png" alt="DWD Weather Warnings" width="64">&nbsp;&nbsp;
   <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/nws_alerts.png" alt="NWS Alerts" width="64">&nbsp;&nbsp;
-  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/lunar_phase.png" alt="Lunar Phase" width="64">
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/lunar_phase.png" alt="Lunar Phase" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/netatmo.png" alt="Netatmo" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/ecowitt.png" alt="Ecowitt" width="64">&nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/weatherflow.png" alt="WeatherFlow" width="64">
 </p>
 
-An animated weather card for Home Assistant that brings together everything the weather integrations of your instance know: the weather now and its forecasts, **rain in the next hour**, **weather warnings**, **thunderstorms and lightning nearby**, **air quality and pollutants**, **UV index**, **pollen** and **VigiEau drought restrictions**, with a mini card. Add it, it finds the weather entity and the sensors around it by itself. The sky comes alive: the sun turns, clouds drift, rain and snow fall, lightning flashes.
+An animated weather card for Home Assistant that brings together everything the weather integrations of your instance know: the weather now and its forecasts, **rain in the next hour**, **weather warnings**, **thunderstorms and lightning nearby**, **air quality and pollutants**, **UV index**, **pollen**, **VigiEau drought restrictions** and a **wind rose** from your weather station, with a mini card. Add it, it finds the weather entity and the sensors around it by itself. The sky comes alive: the sun turns, clouds drift, rain and snow fall, lightning flashes.
 
 [![Open your Home Assistant instance and open a repository inside the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=juju35&repository=ha-weather-card&category=plugin)
 
@@ -67,6 +70,7 @@ Sections, in the order of `sections` (a section with no data hides itself):
 | `rain` | Rain in the next hour as a 5-minute timeline coloured by intensity, with *Heavy rain in 15 min* / *Light rain now, stopping in 10 min*; rain, snow and frost chances; today's rainfall and the forecast totals for the next 6 and 24 hours | Météo-France *next rain*, *rain / snow / freeze chance*, *daily precipitation*, the hourly forecast |
 | `hourly` | Icons by day or night, a temperature curve that draws itself, precipitation probability (or amount) bars, the wind of each hour (an arrow, its speed, the gusts on hover, strong gusts highlighted); scrolls sideways | `weather.get_forecasts` (hourly) |
 | `daily` | One row a day: icon, precipitation probability, low and high on a range bar coloured by temperature against the whole week, the current temperature on today's | `weather.get_forecasts` (daily, or twice daily folded into days) |
+| `wind` | *Off by default.* A wind rose of the last 24 hours (`wind_hours`): where the wind came from, by sector (16 points), each petal stacked by speed class on the Beaufort steps (< 6, 6–20, 20–29, 29–39, 39–50, 50+ km/h, shown in the station's unit) with its legend; the current wind and gusts beside it, a marker on the rim where it blows from, the dominant direction and the share of calm. The petals open on display; the station's new readings move the marker and the text in place | A weather station's wind direction and speed sensors (Netatmo, Ecowitt, WeatherFlow, Davis…) from the recorder's history; else the weather entity's wind |
 | `air` | The air quality index (1 good … 6 extremely poor) with its advice and zone, and tomorrow's next to the title, then each pollutant — PM2.5, PM10, ozone, NO₂, SO₂ — on the six levels, the most degraded first; a poor air (level 4 and up) also shows in the alerts | Atmo France (index and pollutants), or the concentrations of WAQI, AirVisual, Google Air Quality, Airly, sensor.community… placed on the European EAQI thresholds |
 | `uv` | The UV index on its scale, its level and the advice that goes with it, today's peak | A UV sensor (Météo-France, OpenUV…), else the weather entity's `uv_index` |
 | `pollen` | The overall pollen risk (1 very low … 6 extremely high) with its advice and main species, and tomorrow's next to the title, then one row per species on six levels, the most present first; a high risk (4 and up) also shows in the alerts | Pollens (RNSA), Atmo France, Google Pollen, or any pollen sensor |
@@ -103,6 +107,7 @@ The other sections read the sensors of these integrations, found by their transl
 | Pollen | Pollens (RNSA), <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/atmofrance.png" alt="" width="16"> Atmo France, <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/google_pollen.png" alt="" width="16"> Google Pollen, any sensor named after a pollen species (levels 0–5 or 0–6, or words in French or English) | `pollen` (a list), `pollen_risk` |
 | Air quality index | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/atmofrance.png" alt="" width="16"> Atmo France *qualité globale*, or any outdoor `aqi` sensor (<img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/waqi.png" alt="" width="16"> WAQI, AirVisual…); else the worst pollutant | `aqi` |
 | Pollutants | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/atmofrance.png" alt="" width="16"> Atmo France, <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/waqi.png" alt="" width="16"> WAQI, AirVisual, <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/google_air_quality.png" alt="" width="16"> Google Air Quality, <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/airly.png" alt="" width="16"> Airly, <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/luftdaten.png" alt="" width="16"> sensor.community… (an indoor purifier's PM2.5 is left out; Atmo's day-ahead *-J+1* copies too) | `air` (a map: `pm25`, `pm10`, `o3`, `no2`, `so2`) |
+| Wind rose | A local weather station: <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/netatmo.png" alt="" width="16"> [Netatmo](https://www.home-assistant.io/integrations/netatmo/), <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/ecowitt.png" alt="" width="16"> [Ecowitt](https://www.home-assistant.io/integrations/ecowitt/), <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/weatherflow.png" alt="" width="16"> [WeatherFlow](https://www.home-assistant.io/integrations/weatherflow/)… or any sensor with the *wind direction* (degrees or a cardinal point) and *wind speed* device classes, read from the recorder's history; else the weather entity's `wind_bearing` and `wind_speed` | `wind_direction`, `wind_speed`, `wind_gust` |
 | Sun | `sun.sun` | `sun` |
 | Cloud cover | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/images/meteo_france.png" alt="" width="16"> Météo-France *cloud cover*, else the weather entity's `cloud_coverage` | `cloud_cover` |
 | Pressure trend | The weather entity's pressure sensor (else the entity itself), read from the recorder's history | `pressure` |
@@ -151,7 +156,7 @@ type: custom:weather-plus-card
 type: custom:weather-plus-card
 entity: weather.paris
 name: Home
-sections: [alerts, rain, hourly, daily, air, pollen]
+sections: [alerts, rain, hourly, daily, wind, air, pollen]
 hours: 18
 days: 7
 warning_entities:
@@ -160,6 +165,8 @@ warning_entities:
 entities:
   uv: sensor.openuv_current_uv_index
   vigieau: sensor.alert_level_in_paris
+  wind_direction: sensor.garden_wind_direction
+  wind_speed: sensor.garden_wind_speed
   pollen:
     - sensor.pollens_75_graminees
     - sensor.pollens_75_bouleau
@@ -179,6 +186,7 @@ entity: weather.paris
 | `sections` | list | `[alerts, rain, hourly, daily, air, uv, pollen, sun, moon]` | Sections shown, in this order |
 | `hours` | number | `12` | Hours of the hourly forecast |
 | `days` | number | `5` | Days of the daily forecast |
+| `wind_hours` | number | `24` | Hours of history in the wind rose (1 to 168), with the `wind` section |
 | `animations` | boolean | `true` | Animate the scene and the sections |
 | `illustration` | boolean | `true` | Illustrated 90px header (full and mini card): the title on a day or night sky, the animated weather scene at the right, a lawn strip along the bottom, the icon in the status colour (warning, lightning, else the condition). `false` keeps the classic header with the scene in the body |
 | `illustration_theme` | string | `auto` | Sky of the illustrated header: `auto` (night when `sun.sun` is below the horizon or Home Assistant's theme is dark), `day` or `night` |
@@ -196,6 +204,7 @@ entity: weather.paris
 | Weather card | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card.png" alt="" width="169"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/card-dark.png" alt="" width="169"> |
 | Storm, orange warning | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm.png" alt="" width="374"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/storm-dark.png" alt="" width="374"> |
 | Night | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night.png" alt="" width="315"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/night-dark.png" alt="" width="315"> |
+| Wind rose from a weather station | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/wind.png" alt="" width="315"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/wind-dark.png" alt="" width="315"> |
 | Moon from Lunar Phase | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/lunar-phase.png" alt="" width="315"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/lunar-phase-dark.png" alt="" width="315"> |
 | Full screen | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup.png" alt="" width="700"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-dark.png" alt="" width="700"> |
 | Full screen, phone | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone.png" alt="" width="241"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/popup-phone-dark.png" alt="" width="241"> |

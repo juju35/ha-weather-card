@@ -72,7 +72,7 @@ const wxPlacePill = (head, row, ground) => {
   }
 };
 
-const wxEntIds = (ent) => [...Object.values(ent), ...Object.values(ent.air || {})].flat().filter((id) => typeof id === "string");
+const wxEntIds = (ent) => [...Object.values(ent), ...Object.values(ent.air || {}), ...Object.values(ent.wind || {})].flat().filter((id) => typeof id === "string");
 
 // Runs `write` (which replaces the markup under `scope`) keeping what the viewer was doing: the scroll of `scope`, of
 // the hourly strips, and the focused control (found again by its action or entity) when `keepFocus` (the keyboard:
@@ -241,7 +241,7 @@ class WeatherPlusCard extends WxElement {
 
   _entities() {
     if (!this._ent || this._ent.weather !== this._weatherId()) {
-      this._ent = wxResolve(this._hass, this._weatherId(), this._config.entities);
+      this._ent = wxResolve(this._hass, this._weatherId(), this._config.entities, { wind: this._windShown() });
       // The warning banner's entities, tracked like the detected ones (signature, refresh).
       const warnings = [].concat(this._config.warning_entities || []).filter((id) => typeof id === "string" && id);
       if (warnings.length) this._ent.warnings = warnings;
@@ -305,6 +305,99 @@ class WeatherPlusCard extends WxElement {
     return this._astroCache;
   }
 
+  _windShown() {
+    return (this._config.sections || WX_SECTIONS).includes("wind");
+  }
+
+  _windHours() {
+    return Math.round(wxClamp(Number(this._config.wind_hours) || WX_WIND_HOURS, 1, 168));
+  }
+
+  // The wind of the station's sensors, else of the weather entity: its direction, speed, gusts and their unit.
+  _windNow(ent) {
+    const w = ent.wind || {};
+    const lang = this._lang();
+    if (w.direction) {
+      const d = this._st(w.direction);
+      const sp = this._st(w.speed);
+      return {
+        b: wxUnavailable(d) ? null : wxBearing(lang, d.state),
+        speed: wxNum(sp),
+        gust: this._num(w.gust),
+        unit: sp?.attributes.unit_of_measurement || this._st(w.gust)?.attributes.unit_of_measurement || "km/h",
+      };
+    }
+    const a = this._st(ent.weather)?.attributes || {};
+    return { b: wxBearing(lang, a.wind_bearing), speed: wxNumber(a.wind_speed), gust: wxNumber(a.wind_gust_speed), unit: a.wind_speed_unit || "km/h" };
+  }
+
+  // ── Wind rose: the history of the station's direction and speed (the weather entity's otherwise), every 15 minutes ──
+  _fetchWind(ent) {
+    if (!ent.wind || !this._hass.callApi) return;
+    const w = ent.wind;
+    const hours = this._windHours();
+    const ids = w.direction ? [w.direction, w.speed].filter(Boolean) : [ent.weather];
+    const key = `${ids.join()}:${hours}`;
+    if (this._windFor === key && Date.now() - this._windAt < 15 * 60000) return;
+    this._windFor = key;
+    this._windAt = Date.now();
+    const end = Date.now();
+    const start = end - hours * 3600000;
+    const weather = !w.direction;
+    const path = `history/period/${new Date(start).toISOString()}?filter_entity_id=${ids.join(",")}${weather ? "&significant_changes_only=0" : "&minimal_response&no_attributes"}`;
+    Promise.resolve(this._hass.callApi("GET", path))
+      .then((res) => {
+        if (this._windFor !== key) return;
+        // One list per entity, in no set order: only its first entry carries the entity_id.
+        const byId = Object.fromEntries((res || []).filter((l) => l?.length).map((l) => [l[0].entity_id, l]));
+        const t = (x) => Math.max(start, Date.parse(x.last_updated || x.last_changed) || start);
+        const series = (id, read) => (byId[id] || []).map((x) => [t(x), read(x)]).filter(([, v]) => v != null);
+        let dirs;
+        let speeds;
+        let unit;
+        if (weather) {
+          dirs = series(ent.weather, (x) => wxBearing("en", x.attributes?.wind_bearing)?.deg ?? null);
+          speeds = series(ent.weather, (x) => wxNumber(x.attributes?.wind_speed));
+          unit = this._st(ent.weather)?.attributes.wind_speed_unit || "km/h";
+        } else {
+          dirs = series(w.direction, (x) => wxBearing("en", x.state)?.deg ?? null);
+          speeds = w.speed ? series(w.speed, (x) => wxNumber(x.state)) : null;
+          unit = this._st(w.speed)?.attributes.unit_of_measurement || "km/h";
+        }
+        const rose = dirs.length ? wxWindRose(dirs, speeds?.length ? speeds : null, start, end, unit) : null;
+        const prev = JSON.stringify(this._wind || null);
+        this._wind = rose ? { key, rose, unit } : null;
+        // Not in the signature: rebuild only when the rose changed.
+        if (prev !== JSON.stringify(this._wind)) {
+          this._sig = null;
+          this._update();
+        }
+      })
+      .catch(() => {});
+  }
+
+  _windModel(ent) {
+    if (!ent.wind || !this._wind || this._wind.key.split(":")[0] !== (ent.wind.direction ? [ent.wind.direction, ent.wind.speed].filter(Boolean) : [ent.weather]).join()) return null;
+    const now = this._windNow(ent);
+    return { rose: this._wind.rose, unit: now.unit || this._wind.unit, now, hours: this._windHours(), entity: ent.wind.direction || ent.weather };
+  }
+
+  // The current wind on the rose, in place: the station reports every minute or so, the rose stays as drawn.
+  _patchWind(ent) {
+    if (!ent.wind) return;
+    const now = this._windNow(ent);
+    const m = { fmt: this._fmtLang(), wind: { unit: now.unit } };
+    for (const root of [this.shadowRoot, this._popup?.shadowRoot]) {
+      const el = root?.querySelector?.(".s-wind .wnow");
+      if (!el) continue;
+      el.textContent = wxWindNow(m, now);
+      const g = root.querySelector(".s-wind .wmark");
+      if (g && now.b) g.setAttribute("transform", `rotate(${now.b.deg.toFixed(0)} 100 100)`);
+      const gust = root.querySelector(".s-wind .wgust");
+      if (gust && now.gust != null) gust.textContent = this._t("gusts", { v: `${wxFmtNum(m.fmt, now.gust, 0)} ${now.unit}` });
+    }
+  }
+
   // ── Pressure trend over 3 hours, from the recorder's history (fetched every 15 minutes) ──
   _fetchTrend(id) {
     if (!id || !this._hass.callApi || (this._trendFor === id && Date.now() - this._trendAt < 15 * 60000)) return;
@@ -364,13 +457,16 @@ class WeatherPlusCard extends WxElement {
     const hass = this._hass;
     // sun.sun: only what the card shows of it. Its elevation and azimuth change every few minutes and would rebuild
     // the card (restarting every animation) for nothing.
-    const states = wxEntIds(ent).map((id) => {
+    // The station's wind is left out: it changes every minute, and the rose is patched in place (_patchWind).
+    const windIds = new Set(Object.values(ent.wind || {}));
+    const states = wxEntIds(ent).filter((id) => !windIds.has(id)).map((id) => {
       const s = hass.states[id];
       if (!s) return null;
       if (id === ent.sun) return [id, s.state, s.attributes.next_rising, s.attributes.next_setting];
       return [id, s.state, s.attributes];
     });
     this._fetchTrend(ent.pressure || ent.weather);
+    this._fetchWind(ent);
     // The clock only enters the signature through the hourly/daily rollover (and the astro day) on the hour, and
     // through the rain starting, stopping or leaving the forecast, so the minute tick does not rebuild the shadow root
     // (restarting every animation); the sun moves along its arc and the rain counts down in place.
@@ -380,6 +476,7 @@ class WeatherPlusCard extends WxElement {
     if (sig === this._sig) {
       this._patchSun(this._sunModel(ent));
       this._patchRain(rain);
+      this._patchWind(ent);
       return;
     }
     this._sig = sig;
@@ -727,6 +824,7 @@ class WeatherPlusCard extends WxElement {
       clouds: this._num(ent.cloud_cover) ?? wxNumber(a.cloud_coverage),
       trend: this._trend?.id === (ent.pressure || ent.weather) ? this._trend : null,
       sunTimes: this._astro()?.sun || null,
+      wind: this._windModel(ent),
     };
   }
 

@@ -79,7 +79,37 @@ const lunar = (now) => ({
   },
 });
 
+// A weather station's wind (Netatmo-like) and its last 24 hours, every 10 minutes: mostly from the south-west and the
+// west, freshening in the afternoon, a calm spell at night, a north-easterly breeze in the morning. Deterministic.
+const STATION = {
+  "sensor.garden_wind_direction": { state: "245", friendly_name: "Garden Wind direction", device_class: "wind_direction", unit_of_measurement: "°" },
+  "sensor.garden_wind_speed": { state: "19", friendly_name: "Garden Wind speed", device_class: "wind_speed", unit_of_measurement: "km/h" },
+  "sensor.garden_gust_speed": { state: "37", friendly_name: "Garden Gust speed", device_class: "wind_speed", unit_of_measurement: "km/h" },
+};
+const windHistory = (now) => {
+  const dirs = [];
+  const speeds = [];
+  for (let i = 0; i <= 144; i++) {
+    const t = new Date(now.getTime() - (144 - i) * 600000).toISOString();
+    const h = i / 6;
+    const wave = Math.sin(i * 1.7) * 18 + Math.sin(i * 0.37) * 12;
+    const dir = h < 5 ? 225 + wave : h < 9 ? (h < 7 ? 270 + wave : 0) : h < 13 ? 40 + wave : 250 + wave * 1.4;
+    const speed = h >= 7 && h < 9 ? 0.4 : Math.max(2, (h < 9 ? 14 : h < 13 ? 9 : 22) + Math.sin(i * 2.3) * 7 + Math.sin(i * 0.5) * 6 + (h > 18 ? 14 : 0));
+    dirs.push({ state: String(Math.round((dir + 360) % 360)), last_changed: t });
+    speeds.push({ state: speed.toFixed(1), last_changed: t });
+  }
+  dirs[0].entity_id = "sensor.garden_wind_direction";
+  speeds[0].entity_id = "sensor.garden_wind_speed";
+  return [dirs, speeds];
+};
+const windCard = (lang) => {
+  const hass = mockHass(lang, STATION, DAY);
+  hass.windHistory = windHistory(DAY);
+  return { cards: [{ tag: "weather-plus-card", config: { ...config, sections: ["wind", "sun"] }, hass }] };
+};
+
 const SETUPS = {
+  wind: windCard,
   card: card("weather-plus-card"),
   mini: card("weather-plus-mini-card"),
   // The mini card expanded with its top right button: the full card, at the full card's width.
@@ -92,7 +122,7 @@ const SETUPS = {
 
 if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   await shoot({
-    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("mini-zoom"), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 }), ...pair("lunar-phase", { now: NIGHT })],
+    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("mini-zoom"), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 }), ...pair("lunar-phase", { now: NIGHT }), ...pair("wind")],
     setup: (s, lang) => SETUPS[s.file.replace(/-dark$/, "")](lang),
   });
 
