@@ -5553,19 +5553,35 @@ function wxSeverityLevel(v) {
   return null;
 }
 
+// The phenomenon of a warning's type: a Meteoalarm `awareness_type` ("1; Wind", by its number) or a GeoSphere
+// Austria `type` slug (its "storm" is wind, not a thunderstorm).
+const WX_METEOALARM_TYPES = { 1: "wind", 2: "snow_ice", 3: "thunderstorm", 5: "heat_wave", 6: "cold_wave", 7: "waves", 9: "avalanche", 10: "rain_flood", 12: "flood", 13: "rain_flood" };
+const WX_GEOSPHERE_TYPES = { storm: "wind", rain: "rain_flood", snow: "snow_ice", black_ice: "snow_ice", thunderstorm: "thunderstorm", heat: "heat_wave", cold: "cold_wave" };
+function wxWarningType(v) {
+  if (v == null || v === "") return null;
+  const n = wxNumber(String(v).split(";")[0].trim());
+  const key = n != null ? WX_METEOALARM_TYPES[n] : WX_GEOSPHERE_TYPES[wxNorm(v)];
+  return key ? WX_PHENOMENA.find((p) => p.key === key) : (wxPhenomenon(String(v).split(";").pop()) ?? null);
+}
+
 // The warnings of the `warning_entities`, yellow (2) and up, the highest first: each { entity, level, title, icon };
-// `ph` instead of a title for a Météo-France phenomenon (named in the card's language).
+// `ph` its phenomenon, which names it in the card's language when it has no title (Météo-France, GeoSphere Austria).
 // - Meteoalarm: a binary_sensor, on while there is a warning; `awareness_level` "3; orange; Severe", `headline` / `event`.
 // - DWD (Deutscher Wetterdienst): `warning_count`, then `warning_<n>_level` (1 … 4) and `warning_<n>_headline` / `_name`.
 // - NWS alerts: an `Alerts` list of { Event, Headline, Severity }.
 // - Météo-France: one attribute per phenomenon with its colour.
+// - GeoSphere Austria Warnings: a level sensor ("none", "yellow"…) with the featured warning's `type` (storm, rain…);
+//   its warning counts are no level and are skipped.
 // - Anything else: on, or a level / severity, with a headline, title or event.
+// The same warning from two entities (Meteoalarm and its national service) is shown once.
 function wxWarnings(hass, ids) {
   const out = [];
   const add = (entity, level, title, ph) => {
     if (!level || level < 2) return;
     const p = ph || wxPhenomenon(title);
-    out.push({ entity, level: Math.min(4, level), title: title ? String(title) : "", ph: ph?.key, icon: p?.icon || "mdi:alert" });
+    const w = { entity, level: Math.min(4, level), title: title ? String(title) : "", ph: p?.key, icon: p?.icon || "mdi:alert" };
+    if (out.some((x) => x.entity !== entity && x.level === w.level && (w.ph ? x.ph === w.ph : x.title === w.title))) return;
+    out.push(w);
   };
   const levelOf = (x) => wxAlertLevel(String(x?.awareness_level ?? "").split(";")[0]) ?? wxAlertLevel(x?.awareness_level) ?? wxSeverityLevel(x?.severity ?? x?.Severity);
   for (const id of [].concat(ids || [])) {
@@ -5589,8 +5605,10 @@ function wxWarnings(hass, ids) {
         if (p && !out.some((w) => w.entity === id && w.ph === p.key)) add(id, wxAlertLevel(v), "", p);
       }
     } else {
-      const lvl = levelOf(a) ?? wxAlertLevel(a.level) ?? wxAlertLevel(st.state) ?? (st.state === "on" ? 2 : null);
-      add(id, lvl, a.headline ?? a.event ?? a.title ?? a.awareness_type?.split?.(";").pop()?.trim());
+      // A count (GeoSphere's active / advance warnings, a unit or a state class) is no level.
+      const count = a.unit_of_measurement != null || a.state_class != null;
+      const lvl = levelOf(a) ?? wxAlertLevel(a.level) ?? (count ? null : wxAlertLevel(st.state)) ?? (st.state === "on" ? 2 : null);
+      add(id, lvl, a.headline ?? a.event ?? a.title ?? "", wxWarningType(a.awareness_type) ?? wxWarningType(a.type));
     }
   }
   return out.sort((x, y) => y.level - x.level);
