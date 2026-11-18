@@ -79,11 +79,15 @@ const lunar = (now) => ({
   },
 });
 
+// Every section, the wind rose (off by default) included: the full card, the unfolded mini card and the full screen.
+const ALL = { sections: ["alerts", "rain", "hourly", "daily", "wind", "air", "uv", "pollen", "sun", "moon"] };
+
 const SETUPS = {
-  card: card("weather-plus-card"),
+  wind: card("weather-plus-card", { sections: ["wind", "sun"] }),
+  card: card("weather-plus-card", ALL),
   mini: card("weather-plus-mini-card"),
   // The mini card expanded with its top right button: the full card, at the full card's width.
-  "mini-zoom": (lang) => ({ cards: card("weather-plus-mini-card")(lang).cards.map((c) => ({ ...c, open: '[data-action="zoom"]' })) }),
+  "mini-zoom": (lang) => ({ cards: card("weather-plus-mini-card", ALL)(lang).cards.map((c) => ({ ...c, open: '[data-action="zoom"]' })) }),
   storm: card("weather-plus-card", { sections: ["alerts", "rain", "hourly"] }, STORM),
   night: card("weather-plus-card", { sections: ["hourly", "daily", "sun", "moon"] }, { "weather.paris": { state: "clear-night", temperature: 11.2 } }, NIGHT),
   conditions: (lang) => ({ cards: conditionCards(lang), cols: 2 }),
@@ -92,7 +96,7 @@ const SETUPS = {
 
 if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   await shoot({
-    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("mini-zoom"), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 }), ...pair("lunar-phase", { now: NIGHT })],
+    shots: [...pair("card"), ...pair("mini", { width: 380 }), ...pair("mini-zoom"), ...pair("storm"), ...pair("night", { now: NIGHT }), ...pair("conditions", { width: 640 }), ...pair("lunar-phase", { now: NIGHT }), ...pair("wind")],
     setup: (s, lang) => SETUPS[s.file.replace(/-dark$/, "")](lang),
   });
 
@@ -108,7 +112,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToP
     const page = await openPage(browser, { theme, width: 360 });
     await page.setViewportSize({ width, height });
     const lang = "en";
-    await addCards(page, [{ tag: "weather-plus-card", config, hass: mockHass(lang, {}, DAY), open: '[data-action="popup"]' }]);
+    await addCards(page, [{ tag: "weather-plus-card", config: { ...config, ...ALL }, hass: mockHass(lang, {}, DAY), open: '[data-action="popup"]' }]);
     await page.waitForTimeout(500);
     const png = await page.screenshot({ animations: "disabled" });
     const written = await saveFramed(browser, { theme, png, width, height, path: `${root}screenshots/${file}.png` });

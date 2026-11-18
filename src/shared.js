@@ -77,6 +77,10 @@ const WX_I18N = {
     s_pollen: "Pollen",
     s_sun: "Sun",
     s_moon: "Moon",
+    s_wind: "Wind rose",
+    wind_from: "Mostly from {d} · {v} %",
+    wind_calm: "Calm {v} %",
+    wind_period: "Last {n} h",
     dawn: "Dawn",
     dusk: "Dusk",
     golden_hour: "Golden hour",
@@ -223,6 +227,8 @@ const WX_I18N = {
     ed_hours_helper: "Hourly forecast length",
     ed_days: "Days",
     ed_days_helper: "Daily forecast length",
+    ed_wind_hours: "Wind rose hours",
+    ed_wind_hours_helper: "Period of the wind rose, read from the history (1 to 168 hours)",
     ed_animations: "Animations",
     ed_illustration: "Animated illustration",
     ed_illustration_theme: "Illustration theme",
@@ -313,6 +319,10 @@ const WX_I18N = {
     s_pollen: "Pollens",
     s_sun: "Soleil",
     s_moon: "Lune",
+    s_wind: "Rose des vents",
+    wind_from: "Dominant : {d} · {v} %",
+    wind_calm: "Calme {v} %",
+    wind_period: "{n} dernières heures",
     dawn: "Aube",
     dusk: "Crépuscule",
     golden_hour: "Heure dorée",
@@ -453,6 +463,8 @@ const WX_I18N = {
     ed_hours_helper: "Durée des prévisions horaires",
     ed_days: "Jours",
     ed_days_helper: "Durée des prévisions quotidiennes",
+    ed_wind_hours: "Heures de la rose des vents",
+    ed_wind_hours_helper: "Période de la rose des vents, lue dans l'historique (1 à 168 heures)",
     ed_animations: "Animations",
     ed_illustration: "Illustration animée",
     ed_illustration_theme: "Thème de l’illustration",
@@ -543,6 +555,10 @@ const WX_I18N = {
     s_pollen: "Pollen",
     s_sun: "Sonne",
     s_moon: "Mond",
+    s_wind: "Windrose",
+    wind_from: "Meist aus {d} · {v} %",
+    wind_calm: "Windstill {v} %",
+    wind_period: "Letzte {n} h",
     dawn: "Morgendämmerung",
     dusk: "Abenddämmerung",
     golden_hour: "Goldene Stunde",
@@ -683,6 +699,8 @@ const WX_I18N = {
     ed_hours_helper: "Länge der stündlichen Vorhersage",
     ed_days: "Tage",
     ed_days_helper: "Länge der täglichen Vorhersage",
+    ed_wind_hours: "Stunden der Windrose",
+    ed_wind_hours_helper: "Zeitraum der Windrose, aus dem Verlauf gelesen (1 bis 168 Stunden)",
     ed_animations: "Animationen",
     ed_illustration: "Animierte Illustration",
     ed_illustration_theme: "Thema der Illustration",
@@ -773,6 +791,10 @@ const WX_I18N = {
     s_pollen: "Polen",
     s_sun: "Sol",
     s_moon: "Luna",
+    s_wind: "Rosa de los vientos",
+    wind_from: "Dominante: {d} · {v} %",
+    wind_calm: "Calma {v} %",
+    wind_period: "Últimas {n} h",
     dawn: "Amanecer",
     dusk: "Anochecer",
     golden_hour: "Hora dorada",
@@ -913,6 +935,8 @@ const WX_I18N = {
     ed_hours_helper: "Duración de la previsión por horas",
     ed_days: "Días",
     ed_days_helper: "Duración de la previsión diaria",
+    ed_wind_hours: "Horas de la rosa de los vientos",
+    ed_wind_hours_helper: "Periodo de la rosa de los vientos, leído del historial (1 a 168 horas)",
     ed_animations: "Animaciones",
     ed_illustration: "Ilustración animada",
     ed_illustration_theme: "Tema de la ilustración",
@@ -1003,6 +1027,10 @@ const WX_I18N = {
     s_pollen: "Полен",
     s_sun: "Сунце",
     s_moon: "Месец",
+    s_wind: "Ружа ветрова",
+    wind_from: "Претежно: {d} · {v} %",
+    wind_calm: "Тишина {v} %",
+    wind_period: "Последњих {n} ч",
     dawn: "Свитање",
     dusk: "Сумрак",
     golden_hour: "Златни сат",
@@ -1143,6 +1171,8 @@ const WX_I18N = {
     ed_hours_helper: "Дужина прогнозе по сатима",
     ed_days: "Дани",
     ed_days_helper: "Дужина прогнозе по данима",
+    ed_wind_hours: "Сати руже ветрова",
+    ed_wind_hours_helper: "Период руже ветрова, из историје (1 до 168 сати)",
     ed_animations: "Анимације",
     ed_illustration: "Анимирана илустрација",
     ed_illustration_theme: "Тема илустрације",
@@ -1233,6 +1263,10 @@ const WX_I18N = {
     s_pollen: "Polen",
     s_sun: "Sunce",
     s_moon: "Mesec",
+    s_wind: "Ruža vetrova",
+    wind_from: "Pretežno: {d} · {v} %",
+    wind_calm: "Tišina {v} %",
+    wind_period: "Poslednjih {n} č",
     dawn: "Svitanje",
     dusk: "Sumrak",
     golden_hour: "Zlatni sat",
@@ -1373,6 +1407,8 @@ const WX_I18N = {
     ed_hours_helper: "Dužina prognoze po satima",
     ed_days: "Dani",
     ed_days_helper: "Dužina prognoze po danima",
+    ed_wind_hours: "Sati ruže vetrova",
+    ed_wind_hours_helper: "Period ruže vetrova, iz istorije (1 do 168 sati)",
     ed_animations: "Animacije",
     ed_illustration: "Animirana ilustracija",
     ed_illustration_theme: "Tema ilustracije",
@@ -1463,6 +1499,10 @@ const WX_I18N = {
     s_pollen: "Pollini",
     s_sun: "Sole",
     s_moon: "Luna",
+    s_wind: "Rosa dei venti",
+    wind_from: "Prevalente: {d} · {v} %",
+    wind_calm: "Calma {v} %",
+    wind_period: "Ultime {n} h",
     dawn: "Alba",
     dusk: "Crepuscolo",
     golden_hour: "Ora d'oro",
@@ -1603,6 +1643,8 @@ const WX_I18N = {
     ed_hours_helper: "Durata delle previsioni orarie",
     ed_days: "Giorni",
     ed_days_helper: "Durata delle previsioni giornaliere",
+    ed_wind_hours: "Ore della rosa dei venti",
+    ed_wind_hours_helper: "Periodo della rosa dei venti, letto dallo storico (da 1 a 168 ore)",
     ed_animations: "Animazioni",
     ed_illustration: "Illustrazione animata",
     ed_illustration_theme: "Tema dell’illustrazione",
@@ -1693,6 +1735,10 @@ const WX_I18N = {
     s_pollen: "Pollen",
     s_sun: "Zon",
     s_moon: "Maan",
+    s_wind: "Windroos",
+    wind_from: "Meestal uit {d} · {v} %",
+    wind_calm: "Windstil {v} %",
+    wind_period: "Laatste {n} u",
     dawn: "Dageraad",
     dusk: "Schemering",
     golden_hour: "Gouden uur",
@@ -1833,6 +1879,8 @@ const WX_I18N = {
     ed_hours_helper: "Lengte van de uurverwachting",
     ed_days: "Dagen",
     ed_days_helper: "Lengte van de dagverwachting",
+    ed_wind_hours: "Uren van de windroos",
+    ed_wind_hours_helper: "Periode van de windroos, uit de geschiedenis (1 tot 168 uur)",
     ed_animations: "Animaties",
     ed_illustration: "Geanimeerde illustratie",
     ed_illustration_theme: "Thema van de illustratie",
@@ -1923,6 +1971,10 @@ const WX_I18N = {
     s_pollen: "Pólenes",
     s_sun: "Sol",
     s_moon: "Lua",
+    s_wind: "Rosa dos ventos",
+    wind_from: "Predominante: {d} · {v} %",
+    wind_calm: "Calma {v} %",
+    wind_period: "Últimas {n} h",
     dawn: "Aurora",
     dusk: "Crepúsculo",
     golden_hour: "Hora dourada",
@@ -2063,6 +2115,8 @@ const WX_I18N = {
     ed_hours_helper: "Duração da previsão horária",
     ed_days: "Dias",
     ed_days_helper: "Duração da previsão diária",
+    ed_wind_hours: "Horas da rosa dos ventos",
+    ed_wind_hours_helper: "Período da rosa dos ventos, lido do histórico (1 a 168 horas)",
     ed_animations: "Animações",
     ed_illustration: "Ilustração animada",
     ed_illustration_theme: "Tema da ilustração",
@@ -2153,6 +2207,10 @@ const WX_I18N = {
     s_pollen: "Pyłki",
     s_sun: "Słońce",
     s_moon: "Księżyc",
+    s_wind: "Róża wiatrów",
+    wind_from: "Przeważający: {d} · {v} %",
+    wind_calm: "Cisza {v} %",
+    wind_period: "Ostatnie {n} h",
     dawn: "Świt",
     dusk: "Zmierzch",
     golden_hour: "Złota godzina",
@@ -2293,6 +2351,8 @@ const WX_I18N = {
     ed_hours_helper: "Długość prognozy godzinowej",
     ed_days: "Dni",
     ed_days_helper: "Długość prognozy dziennej",
+    ed_wind_hours: "Godziny róży wiatrów",
+    ed_wind_hours_helper: "Okres róży wiatrów, z historii (od 1 do 168 godzin)",
     ed_animations: "Animacje",
     ed_illustration: "Animowana ilustracja",
     ed_illustration_theme: "Motyw ilustracji",
@@ -2383,6 +2443,10 @@ const WX_I18N = {
     s_pollen: "Polen",
     s_sun: "Soare",
     s_moon: "Lună",
+    s_wind: "Roza vânturilor",
+    wind_from: "Dominant: {d} · {v} %",
+    wind_calm: "Calm {v} %",
+    wind_period: "Ultimele {n} h",
     dawn: "Zori",
     dusk: "Amurg",
     golden_hour: "Ora de aur",
@@ -2523,6 +2587,8 @@ const WX_I18N = {
     ed_hours_helper: "Durata prognozei pe ore",
     ed_days: "Zile",
     ed_days_helper: "Durata prognozei zilnice",
+    ed_wind_hours: "Ore pentru roza vânturilor",
+    ed_wind_hours_helper: "Perioada rozei vânturilor, citită din istoric (1 până la 168 de ore)",
     ed_animations: "Animații",
     ed_illustration: "Ilustrație animată",
     ed_illustration_theme: "Tema ilustrației",
@@ -2613,6 +2679,10 @@ const WX_I18N = {
     s_pollen: "Pollen",
     s_sun: "Sol",
     s_moon: "Måne",
+    s_wind: "Vindrose",
+    wind_from: "Mest fra {d} · {v} %",
+    wind_calm: "Vindstille {v} %",
+    wind_period: "Seneste {n} t",
     dawn: "Daggry",
     dusk: "Skumring",
     golden_hour: "Gyldne time",
@@ -2753,6 +2823,8 @@ const WX_I18N = {
     ed_hours_helper: "Længde på timeprognosen",
     ed_days: "Dage",
     ed_days_helper: "Længde på dagsprognosen",
+    ed_wind_hours: "Timer i vindrosen",
+    ed_wind_hours_helper: "Vindrosens periode, læst fra historikken (1 til 168 timer)",
     ed_animations: "Animationer",
     ed_illustration: "Animeret illustration",
     ed_illustration_theme: "Illustrationens tema",
@@ -2843,6 +2915,10 @@ const WX_I18N = {
     s_pollen: "Pollen",
     s_sun: "Sol",
     s_moon: "Måne",
+    s_wind: "Vindros",
+    wind_from: "Mest från {d} · {v} %",
+    wind_calm: "Vindstilla {v} %",
+    wind_period: "Senaste {n} h",
     dawn: "Gryning",
     dusk: "Skymning",
     golden_hour: "Gyllene timmen",
@@ -2983,6 +3059,8 @@ const WX_I18N = {
     ed_hours_helper: "Längd på timprognosen",
     ed_days: "Dagar",
     ed_days_helper: "Längd på dygnsprognosen",
+    ed_wind_hours: "Timmar i vindrosen",
+    ed_wind_hours_helper: "Vindrosens period, läst från historiken (1 till 168 timmar)",
     ed_animations: "Animationer",
     ed_illustration: "Animerad illustration",
     ed_illustration_theme: "Illustrationens tema",
@@ -3073,6 +3151,10 @@ const WX_I18N = {
     s_pollen: "Полени",
     s_sun: "Слънце",
     s_moon: "Луна",
+    s_wind: "Роза на ветровете",
+    wind_from: "Преобладаващ: {d} · {v} %",
+    wind_calm: "Тихо {v} %",
+    wind_period: "Последните {n} ч",
     dawn: "Зазоряване",
     dusk: "Здрач",
     golden_hour: "Златен час",
@@ -3213,6 +3295,8 @@ const WX_I18N = {
     ed_hours_helper: "Продължителност на почасовата прогноза",
     ed_days: "Дни",
     ed_days_helper: "Продължителност на дневната прогноза",
+    ed_wind_hours: "Часове на розата на ветровете",
+    ed_wind_hours_helper: "Период на розата на ветровете, от историята (от 1 до 168 часа)",
     ed_animations: "Анимации",
     ed_illustration: "Анимирана илюстрация",
     ed_illustration_theme: "Тема на илюстрацията",
@@ -3303,6 +3387,10 @@ const WX_I18N = {
     s_pollen: "Пыльца",
     s_sun: "Солнце",
     s_moon: "Луна",
+    s_wind: "Роза ветров",
+    wind_from: "Преобладает: {d} · {v} %",
+    wind_calm: "Штиль {v} %",
+    wind_period: "Последние {n} ч",
     dawn: "Рассвет",
     dusk: "Сумерки",
     golden_hour: "Золотой час",
@@ -3443,6 +3531,8 @@ const WX_I18N = {
     ed_hours_helper: "Длина почасового прогноза",
     ed_days: "Дни",
     ed_days_helper: "Длина прогноза по дням",
+    ed_wind_hours: "Часы розы ветров",
+    ed_wind_hours_helper: "Период розы ветров по истории (от 1 до 168 часов)",
     ed_animations: "Анимации",
     ed_illustration: "Анимированная иллюстрация",
     ed_illustration_theme: "Тема иллюстрации",
@@ -3533,6 +3623,10 @@ const WX_I18N = {
     s_pollen: "Пилок",
     s_sun: "Сонце",
     s_moon: "Місяць",
+    s_wind: "Роза вітрів",
+    wind_from: "Переважає: {d} · {v} %",
+    wind_calm: "Штиль {v} %",
+    wind_period: "Останні {n} год",
     dawn: "Світанок",
     dusk: "Сутінки",
     golden_hour: "Золота година",
@@ -3673,6 +3767,8 @@ const WX_I18N = {
     ed_hours_helper: "Тривалість погодинного прогнозу",
     ed_days: "Дні",
     ed_days_helper: "Тривалість прогнозу на дні",
+    ed_wind_hours: "Години рози вітрів",
+    ed_wind_hours_helper: "Період рози вітрів з історії (від 1 до 168 годин)",
     ed_animations: "Анімації",
     ed_illustration: "Анімована ілюстрація",
     ed_illustration_theme: "Тема ілюстрації",
@@ -3763,6 +3859,10 @@ const WX_I18N = {
     s_pollen: "Pollen",
     s_sun: "Nap",
     s_moon: "Hold",
+    s_wind: "Szélrózsa",
+    wind_from: "Leginkább: {d} · {v} %",
+    wind_calm: "Szélcsend {v} %",
+    wind_period: "Elmúlt {n} óra",
     dawn: "Hajnal",
     dusk: "Szürkület",
     golden_hour: "Aranyóra",
@@ -3903,6 +4003,8 @@ const WX_I18N = {
     ed_hours_helper: "Az óránkénti előrejelzés hossza",
     ed_days: "Napok",
     ed_days_helper: "A napi előrejelzés hossza",
+    ed_wind_hours: "Szélrózsa órái",
+    ed_wind_hours_helper: "A szélrózsa időszaka az előzményekből (1–168 óra)",
     ed_animations: "Animációk",
     ed_illustration: "Animált illusztráció",
     ed_illustration_theme: "Az illusztráció témája",
@@ -3993,6 +4095,10 @@ const WX_I18N = {
     s_pollen: "Peľ",
     s_sun: "Slnko",
     s_moon: "Mesiac",
+    s_wind: "Veterná ružica",
+    wind_from: "Prevažne: {d} · {v} %",
+    wind_calm: "Bezvetrie {v} %",
+    wind_period: "Posledných {n} h",
     dawn: "Svitanie",
     dusk: "Súmrak",
     golden_hour: "Zlatá hodinka",
@@ -4133,6 +4239,8 @@ const WX_I18N = {
     ed_hours_helper: "Dĺžka hodinovej predpovede",
     ed_days: "Dni",
     ed_days_helper: "Dĺžka dennej predpovede",
+    ed_wind_hours: "Hodiny veternej ružice",
+    ed_wind_hours_helper: "Obdobie veternej ružice z histórie (1 až 168 hodín)",
     ed_animations: "Animácie",
     ed_illustration: "Animovaná ilustrácia",
     ed_illustration_theme: "Téma ilustrácie",
@@ -4223,6 +4331,10 @@ const WX_I18N = {
     s_pollen: "Pyl",
     s_sun: "Slunce",
     s_moon: "Měsíc",
+    s_wind: "Větrná růžice",
+    wind_from: "Převážně: {d} · {v} %",
+    wind_calm: "Bezvětří {v} %",
+    wind_period: "Posledních {n} h",
     dawn: "Svítání",
     dusk: "Soumrak",
     golden_hour: "Zlatá hodinka",
@@ -4363,6 +4475,8 @@ const WX_I18N = {
     ed_hours_helper: "Délka hodinové předpovědi",
     ed_days: "Dny",
     ed_days_helper: "Délka denní předpovědi",
+    ed_wind_hours: "Hodiny větrné růžice",
+    ed_wind_hours_helper: "Období větrné růžice z historie (1 až 168 hodin)",
     ed_animations: "Animace",
     ed_illustration: "Animovaná ilustrace",
     ed_illustration_theme: "Motiv ilustrace",
@@ -4453,6 +4567,10 @@ const WX_I18N = {
     s_pollen: "Cvetni prah",
     s_sun: "Sonce",
     s_moon: "Luna",
+    s_wind: "Vetrovnica",
+    wind_from: "Pretežno: {d} · {v} %",
+    wind_calm: "Brezvetrje {v} %",
+    wind_period: "Zadnjih {n} h",
     dawn: "Zora",
     dusk: "Mrak",
     golden_hour: "Zlata ura",
@@ -4593,6 +4711,8 @@ const WX_I18N = {
     ed_hours_helper: "Dolžina urne napovedi",
     ed_days: "Dnevi",
     ed_days_helper: "Dolžina dnevne napovedi",
+    ed_wind_hours: "Ure vetrovnice",
+    ed_wind_hours_helper: "Obdobje vetrovnice iz zgodovine (od 1 do 168 ur)",
     ed_animations: "Animacije",
     ed_illustration: "Animirana ilustracija",
     ed_illustration_theme: "Tema ilustracije",
@@ -4683,6 +4803,10 @@ const WX_I18N = {
     s_pollen: "Putekšņi",
     s_sun: "Saule",
     s_moon: "Mēness",
+    s_wind: "Vēja roze",
+    wind_from: "Pārsvarā: {d} · {v} %",
+    wind_calm: "Bezvējš {v} %",
+    wind_period: "Pēdējās {n} h",
     dawn: "Rītausma",
     dusk: "Krēsla",
     golden_hour: "Zelta stunda",
@@ -4823,6 +4947,8 @@ const WX_I18N = {
     ed_hours_helper: "Stundu prognozes garums",
     ed_days: "Dienas",
     ed_days_helper: "Dienu prognozes garums",
+    ed_wind_hours: "Vēja rozes stundas",
+    ed_wind_hours_helper: "Vēja rozes periods no vēstures (1 līdz 168 stundas)",
     ed_animations: "Animācijas",
     ed_illustration: "Animēta ilustrācija",
     ed_illustration_theme: "Ilustrācijas motīvs",
@@ -4913,6 +5039,10 @@ const WX_I18N = {
     s_pollen: "Γύρη",
     s_sun: "Ήλιος",
     s_moon: "Σελήνη",
+    s_wind: "Ανεμολόγιο",
+    wind_from: "Κυρίως: {d} · {v} %",
+    wind_calm: "Νηνεμία {v} %",
+    wind_period: "Τελευταίες {n} ώρες",
     dawn: "Αυγή",
     dusk: "Σούρουπο",
     golden_hour: "Χρυσή ώρα",
@@ -5053,6 +5183,8 @@ const WX_I18N = {
     ed_hours_helper: "Διάρκεια ωριαίας πρόγνωσης",
     ed_days: "Ημέρες",
     ed_days_helper: "Διάρκεια ημερήσιας πρόγνωσης",
+    ed_wind_hours: "Ώρες ανεμολογίου",
+    ed_wind_hours_helper: "Περίοδος ανεμολογίου από το ιστορικό (1 έως 168 ώρες)",
     ed_animations: "Κινούμενα εφέ",
     ed_illustration: "Κινούμενη εικονογράφηση",
     ed_illustration_theme: "Θέμα εικονογράφησης",
@@ -5524,6 +5656,24 @@ const WX_ROLES = {
   },
 };
 
+// A local weather station's wind (Netatmo, Ecowitt, WeatherFlow, Davis…), for the wind rose: resolved only when the
+// `wind` section is shown, so that a station updating every minute does not touch the other cards.
+const WX_WIND_ROLES = {
+  wind_direction: {
+    keys: ["wind_direction", "wind_bearing", "wind_angle"],
+    id: /wind_?(direction|bearing|angle|dir)|direction_(du_)?vent|(^|_)winddir/,
+    not: /forecast|prevision|gust|rafale|cardinal|max|_j_?\d/,
+    test: (st) => st.attributes.device_class === "wind_direction",
+  },
+  wind_speed: {
+    keys: ["wind_speed", "wind_strength", "wind_speed_avg"],
+    id: /wind_?(speed|strength)(_avg|_average|_mean)?$|vitesse_(moyenne_)?(du_)?vent$|(^|_)windspeed(avg)?$/,
+    not: /forecast|prevision|gust|rafale|max/,
+    test: (st, id) => st.attributes.device_class === "wind_speed" && !/gust|rafale|max/.test(id),
+  },
+  wind_gust: { keys: ["gust_speed", "wind_gust", "gust_strength", "wind_gust_speed"], id: /(wind_)?gust(_speed|_strength)?$|rafales?(_de_vent|_max)?$/, not: /forecast|prevision|daily|max_daily/ },
+};
+
 // Registry entries grouped by device, built once per `hass.entities` object (it only changes with the registry).
 const wxRegistryIndex = new WeakMap();
 function wxByDevice(reg) {
@@ -5555,8 +5705,8 @@ function wxSensors(hass) {
     .sort();
 }
 
-function wxFindRole(hass, role, sensors, near) {
-  const m = WX_ROLES[role];
+function wxFindRole(hass, role, sensors, near, roles = WX_ROLES) {
+  const m = roles[role];
   const ok = (id) => !m.not?.test(id) && (!m.need || (hass.states[id] && m.need(hass.states[id])));
   const pick = (list) => list.find((id) => near.has(id)) || list[0];
   const tk = m.keys ? sensors.filter((id) => ok(id) && m.keys.includes(hass.entities?.[id]?.translation_key)) : [];
@@ -5610,8 +5760,9 @@ function wxFindWeather(hass) {
     .sort()[0];
 }
 
-// The entities the card reads around `weatherId`, `over`riding the detected ones.
-function wxResolve(hass, weatherId, over = {}) {
+// The entities the card reads around `weatherId`, `over`riding the detected ones; `wind`: the station's wind too
+// (ent.wind, kept apart from the signature: see the card's _update).
+function wxResolve(hass, weatherId, over = {}, { wind = false } = {}) {
   const sensors = wxSensors(hass);
   const dev = hass.entities?.[weatherId]?.device_id;
   const near = (dev && hass.entities && wxByDevice(hass.entities).get(dev)) || new Set();
@@ -5619,8 +5770,16 @@ function wxResolve(hass, weatherId, over = {}) {
   for (const role of Object.keys(WX_ROLES)) ent[role] = wxFindRole(hass, role, sensors, near);
   Object.assign(ent, wxFindPollen(hass, sensors));
   ent.air = wxFindPollutants(hass, sensors);
+  if (wind) {
+    const w = {};
+    for (const role of Object.keys(WX_WIND_ROLES)) {
+      const id = over?.[role] || wxFindRole(hass, role, sensors.filter((x) => x.startsWith("sensor.")), near, WX_WIND_ROLES);
+      if (id) w[role.slice(5)] = id;
+    }
+    ent.wind = w;
+  }
   for (const [k, v] of Object.entries(over || {})) {
-    if (v == null || v === "") continue;
+    if (v == null || v === "" || k in WX_WIND_ROLES) continue;
     if (k === "pollen") ent[k] = [].concat(v);
     else if (k === "air" && typeof v === "object") ent.air = { ...ent.air, ...v };
     else ent[k] = v;
@@ -5759,7 +5918,10 @@ const wxMini = (Base) =>
 
 // ── Editor (built on Home Assistant's ha-form) ───────────────────────────────
 const WX_SECTIONS = ["alerts", "rain", "hourly", "daily", "air", "uv", "pollen", "sun", "moon"];
-const WX_DEFAULTS = { show_title: true, show_subtitle: true, sections: WX_SECTIONS, hours: 12, days: 5, animations: true, illustration: true, illustration_theme: "auto", popup: true, refresh: true };
+// Every section the editor offers: the wind rose is off by default (it reads the history of a weather station).
+const WX_SECTIONS_ALL = ["alerts", "rain", "hourly", "daily", "wind", "air", "uv", "pollen", "sun", "moon"];
+const WX_WIND_HOURS = 24;
+const WX_DEFAULTS = { show_title: true, show_subtitle: true, sections: WX_SECTIONS, hours: 12, days: 5, wind_hours: WX_WIND_HOURS, animations: true, illustration: true, illustration_theme: "auto", popup: true, refresh: true };
 
 class WxCardEditor extends HTMLElement {
   static mini = false;
@@ -5786,7 +5948,7 @@ class WxCardEditor extends HTMLElement {
       { name: "name", selector: { text: {} } },
       {
         name: "sections",
-        selector: { select: { multiple: true, reorder: true, mode: "list", options: WX_SECTIONS.map((s) => ({ value: s, label: wxT(lang, `s_${s}`) })) } },
+        selector: { select: { multiple: true, reorder: true, mode: "list", options: WX_SECTIONS_ALL.map((s) => ({ value: s, label: wxT(lang, `s_${s}`) })) } },
       },
       { name: "warning_entities", selector: { entity: { multiple: true, domain: ["sensor", "binary_sensor"] } } },
       {
@@ -5795,6 +5957,7 @@ class WxCardEditor extends HTMLElement {
         schema: [
           { name: "hours", selector: { number: { min: 0, max: 48, mode: "box" } } },
           { name: "days", selector: { number: { min: 0, max: 10, mode: "box" } } },
+          ...((this._config.sections || []).includes("wind") ? [{ name: "wind_hours", selector: { number: { min: 1, max: 168, mode: "box" } } }] : []),
         ],
       },
       {
@@ -5881,8 +6044,10 @@ class WxCardEditor extends HTMLElement {
   _valueChanged(ev) {
     ev.stopPropagation();
     const lang = wxLang(this._config, this._hass);
+    const wind = (this._config.sections || []).includes("wind");
     this._config = wxCleanConfig(ev.detail.value, this._defaults(), this._config.type);
-    if (lang !== wxLang(this._config, this._hass)) this._render();
+    // The wind rose's hours show with the wind section only.
+    if (lang !== wxLang(this._config, this._hass) || wind !== (this._config.sections || []).includes("wind")) this._render();
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: this._config }, bubbles: true, composed: true }));
   }
 }
