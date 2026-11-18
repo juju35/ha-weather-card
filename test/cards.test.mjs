@@ -218,9 +218,13 @@ test("card: no warning, rain now, clear night, no animation", () => {
   assert.match(classic, /class="st" style="--st-color:#5c6bc0" title="Clear night" aria-label="Clear night"><span class="dot"><\/span><span class="stt">Clear night<\/span>/);
 });
 
-test("card: night picture with the dark theme even while the sun is up; illustration_theme still wins", () => {
+test("card: night colours with the dark theme, the real weather by the sun; illustration_theme still wins", () => {
   const up = (dark) => ({ ...makeHass("en", { "weather.paris": { state: "sunny" }, "sun.sun": { state: "above_horizon" } }), themes: { darkMode: dark } });
-  assert.match(html(card({}, up(true))), /<div class="banner night" /, "dark theme while the sun is up: night");
+  const dark = html(card({}, up(true)));
+  assert.match(dark, /<div class="banner night" /, "dark theme while the sun is up: night colours");
+  // #63: the weather stays the real one — the sun, not the moon, on a sunny day with a dark theme.
+  assert.match(dark, /class="scene c-sunny day/, "dark theme while the sun is up: the sunny scene");
+  assert.match(dark, /icon="mdi:weather-sunny"/, "dark theme while the sun is up: the sun icon");
   assert.match(html(card({}, up(false))), /<div class="banner" /, "light theme while the sun is up: day");
   assert.match(html(card({ illustration_theme: "day" }, up(true))), /<div class="banner" /, "forced day wins");
   assert.match(html(card({ illustration_theme: "night" }, up(false))), /<div class="banner night" /, "forced night wins");
