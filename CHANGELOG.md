@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.16.2 - 2026-11-18
+
+### Fixes
+- Illustrated header on a dark theme (#63): the scene and the icon show the real weather again — the sun on a sunny day, the moon only at night (by `sun.sun`, or a clear night without it) — instead of always the moon. The dark theme still gives the banner its night colours; `illustration_theme: day | night` still forces both.
+
 ## 1.16.1 - 2026-11-18
 
 ### Fixes

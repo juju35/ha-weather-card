@@ -868,7 +868,7 @@ class WeatherPlusCard extends WxElement {
       const off = this._t("unavailable");
       const header = this._illustrated()
         ? this._banner(
-            { name, ent, still, cond: "unknown", night: this._bannerNight(null), icon: "mdi:weather-cloudy-alert", color: WX_IDLE, status: { text: off, color: WX_IDLE, alert: false, show: true } },
+            { name, ent, still, cond: "unknown", night: this._bannerNight(null), sky: this._bannerNight(null), icon: "mdi:weather-cloudy-alert", color: WX_IDLE, status: { text: off, color: WX_IDLE, alert: false, show: true } },
             `${this._refreshButton()}${this._zoomButton()}`,
           )
         : `<div class="header"><div class="badge"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon></div>` +
@@ -943,20 +943,26 @@ class WeatherPlusCard extends WxElement {
     return this._config.illustration !== false;
   }
 
-  // Night picture of the banner: forced by `illustration_theme`, else Home Assistant's dark theme or the night (the
-  // sun down by sun.sun, or a clear night without it).
-  _bannerNight(m) {
+  // `illustration_theme: day | night` forces the banner; null when it follows Home Assistant (auto).
+  _forcedNight() {
     const theme = this._config.illustration_theme;
-    if (theme === "night") return true;
-    if (theme === "day") return false;
-    if (this._hass?.themes?.darkMode) return true;
-    return m?.sun ? !m.sun.up : m?.st?.state === "clear-night";
+    return theme === "night" ? true : theme === "day" ? false : null;
   }
 
-  // The banner of the card from its model: the weather now as the sky of the banner shows it (day or night), the
-  // icon in the status colour (a warning's or the lightning's when there is one, else the condition's).
+  // Night colours of the banner (its sky, lawn and buttons): forced by `illustration_theme`, else Home Assistant's
+  // dark theme or the night (the sun down by sun.sun, or a clear night without it).
+  _bannerNight(m) {
+    const forced = this._forcedNight();
+    if (forced != null) return forced;
+    if (this._hass?.themes?.darkMode) return true;
+    return !!m?.night;
+  }
+
+  // The banner of the card from its model: the weather now (scene, icon, colour) by the real day or night — the sun
+  // stays the sun on a dark theme (#63) — on a sky in the theme's colours; the icon in the status colour (a
+  // warning's or the lightning's when there is one, else the condition's).
   _bannerOf(m, buttons) {
-    const night = this._bannerNight(m);
+    const night = this._forcedNight() ?? m.night;
     const cond = wxDayCond(m.st.state, night);
     // The body shows the temperature big (every layout): the subtitle tells the feels-like instead, after the
     // condition when a warning takes the pill (else the pill names the condition).
@@ -970,6 +976,7 @@ class WeatherPlusCard extends WxElement {
         moon: m.moon,
         cond,
         night,
+        sky: this._bannerNight(m),
         icon: wxCondIcon(cond, night),
         color: m.status.alert ? m.status.color : wxCondColor(cond, night),
         status: m.status,
@@ -985,7 +992,7 @@ class WeatherPlusCard extends WxElement {
     const more = wxEsc(b.ent.weather);
     const scene = wxScene(b.cond, b.night, b.still, b.moon).replace(/(id="|url\(#)wx-/g, `$1wx${this._uid}-`);
     return (
-      `<div class="banner${b.night ? " night" : ""}" style="--wx-icon:${b.color}">` +
+      `<div class="banner${b.sky ? " night" : ""}" style="--wx-icon:${b.color}">` +
       `<div class="bscene" data-more="${more}">${scene}</div>` +
       `<div class="htext"><div class="badge" data-more="${more}"><ha-icon icon="${b.icon}"></ha-icon></div>` +
       `${this._titles(more, b.name, b.sub, b.status)}</div>` +
