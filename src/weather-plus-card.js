@@ -386,15 +386,21 @@ class WeatherPlusCard extends WxElement {
   _patchWind(ent) {
     if (!ent.wind) return;
     const now = this._windNow(ent);
-    const m = { fmt: this._fmtLang(), wind: { unit: now.unit } };
+    const fmt = this._fmtLang();
     for (const root of [this.shadowRoot, this._popup?.shadowRoot]) {
-      const el = root?.querySelector?.(".s-wind .wnow");
-      if (!el) continue;
-      el.textContent = wxWindNow(m, now);
-      const g = root.querySelector(".s-wind .wmark");
-      if (g && now.b) g.setAttribute("transform", `rotate(${now.b.deg.toFixed(0)} 100 100)`);
-      const gust = root.querySelector(".s-wind .wgust");
-      if (gust && now.gust != null) gust.textContent = this._t("gusts", { v: `${wxFmtNum(m.fmt, now.gust, 0)} ${now.unit}` });
+      const speed = root?.querySelector?.(".s-wind .wspeed");
+      if (!speed) continue;
+      const sp = wxWindSpeed(fmt, now.speed, now.unit);
+      if (speed.firstChild?.nodeType === 3) speed.firstChild.textContent = sp;
+      if (now.b) {
+        root.querySelector(".s-wind .wmark")?.setAttribute("transform", `rotate(${now.b.deg.toFixed(0)} 110 110)`);
+        const arrow = root.querySelector(".s-wind .wdir .arrow");
+        if (arrow) arrow.style.transform = `rotate(${((now.b.deg + 180) % 360).toFixed(0)}deg)`;
+        const label = root.querySelector(".s-wind .wdir b");
+        if (label) label.textContent = now.b.label;
+      }
+      const gust = root.querySelector(".s-wind .wgust .ct");
+      if (gust && now.gust != null) gust.textContent = this._t("gusts", { v: `${wxFmtNum(fmt, now.gust, 0)} ${now.unit}` });
     }
   }
 

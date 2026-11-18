@@ -1612,9 +1612,13 @@ test("wind rose: off by default, from the station's history when the section is 
   await tick();
   const out = html(el);
   assert.match(out, /class="section enter s-wind/);
-  assert.match(out, /<b class="wnow">18 km\/h WSW<\/b><span class="wgust">gusts 34 km\/h<\/span><span>Mostly from WSW · 50 %<\/span><span>Calm 17 %<\/span><span class="wper">Last 12 h<\/span>/);
+  assert.match(out, /Wind rose<\/span><span class="wper">Last 12 h<\/span>/);
+  assert.match(out, /<span class="wspeed">18<small>km\/h<\/small><\/span><span class="wdir">.*<b>WSW<\/b>/);
+  assert.match(out, /gusts 34 km\/h.*Mostly from WSW · 50 %.*Calm 17 %/);
+  // Round rings: 50 % in steps of 20 %, up to 60 %.
+  assert.match(out, /class="rl"[^>]*>20 %<.*class="rl"[^>]*>60 %</);
   assert.match(out, /data-more="sensor\.garden_wind_direction"/);
-  assert.match(out, /&lt; 6.*6–20.*50\+.*km\/h/);
+  assert.match(out, /class="wunit">km\/h<.*&lt; 6.*6–20.*50\+/);
   // A new reading does not rebuild the card (the marker and the text are patched in place, see _patchWind).
   const sig = el._sig;
   el.hass = { ...h, states: { ...h.states, "sensor.garden_wind_direction": { ...h.states["sensor.garden_wind_direction"], state: "90" } } };
@@ -1634,7 +1638,7 @@ test("wind rose: the weather entity's history without a station; overrides by ro
   const el = card({ sections: ["wind"] }, h);
   assert.ok(h.apiCalls.some(([, p]) => /filter_entity_id=weather\.paris&significant_changes_only=0$/.test(p)));
   await tick();
-  assert.match(html(el), /Dominant : S · 100 %.*24 dernières heures/);
+  assert.match(html(el), /24 dernières heures.*Dominant : S · 100 %/);
   const ent = lib.wxResolve(makeHass("en", STATION), "weather.paris", { wind_speed: "sensor.garden_gust_speed" }, { wind: true });
   assert.equal(ent.wind.direction, "sensor.garden_wind_direction");
   assert.equal(ent.wind.speed, "sensor.garden_gust_speed");
