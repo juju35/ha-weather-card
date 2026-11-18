@@ -1000,7 +1000,7 @@ class WeatherPlusCard extends WxElement {
     if (!m.warnings.length) return "";
     const rows = m.warnings.slice(0, max).map((w) => {
       const level = this._t("vigilance_level", { v: this._t(`lvl_${w.level}`) });
-      const title = w.ph ? this._t(`ph_title_${w.ph}`) : w.title || level;
+      const title = w.title || (w.ph ? this._t(`ph_title_${w.ph}`) : level);
       return (
         `<div class="warning lvl${w.level}" style="--k:${WX_ALERT_COLORS[w.level]}" data-more="${wxEsc(w.entity)}" role="button" tabindex="0" title="${wxEsc(`${title} · ${level}`)}">` +
         `<ha-icon icon="${w.icon}"></ha-icon><span class="wt">${wxEsc(title)}</span></div>`

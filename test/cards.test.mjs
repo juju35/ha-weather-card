@@ -1495,6 +1495,40 @@ test("warning banner: hidden without warnings; Météo-France phenomena named in
   assert.deepEqual(JSON.parse(JSON.stringify(lib.wxCleanConfig({ warning_entities: [] }, { sections: [] }))), {});
 });
 
+test("warning banner: GeoSphere Austria level sensors, its counts skipped, and the alerts section agrees (#64)", () => {
+  const h = makeHass("en", {
+    "binary_sensor.meteoalarm_home": { state: "on", awareness_level: "3; orange; Severe", awareness_type: "1; Wind", headline: "Sturmwarnung", event: "Sturm" },
+    "sensor.home_warnstufe": { state: "orange", device_class: "enum", options: ["none", "yellow", "orange", "red"], type: "storm", level: "orange", start: "2026-11-18T10:00:00+00:00", end: "2026-11-19T06:00:00+00:00", warning_id: 7 },
+    "sensor.home_aktive_warnungen": { state: "3", state_class: "measurement", unit_of_measurement: "warnings" },
+    "sensor.home_vorwarnstufe": { state: "yellow", device_class: "enum", type: "black_ice", level: "yellow", warning_id: 8 },
+    "sensor.home_vorwarnungen": { state: "2", state_class: "measurement", unit_of_measurement: "warnings" },
+    "sensor.quiet_warnstufe": { state: "none", device_class: "enum" },
+  });
+  const ids = ["binary_sensor.meteoalarm_home", "sensor.home_vorwarnstufe", "sensor.home_vorwarnungen", "sensor.home_warnstufe", "sensor.home_aktive_warnungen", "sensor.quiet_warnstufe"];
+  const list = lib.wxWarnings(h, ids);
+  // The orange storm from GeoSphere is Meteoalarm's orange wind: shown once; the counts are no warning.
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(list.map((w) => [w.entity, w.level, w.ph, w.icon]))),
+    [
+      ["binary_sensor.meteoalarm_home", 3, "wind", "mdi:weather-windy"],
+      ["sensor.home_vorwarnstufe", 2, "snow_ice", "mdi:weather-snowy-heavy"],
+    ],
+  );
+  // Without Meteoalarm, GeoSphere's storm is a wind warning named in the card's language.
+  const geo = lib.wxWarnings(h, ["sensor.home_warnstufe"]);
+  assert.equal(geo[0].ph, "wind");
+  const el = card({ warning_entities: ["sensor.home_warnstufe"] }, h);
+  assert.match(html(el), /class="warning lvl3"[^>]*><ha-icon icon="mdi:weather-windy"><\/ha-icon><span class="wt">[^<]+<\/span>/);
+  assert.doesNotMatch(html(el), /<span class="wt">Orange warning<\/span>/);
+  // The alerts section (here the detected alert entity, all green) no longer says "no weather warning" while the
+  // banner shows one; it still does without one.
+  const green = { "sensor.75_weather_alert": { state: "Vert", "Vent violent": "Vert", Orages: "Vert" } };
+  const geoGreen = makeHass("en", { ...green, "sensor.home_warnstufe": { state: "orange", device_class: "enum", type: "storm", level: "orange" } });
+  assert.doesNotMatch(html(card({ warning_entities: ["sensor.home_warnstufe"] }, geoGreen)), /No weather warning/);
+  const geoQuiet = makeHass("en", { ...green, "sensor.home_warnstufe": { state: "none", device_class: "enum" } });
+  assert.match(html(card({ warning_entities: ["sensor.home_warnstufe"] }, geoQuiet)), /No weather warning/);
+});
+
 test("pause: the animations stop off-screen or in a hidden tab, and go on after", () => {
   const observers = [];
   lib.window.IntersectionObserver = class {

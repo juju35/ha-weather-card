@@ -254,7 +254,7 @@ const WX_I18N = {
     ed_entities: "Entities",
     ed_entities_helper: "Detected automatically; set a role here, e.g. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Warning banner",
-    ed_warning_entities_helper: "Meteoalarm, DWD, NWS or Météo-France warning entities, shown as a banner under the header when there is a warning",
+    ed_warning_entities_helper: "Meteoalarm, DWD, GeoSphere Austria, NWS or Météo-France warning entities, shown as a banner under the header when there is a warning",
   },
   fr: {
     title: "Météo",
@@ -494,7 +494,7 @@ const WX_I18N = {
     ed_entities: "Entités",
     ed_entities_helper: "Détectées automatiquement ; forcer un rôle ici, ex. uv: sensor.paris_uv, pollen: [sensor.bouleau, sensor.graminees]",
     ed_warning_entities: "Bandeau de vigilance",
-    ed_warning_entities_helper: "Entités d'alerte Meteoalarm, DWD, NWS ou Météo-France, affichées en bandeau sous l'en-tête en cas de vigilance",
+    ed_warning_entities_helper: "Entités d'alerte Meteoalarm, DWD, GeoSphere Austria, NWS ou Météo-France, affichées en bandeau sous l'en-tête en cas de vigilance",
   },
   de: {
     title: "Wetter",
@@ -734,7 +734,7 @@ const WX_I18N = {
     ed_entities: "Entitäten",
     ed_entities_helper: "Automatisch erkannt; hier eine Rolle festlegen, z. B. uv: sensor.paris_uv, pollen: [sensor.birke, sensor.graeser]",
     ed_warning_entities: "Warnbanner",
-    ed_warning_entities_helper: "Warn-Entitäten von Meteoalarm, DWD, NWS oder Météo-France, als Banner unter der Kopfzeile, solange eine Warnung besteht",
+    ed_warning_entities_helper: "Warn-Entitäten von Meteoalarm, DWD, GeoSphere Austria, NWS oder Météo-France, als Banner unter der Kopfzeile, solange eine Warnung besteht",
   },
   es: {
     title: "Tiempo",
@@ -974,7 +974,7 @@ const WX_I18N = {
     ed_entities: "Entidades",
     ed_entities_helper: "Detectadas automáticamente; fuerza un rol aquí, p. ej. uv: sensor.paris_uv, pollen: [sensor.abedul, sensor.gramineas]",
     ed_warning_entities: "Banda de avisos",
-    ed_warning_entities_helper: "Entidades de avisos de Meteoalarm, DWD, NWS o Météo-France, mostradas como banda bajo el encabezado cuando hay un aviso",
+    ed_warning_entities_helper: "Entidades de avisos de Meteoalarm, DWD, GeoSphere Austria, NWS o Météo-France, mostradas como banda bajo el encabezado cuando hay un aviso",
   },
   sr: {
     title: "Време",
@@ -1214,7 +1214,7 @@ const WX_I18N = {
     ed_entities: "Ентитети",
     ed_entities_helper: "Аутоматски детектовано; поставите улогу овде, нпр. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Трака упозорења",
-    ed_warning_entities_helper: "Ентитети упозорења (Метеоаларм, Немачка метеоролошка служба, Национална метеоролошка служба САД, Метео-Франс), приказани као трака испод заглавља када постоји упозорење",
+    ed_warning_entities_helper: "Ентитети упозорења (Метеоаларм, Немачка метеоролошка служба, ГеоСфера Аустрија, Национална метеоролошка служба САД, Метео-Франс), приказани као трака испод заглавља када постоји упозорење",
   },
   "sr-Latn": {
     title: "Vreme",
@@ -1454,7 +1454,7 @@ const WX_I18N = {
     ed_entities: "Entiteti",
     ed_entities_helper: "Automatski detektovano; postavite ulogu ovde, npr. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Traka upozorenja",
-    ed_warning_entities_helper: "Entiteti upozorenja Meteoalarm, DWD, NWS ili Météo-France, prikazani kao traka ispod zaglavlja kada postoji upozorenje",
+    ed_warning_entities_helper: "Entiteti upozorenja Meteoalarm, DWD, GeoSphere Austria, NWS ili Météo-France, prikazani kao traka ispod zaglavlja kada postoji upozorenje",
   },
   it: {
     title: "Meteo",
@@ -1694,7 +1694,7 @@ const WX_I18N = {
     ed_entities: "Entità",
     ed_entities_helper: "Rilevate automaticamente; impostare qui un ruolo, ad es. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Banner delle allerte",
-    ed_warning_entities_helper: "Entità di allerta Meteoalarm, DWD, NWS o Météo-France, mostrate come banner sotto l'intestazione quando c'è un'allerta",
+    ed_warning_entities_helper: "Entità di allerta Meteoalarm, DWD, GeoSphere Austria, NWS o Météo-France, mostrate come banner sotto l'intestazione quando c'è un'allerta",
   },
   nl: {
     title: "Weer",
@@ -1934,7 +1934,7 @@ const WX_I18N = {
     ed_entities: "Entiteiten",
     ed_entities_helper: "Automatisch gedetecteerd; stel hier een rol in, bijv. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Waarschuwingsbanner",
-    ed_warning_entities_helper: "Waarschuwingsentiteiten van Meteoalarm, DWD, NWS of Météo-France, als banner onder de kop zolang er een waarschuwing is",
+    ed_warning_entities_helper: "Waarschuwingsentiteiten van Meteoalarm, DWD, GeoSphere Austria, NWS of Météo-France, als banner onder de kop zolang er een waarschuwing is",
   },
   pt: {
     title: "Meteorologia",
@@ -2174,7 +2174,7 @@ const WX_I18N = {
     ed_entities: "Entidades",
     ed_entities_helper: "Detetadas automaticamente; defina aqui uma função, p. ex. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Faixa de avisos",
-    ed_warning_entities_helper: "Entidades de avisos Meteoalarm, DWD, NWS ou Météo-France, mostradas como faixa sob o cabeçalho quando há um aviso",
+    ed_warning_entities_helper: "Entidades de avisos Meteoalarm, DWD, GeoSphere Austria, NWS ou Météo-France, mostradas como faixa sob o cabeçalho quando há um aviso",
   },
   pl: {
     title: "Pogoda",
@@ -2414,7 +2414,7 @@ const WX_I18N = {
     ed_entities: "Encje",
     ed_entities_helper: "Wykrywane automatycznie; przypisz tu rolę, np. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Baner ostrzeżeń",
-    ed_warning_entities_helper: "Encje ostrzeżeń Meteoalarm, DWD, NWS lub Météo-France, wyświetlane jako baner pod nagłówkiem, gdy jest ostrzeżenie",
+    ed_warning_entities_helper: "Encje ostrzeżeń Meteoalarm, DWD, GeoSphere Austria, NWS lub Météo-France, wyświetlane jako baner pod nagłówkiem, gdy jest ostrzeżenie",
   },
   ro: {
     title: "Vremea",
@@ -2654,7 +2654,7 @@ const WX_I18N = {
     ed_entities: "Entități",
     ed_entities_helper: "Detectate automat; atribuiți aici un rol, de ex. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Banner de avertizări",
-    ed_warning_entities_helper: "Entități de avertizare Meteoalarm, DWD, NWS sau Météo-France, afișate ca banner sub antet când există o avertizare",
+    ed_warning_entities_helper: "Entități de avertizare Meteoalarm, DWD, GeoSphere Austria, NWS sau Météo-France, afișate ca banner sub antet când există o avertizare",
   },
   da: {
     title: "Vejr",
@@ -2894,7 +2894,7 @@ const WX_I18N = {
     ed_entities: "Entiteter",
     ed_entities_helper: "Registreres automatisk; angiv en rolle her, f.eks. uv: sensor.paris_uv, pollen: [sensor.birk, sensor.graes]",
     ed_warning_entities: "Varselbanner",
-    ed_warning_entities_helper: "Varselentiteter fra Meteoalarm, DWD, NWS eller Météo-France, vist som et banner under overskriften, når der er et varsel",
+    ed_warning_entities_helper: "Varselentiteter fra Meteoalarm, DWD, GeoSphere Austria, NWS eller Météo-France, vist som et banner under overskriften, når der er et varsel",
   },
   sv: {
     title: "Väder",
@@ -3134,7 +3134,7 @@ const WX_I18N = {
     ed_entities: "Entiteter",
     ed_entities_helper: "Identifieras automatiskt; ange en roll här, t.ex. uv: sensor.paris_uv, pollen: [sensor.bjork, sensor.gras]",
     ed_warning_entities: "Varningsbanner",
-    ed_warning_entities_helper: "Varningsentiteter från Meteoalarm, DWD, NWS eller Météo-France, visas som en banderoll under rubriken när det finns en varning",
+    ed_warning_entities_helper: "Varningsentiteter från Meteoalarm, DWD, GeoSphere Austria, NWS eller Météo-France, visas som en banderoll under rubriken när det finns en varning",
   },
   bg: {
     title: "Времето",
@@ -3374,7 +3374,7 @@ const WX_I18N = {
     ed_entities: "Обекти",
     ed_entities_helper: "Откриват се автоматично; задайте роля тук, напр. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Лента с предупреждения",
-    ed_warning_entities_helper: "Обекти за предупреждения от Meteoalarm, DWD, NWS или Météo-France, показвани като лента под заглавието, когато има предупреждение",
+    ed_warning_entities_helper: "Обекти за предупреждения от Meteoalarm, DWD, GeoSphere Austria, NWS или Météo-France, показвани като лента под заглавието, когато има предупреждение",
   },
   ru: {
     title: "Погода",
@@ -3614,7 +3614,7 @@ const WX_I18N = {
     ed_entities: "Объекты",
     ed_entities_helper: "Определяются автоматически; задайте роль здесь, например uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Полоса предупреждений",
-    ed_warning_entities_helper: "Объекты предупреждений Meteoalarm, DWD, NWS или Météo-France, показываются полосой под заголовком, когда есть предупреждение",
+    ed_warning_entities_helper: "Объекты предупреждений Meteoalarm, DWD, GeoSphere Austria, NWS или Météo-France, показываются полосой под заголовком, когда есть предупреждение",
   },
   uk: {
     title: "Погода",
@@ -3854,7 +3854,7 @@ const WX_I18N = {
     ed_entities: "Сутності",
     ed_entities_helper: "Визначаються автоматично; задайте роль тут, наприклад uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Смуга попереджень",
-    ed_warning_entities_helper: "Об'єкти попереджень Meteoalarm, DWD, NWS або Météo-France, показуються смугою під заголовком, коли є попередження",
+    ed_warning_entities_helper: "Об'єкти попереджень Meteoalarm, DWD, GeoSphere Austria, NWS або Météo-France, показуються смугою під заголовком, коли є попередження",
   },
   hu: {
     title: "Időjárás",
@@ -4094,7 +4094,7 @@ const WX_I18N = {
     ed_entities: "Entitások",
     ed_entities_helper: "Automatikusan felismerve; itt adhat meg szerepet, pl. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Figyelmeztető sáv",
-    ed_warning_entities_helper: "Meteoalarm, DWD, NWS vagy Météo-France figyelmeztetési entitások, sávként jelennek meg a fejléc alatt, ha van figyelmeztetés",
+    ed_warning_entities_helper: "Meteoalarm, DWD, GeoSphere Austria, NWS vagy Météo-France figyelmeztetési entitások, sávként jelennek meg a fejléc alatt, ha van figyelmeztetés",
   },
   sk: {
     title: "Počasie",
@@ -4334,7 +4334,7 @@ const WX_I18N = {
     ed_entities: "Entity",
     ed_entities_helper: "Zisťujú sa automaticky; tu priraďte rolu, napr. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Pás výstrah",
-    ed_warning_entities_helper: "Entity výstrah Meteoalarm, DWD, NWS alebo Météo-France, zobrazené ako pás pod hlavičkou, keď platí výstraha",
+    ed_warning_entities_helper: "Entity výstrah Meteoalarm, DWD, GeoSphere Austria, NWS alebo Météo-France, zobrazené ako pás pod hlavičkou, keď platí výstraha",
   },
   cs: {
     title: "Počasí",
@@ -4574,7 +4574,7 @@ const WX_I18N = {
     ed_entities: "Entity",
     ed_entities_helper: "Zjišťují se automaticky; zde přiřaďte roli, např. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Pruh výstrah",
-    ed_warning_entities_helper: "Entity výstrah Meteoalarm, DWD, NWS nebo Météo-France, zobrazené jako pruh pod záhlavím, když platí výstraha",
+    ed_warning_entities_helper: "Entity výstrah Meteoalarm, DWD, GeoSphere Austria, NWS nebo Météo-France, zobrazené jako pruh pod záhlavím, když platí výstraha",
   },
   sl: {
     title: "Vreme",
@@ -4814,7 +4814,7 @@ const WX_I18N = {
     ed_entities: "Entitete",
     ed_entities_helper: "Zaznane samodejno; tu dodelite vlogo, npr. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Pasica opozoril",
-    ed_warning_entities_helper: "Entitete opozoril Meteoalarm, DWD, NWS ali Météo-France, prikazane kot pasica pod glavo, ko velja opozorilo",
+    ed_warning_entities_helper: "Entitete opozoril Meteoalarm, DWD, GeoSphere Austria, NWS ali Météo-France, prikazane kot pasica pod glavo, ko velja opozorilo",
   },
   lv: {
     title: "Laikapstākļi",
@@ -5054,7 +5054,7 @@ const WX_I18N = {
     ed_entities: "Vienības",
     ed_entities_helper: "Nosaka automātiski; šeit piešķiriet lomu, piem., uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Brīdinājumu josla",
-    ed_warning_entities_helper: "Meteoalarm, DWD, NWS vai Météo-France brīdinājumu vienības, rādītas kā josla zem galvenes, ja ir brīdinājums",
+    ed_warning_entities_helper: "Meteoalarm, DWD, GeoSphere Austria, NWS vai Météo-France brīdinājumu vienības, rādītas kā josla zem galvenes, ja ir brīdinājums",
   },
   el: {
     title: "Καιρός",
@@ -5294,7 +5294,7 @@ const WX_I18N = {
     ed_entities: "Οντότητες",
     ed_entities_helper: "Εντοπίζονται αυτόματα· ορίστε εδώ έναν ρόλο, π.χ. uv: sensor.paris_uv, pollen: [sensor.birch, sensor.grass]",
     ed_warning_entities: "Λωρίδα προειδοποιήσεων",
-    ed_warning_entities_helper: "Οντότητες προειδοποιήσεων Meteoalarm, DWD, NWS ή Météo-France, εμφανίζονται ως λωρίδα κάτω από την κεφαλίδα όταν υπάρχει προειδοποίηση",
+    ed_warning_entities_helper: "Οντότητες προειδοποιήσεων Meteoalarm, DWD, GeoSphere Austria, NWS ή Météo-France, εμφανίζονται ως λωρίδα κάτω από την κεφαλίδα όταν υπάρχει προειδοποίηση",
   },
 };
 
@@ -5553,19 +5553,35 @@ function wxSeverityLevel(v) {
   return null;
 }
 
+// The phenomenon of a warning's type: a Meteoalarm `awareness_type` ("1; Wind", by its number) or a GeoSphere
+// Austria `type` slug (its "storm" is wind, not a thunderstorm).
+const WX_METEOALARM_TYPES = { 1: "wind", 2: "snow_ice", 3: "thunderstorm", 5: "heat_wave", 6: "cold_wave", 7: "waves", 9: "avalanche", 10: "rain_flood", 12: "flood", 13: "rain_flood" };
+const WX_GEOSPHERE_TYPES = { storm: "wind", rain: "rain_flood", snow: "snow_ice", black_ice: "snow_ice", thunderstorm: "thunderstorm", heat: "heat_wave", cold: "cold_wave" };
+function wxWarningType(v) {
+  if (v == null || v === "") return null;
+  const n = wxNumber(String(v).split(";")[0].trim());
+  const key = n != null ? WX_METEOALARM_TYPES[n] : WX_GEOSPHERE_TYPES[wxNorm(v)];
+  return key ? WX_PHENOMENA.find((p) => p.key === key) : (wxPhenomenon(String(v).split(";").pop()) ?? null);
+}
+
 // The warnings of the `warning_entities`, yellow (2) and up, the highest first: each { entity, level, title, icon };
-// `ph` instead of a title for a Météo-France phenomenon (named in the card's language).
+// `ph` its phenomenon, which names it in the card's language when it has no title (Météo-France, GeoSphere Austria).
 // - Meteoalarm: a binary_sensor, on while there is a warning; `awareness_level` "3; orange; Severe", `headline` / `event`.
 // - DWD (Deutscher Wetterdienst): `warning_count`, then `warning_<n>_level` (1 … 4) and `warning_<n>_headline` / `_name`.
 // - NWS alerts: an `Alerts` list of { Event, Headline, Severity }.
 // - Météo-France: one attribute per phenomenon with its colour.
+// - GeoSphere Austria Warnings: a level sensor ("none", "yellow"…) with the featured warning's `type` (storm, rain…);
+//   its warning counts are no level and are skipped.
 // - Anything else: on, or a level / severity, with a headline, title or event.
+// The same warning from two entities (Meteoalarm and its national service) is shown once.
 function wxWarnings(hass, ids) {
   const out = [];
   const add = (entity, level, title, ph) => {
     if (!level || level < 2) return;
     const p = ph || wxPhenomenon(title);
-    out.push({ entity, level: Math.min(4, level), title: title ? String(title) : "", ph: ph?.key, icon: p?.icon || "mdi:alert" });
+    const w = { entity, level: Math.min(4, level), title: title ? String(title) : "", ph: p?.key, icon: p?.icon || "mdi:alert" };
+    if (out.some((x) => x.entity !== entity && x.level === w.level && (w.ph ? x.ph === w.ph : x.title === w.title))) return;
+    out.push(w);
   };
   const levelOf = (x) => wxAlertLevel(String(x?.awareness_level ?? "").split(";")[0]) ?? wxAlertLevel(x?.awareness_level) ?? wxSeverityLevel(x?.severity ?? x?.Severity);
   for (const id of [].concat(ids || [])) {
@@ -5589,8 +5605,10 @@ function wxWarnings(hass, ids) {
         if (p && !out.some((w) => w.entity === id && w.ph === p.key)) add(id, wxAlertLevel(v), "", p);
       }
     } else {
-      const lvl = levelOf(a) ?? wxAlertLevel(a.level) ?? wxAlertLevel(st.state) ?? (st.state === "on" ? 2 : null);
-      add(id, lvl, a.headline ?? a.event ?? a.title ?? a.awareness_type?.split?.(";").pop()?.trim());
+      // A count (GeoSphere's active / advance warnings, a unit or a state class) is no level.
+      const count = a.unit_of_measurement != null || a.state_class != null;
+      const lvl = levelOf(a) ?? wxAlertLevel(a.level) ?? (count ? null : wxAlertLevel(st.state)) ?? (st.state === "on" ? 2 : null);
+      add(id, lvl, a.headline ?? a.event ?? a.title ?? "", wxWarningType(a.awareness_type) ?? wxWarningType(a.type));
     }
   }
   return out.sort((x, y) => y.level - x.level);

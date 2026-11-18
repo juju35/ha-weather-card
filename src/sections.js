@@ -111,7 +111,8 @@ function wxAlertChips(card, m, { onlyActive = false } = {}) {
         }),
       );
     }
-    if (!active.length && !onlyActive) out.push(wxChip("mdi:shield-check-outline", card._t("no_alert"), { color: WX_ALERT_COLORS[1], cls: "tint", more: al.entity }));
+    // No "no warning" chip while the warning banner (warning_entities) shows one.
+    if (!active.length && !onlyActive && !m.warnings?.length) out.push(wxChip("mdi:shield-check-outline", card._t("no_alert"), { color: WX_ALERT_COLORS[1], cls: "tint", more: al.entity }));
   }
   const vg = m.vigieau;
   if (vg && (vg.level >= 1 || !onlyActive)) {

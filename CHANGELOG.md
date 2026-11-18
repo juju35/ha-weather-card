@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.16.1 - 2026-11-18
+
+### Fixes
+- Warning banner with MeteoAlarm and GeoSphere Austria Warnings (#64): GeoSphere's warning level sensors show their warning named and drawn by its type (its "storm" is wind, black ice is snow / ice), its warning count sensors are no longer read as a level (3 warnings made an orange warning), Meteoalarm's warning takes its icon from its awareness type whatever the language of its headline, and the same warning from two services shows once. The alerts section no longer says "No weather warning" (from the weather entity's own alerts, Pirate Weather's for instance) while the banner shows a warning.
+- The visual editor's help for the warning banner names GeoSphere Austria too, in every language.
+
 ## 1.16.0 - 2026-11-18
 
 ### Features
