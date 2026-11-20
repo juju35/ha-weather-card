@@ -4,10 +4,12 @@
 
 ### Fixes
 - The page no longer jumps by itself on state updates: an update of the card's entities patches its shadow DOM in place instead of rebuilding it (795 nodes replaced per update on the full card, 109 on the mini card → 0), so the scenes keep running and no node shows for a frame at another size; an update of another entity, the sun's or the minute tick no longer touches the DOM at all (the rain countdown, the sun's dot and the wind are only written when they change).
+- Illustrated header, `illustration_theme: auto`: the banner takes its night colours from Home Assistant's dark theme only, as the other ha-* cards (a light theme after sunset keeps the day sky); the scene and the icon still show the real day or night by `sun.sun`, and `illustration_theme: day | night` still forces both.
 
 ### Maintenance
 - The commitlint config loads as an ES module: the `commit-msg` hook failed on every commit.
 - Release workflow: `softprops/action-gh-release` v3.0.4, as in the other cards.
+- Validate: the Build & check job runs in a Debian 12 container with Playwright's Chromium, so the browser tests (layout shift, pill, narrow widths, animation frames) run in CI instead of being skipped.
 
 ## 1.16.2 - 2026-11-18
 

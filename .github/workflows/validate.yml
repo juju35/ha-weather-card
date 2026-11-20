@@ -39,17 +39,33 @@ jobs:
   build:
     name: Build & check
     runs-on: ubuntu-latest
+    # Debian 12 container (Node 22 included): apt goes to the Debian mirrors, not the runner's Ubuntu ones,
+    # which kept failing. The job runs as root, hence no sudo below.
+    container: node:22-bookworm
+    # In a container, run steps default to sh (dash, no pipefail): keep bash.
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 22
+      # The workspace is owned by another user than the container's root: let git work in it.
+      - name: Trust the checkout
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Install dependencies
         run: npm ci
+
+      # The browser tests (layout shift, narrow widths) skip without Chromium: install it so they run here.
+      # The browser download (no apt) is kept apart from its system libraries, so the apt work all
+      # sits in one time-boxed, retried step and a hung mirror cannot stall the job.
+      - name: Install Chromium for the browser tests
+        run: npx playwright install chromium
+
+      - name: Install Chromium system deps
+        timeout-minutes: 12
+        run: .github/scripts/install-chromium-deps.sh
 
       - name: Build and check the card
         run: npm run check

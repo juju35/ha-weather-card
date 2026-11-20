@@ -1,6 +1,6 @@
 // The scene GIFs are stepped frame by frame: seeking the animations to a time must give the same picture whatever
 // was shown before (else every run of the screenshot job commits new GIFs). Needs the built card and Playwright's
-// Chromium; skipped without them, like on the Validate job.
+// Chromium; skipped without them (the Validate job installs them).
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { test } from "node:test";
