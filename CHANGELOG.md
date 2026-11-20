@@ -2,6 +2,9 @@
 
 ## 1.16.3 - 2026-11-20
 
+### Fixes
+- The page no longer jumps by itself on state updates: an update of the card's entities patches its shadow DOM in place instead of rebuilding it (795 nodes replaced per update on the full card, 109 on the mini card → 0), so the scenes keep running and no node shows for a frame at another size; an update of another entity, the sun's or the minute tick no longer touches the DOM at all (the rain countdown, the sun's dot and the wind are only written when they change).
+
 ### Maintenance
 - The commitlint config loads as an ES module: the `commit-msg` hook failed on every commit.
 - Release workflow: `softprops/action-gh-release` v3.0.4, as in the other cards.

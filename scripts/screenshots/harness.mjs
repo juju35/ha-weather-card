@@ -52,10 +52,11 @@ customElements.define("ha-icon", class extends HTMLElement {
   static get observedAttributes() { return ["icon"]; }
   connectedCallback() { this._draw(); }
   attributeChangedCallback() { this._draw(); }
+  // Drawn in its own shadow root, like Home Assistant's: the card's markup (patched in place) owns its attributes.
   _draw() {
     const path = ICONS[(this.getAttribute("icon") || "").replace("mdi:", "")] || "";
-    this.style.display = "inline-flex";
-    this.innerHTML = '<svg viewBox="0 0 24 24" style="width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);fill:currentColor"><path d="' + path + '"/></svg>';
+    this.shadowRoot || this.attachShadow({ mode: "open" });
+    this.shadowRoot.innerHTML = '<style>:host{display:inline-flex}</style><svg viewBox="0 0 24 24" style="width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);fill:currentColor"><path d="' + path + '"/></svg>';
   }
 });`;
 
