@@ -1,6 +1,6 @@
 // The cards rendered in Chromium at the phone widths of the Sections view: nothing leaves the card, the title keeps
 // its 4 characters, the pill reads whole where there is room. Needs the built card (npm run build) and Playwright's
-// Chromium (npm ci && npx playwright install chromium); skipped without them, like on the Validate job.
+// Chromium (npm ci && npx playwright install chromium); skipped without them (the Validate job installs them).
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { test } from "node:test";

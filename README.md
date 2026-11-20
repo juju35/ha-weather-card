@@ -201,7 +201,7 @@ show_current: false
 | `wind_hours` | number | `24` | Hours of history in the wind rose (1 to 168), with the `wind` section |
 | `animations` | boolean | `true` | Animate the scene and the sections |
 | `illustration` | boolean | `true` | Illustrated 90px header (full and mini card): the title on a day or night sky, the animated weather scene at the right, a lawn strip along the bottom, the icon in the status colour (warning, lightning, else the condition). `false` keeps the classic header with the scene in the body |
-| `illustration_theme` | string | `auto` | Illustrated header: `auto` (night colours when Home Assistant's theme is dark or `sun.sun` is below the horizon; the scene and the icon follow the real day or night by `sun.sun`, so a sunny day keeps its sun on a dark theme), `day` or `night` (forces both) |
+| `illustration_theme` | string | `auto` | Illustrated header: `auto` (night colours when Home Assistant's theme is dark; the scene and the icon follow the real day or night by `sun.sun`, so a sunny day keeps its sun on a dark theme), `day` or `night` (forces both) |
 | `popup` | boolean | `true` | Full screen button that opens the detail over the whole screen |
 | `refresh` | boolean | `true` | Refresh button that asks the integrations for fresh data (hidden on the folded mini card, unless the weather is unavailable) |
 | `zoom` | boolean | `true` | Mini card: detail button to unfold the full card |

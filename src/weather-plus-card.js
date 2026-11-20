@@ -391,16 +391,16 @@ class WeatherPlusCard extends WxElement {
       const speed = root?.querySelector?.(".s-wind .wspeed");
       if (!speed) continue;
       const sp = wxWindSpeed(fmt, now.speed, now.unit);
-      if (speed.firstChild?.nodeType === 3) speed.firstChild.textContent = sp;
+      if (speed.firstChild?.nodeType === 3 && speed.firstChild.textContent !== sp) speed.firstChild.textContent = sp;
       if (now.b) {
-        root.querySelector(".s-wind .wmark")?.setAttribute("transform", `rotate(${now.b.deg.toFixed(0)} 110 110)`);
+        wxSetAttr(root.querySelector(".s-wind .wmark"), "transform", `rotate(${now.b.deg.toFixed(0)} 110 110)`);
         const arrow = root.querySelector(".s-wind .wdir .arrow");
-        if (arrow) arrow.style.transform = `rotate(${((now.b.deg + 180) % 360).toFixed(0)}deg)`;
-        const label = root.querySelector(".s-wind .wdir b");
-        if (label) label.textContent = now.b.label;
+        const turn = `rotate(${((now.b.deg + 180) % 360).toFixed(0)}deg)`;
+        if (arrow && arrow.style.transform !== turn) arrow.style.transform = turn;
+        wxSetText(root.querySelector(".s-wind .wdir b"), now.b.label);
       }
       const gust = root.querySelector(".s-wind .wgust .ct");
-      if (gust && now.gust != null) gust.textContent = this._t("gusts", { v: `${wxFmtNum(fmt, now.gust, 0)} ${now.unit}` });
+      if (gust && now.gust != null) wxSetText(gust, this._t("gusts", { v: `${wxFmtNum(fmt, now.gust, 0)} ${now.unit}` }));
     }
   }
 
@@ -496,10 +496,10 @@ class WeatherPlusCard extends WxElement {
     for (const root of [this.shadowRoot, this._popup?.shadowRoot]) {
       const svg = root?.querySelector?.(".sun svg");
       if (!svg) continue;
-      svg.querySelector(".done")?.setAttribute("d", d);
+      wxSetAttr(svg.querySelector(".done"), "d", d);
       for (const c of svg.querySelectorAll("circle")) {
-        c.setAttribute("cx", x);
-        c.setAttribute("cy", y);
+        wxSetAttr(c, "cx", x);
+        wxSetAttr(c, "cy", y);
       }
     }
   }
@@ -510,7 +510,7 @@ class WeatherPlusCard extends WxElement {
   _patchRain(rain) {
     if (!rain) return;
     for (const root of [this.shadowRoot, this._popup?.shadowRoot]) {
-      for (const el of root?.querySelectorAll?.(".rain-text") || []) el.textContent = rain.headline;
+      for (const el of root?.querySelectorAll?.(".rain-text") || []) wxSetText(el, rain.headline);
       const bar = root?.querySelector?.(".rainbar");
       if (!bar) continue;
       const byKey = new Map(rain.segments.map((s) => [s.k, s]));
@@ -521,8 +521,8 @@ class WeatherPlusCard extends WxElement {
           el.remove();
           continue;
         }
-        el.style.flex = String(s.span);
-        if (!s.na) el.setAttribute("title", wxRainSegTitle(this, s));
+        if (el.style.flexGrow !== String(s.span)) el.style.flex = String(s.span);
+        if (!s.na) wxSetAttr(el, "title", wxRainSegTitle(this, s));
       }
       for (const s of byKey.values()) {
         if (!s.na) continue;
@@ -858,9 +858,9 @@ class WeatherPlusCard extends WxElement {
     const cls = [this._compact() ? "mini" : "", still ? "still" : ""].filter(Boolean).join(" ");
     const haCard = `<ha-card${cls ? ` class="${cls}"` : ""}>`;
     if (!st) {
-      this.shadowRoot.innerHTML = `<style>${WX_STYLES}</style>${haCard}<div class="empty"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon>${wxEsc(
+      wxMorph(this.shadowRoot, `<style>${WX_STYLES}</style>${haCard}<div class="empty"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon>${wxEsc(
         c.entity ? `${this._t("no_weather")} (${c.entity})` : this._t("no_weather"),
-      )}</div></ha-card>`;
+      )}</div></ha-card>`);
       return;
     }
     if (wxUnavailable(st)) {
@@ -874,7 +874,7 @@ class WeatherPlusCard extends WxElement {
         : `<div class="header"><div class="badge"><ha-icon icon="mdi:weather-cloudy-alert"></ha-icon></div>` +
           this._titles(wxEsc(ent.weather), name, "", { text: off, color: WX_IDLE, alert: false }) +
           `${this._refreshButton()}${this._zoomButton()}</div>`;
-      this.shadowRoot.innerHTML = `<style>${WX_STYLES}</style><style>:host{--wx-color:${WX_IDLE}}</style>${haCard}${header}</ha-card>`;
+      wxMorph(this.shadowRoot, `<style>${WX_STYLES}</style><style>:host{--wx-color:${WX_IDLE}}</style>${haCard}${header}</ha-card>`);
       this._closePopup();
       return;
     }
@@ -894,7 +894,7 @@ class WeatherPlusCard extends WxElement {
       this.shadowRoot,
       this.shadowRoot,
       () => {
-        this.shadowRoot.innerHTML = body;
+        wxMorph(this.shadowRoot, body);
       },
       !this._byPointer,
     );
@@ -950,12 +950,11 @@ class WeatherPlusCard extends WxElement {
   }
 
   // Night colours of the banner (its sky, lawn and buttons): forced by `illustration_theme`, else Home Assistant's
-  // dark theme or the night (the sun down by sun.sun, or a clear night without it).
-  _bannerNight(m) {
+  // dark theme only (the ha-* charter); the scene itself still follows the real day or night by sun.sun.
+  _bannerNight(_m) {
     const forced = this._forcedNight();
     if (forced != null) return forced;
-    if (this._hass?.themes?.darkMode) return true;
-    return !!m?.night;
+    return !!this._hass?.themes?.darkMode;
   }
 
   // The banner of the card from its model: the weather now (scene, icon, colour) by the real day or night — the sun
@@ -1269,14 +1268,14 @@ class WeatherPlusCard extends WxElement {
     if (p) {
       // Updates rewrite the card inside the sheet only: the sheet keeps its scroll position and does not replay its
       // entry animation, the hourly strip keeps its scroll, the focused control gets its focus back.
-      p.color.textContent = color;
-      p.sheet.setAttribute("aria-label", m.name);
-      p.card.className = cls;
+      wxSetText(p.color, color);
+      wxSetAttr(p.sheet, "aria-label", m.name);
+      if (p.card.className !== cls) p.card.className = cls;
       wxKeepView(
         root,
         p.sheet,
         () => {
-          p.card.innerHTML = content;
+          wxMorph(p.card, content);
         },
         !this._byPointer,
       );

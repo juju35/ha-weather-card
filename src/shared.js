@@ -5330,6 +5330,67 @@ function wxEsc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
 
+// ── Shadow DOM patching ──
+// A state update rewrites the markup in place instead of replacing it (innerHTML): the nodes kept keep their size,
+// their running animations, their focus and hover, so the card's height does not move for a frame and the Sections
+// view does not reflow (the page jumping by itself on every sensor update). Elements with a data-key are matched by
+// it, the others by position; a node of another kind is replaced.
+const wxPatchAttrs = (cur, next, own = false) => {
+  if (!own) for (const { name } of [...cur.attributes]) if (!next.hasAttribute(name)) cur.removeAttribute(name);
+  for (const { name, value } of next.attributes) if (cur.getAttribute(name) !== value) cur.setAttribute(name, value);
+};
+const wxKeyOf = (n) => (n.nodeType === 1 ? n.getAttribute("data-key") : null);
+const wxPatchChildren = (cur, next) => {
+  const old = [...cur.childNodes];
+  const fresh = [...next.childNodes];
+  const byKey = new Map();
+  for (const o of old) {
+    const k = wxKeyOf(o);
+    if (k !== null && !byKey.has(k)) byKey.set(k, o);
+  }
+  const used = new Set();
+  fresh.forEach((n, i) => {
+    const k = wxKeyOf(n);
+    let o = k !== null ? byKey.get(k) : old[i];
+    if (!o || o.nodeType !== n.nodeType || o.nodeName !== n.nodeName || used.has(o) || (k === null && wxKeyOf(o) !== null)) o = null;
+    const ref = cur.childNodes[i] ?? null;
+    if (!o) {
+      cur.insertBefore(n, ref);
+      return;
+    }
+    used.add(o);
+    if (o !== ref) cur.insertBefore(o, ref);
+    if (n.nodeType === 1) {
+      // A custom element written empty (<ha-icon>) draws its own content and may set its own attributes: left to it,
+      // only the attributes the markup gives are updated.
+      const own = n.localName.includes("-") && !n.firstChild;
+      wxPatchAttrs(o, n, own);
+      if (!own) wxPatchChildren(o, n);
+    } else if (o.nodeValue !== n.nodeValue) o.nodeValue = n.nodeValue;
+  });
+  while (cur.childNodes.length > fresh.length) cur.removeChild(cur.lastChild);
+};
+function wxMorph(root, html) {
+  if (typeof document === "undefined" || !document.createElement || !root.childNodes) {
+    root.innerHTML = html;
+    return;
+  }
+  const tpl = document.createElement("template");
+  tpl.innerHTML = html;
+  if (!tpl.content) {
+    root.innerHTML = html;
+    return;
+  }
+  wxPatchChildren(root, tpl.content);
+}
+// Writes only what changed: setting an attribute or a text to the value it has is still a DOM mutation.
+const wxSetAttr = (el, name, value) => {
+  if (el && (!el.getAttribute || el.getAttribute(name) !== String(value))) el.setAttribute(name, value);
+};
+const wxSetText = (el, text) => {
+  if (el && el.textContent !== text) el.textContent = text;
+};
+
 const wxUnavailable = (st) => !st || st.state === "unavailable" || st.state === "unknown";
 const wxNumber = (v) => (v == null || v === "" ? null : Number.isFinite(Number(v)) ? Number(v) : null);
 const wxNum = (st) => (wxUnavailable(st) ? null : wxNumber(st.state));
