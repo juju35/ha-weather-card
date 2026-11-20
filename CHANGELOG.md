@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.16.3 - 2026-11-20
+
+### Maintenance
+- The commitlint config loads as an ES module: the `commit-msg` hook failed on every commit.
+- Release workflow: `softprops/action-gh-release` v3.0.4, as in the other cards.
+
 ## 1.16.2 - 2026-11-18
 
 ### Fixes
