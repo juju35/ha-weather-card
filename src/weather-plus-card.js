@@ -950,12 +950,11 @@ class WeatherPlusCard extends WxElement {
   }
 
   // Night colours of the banner (its sky, lawn and buttons): forced by `illustration_theme`, else Home Assistant's
-  // dark theme or the night (the sun down by sun.sun, or a clear night without it).
-  _bannerNight(m) {
+  // dark theme only (the ha-* charter); the scene itself still follows the real day or night by sun.sun.
+  _bannerNight(_m) {
     const forced = this._forcedNight();
     if (forced != null) return forced;
-    if (this._hass?.themes?.darkMode) return true;
-    return !!m?.night;
+    return !!this._hass?.themes?.darkMode;
   }
 
   // The banner of the card from its model: the weather now (scene, icon, colour) by the real day or night — the sun
