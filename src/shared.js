@@ -6257,7 +6257,7 @@ function wxRegister(type, cls, key) {
   customElements.define(`${type}-editor`, editor);
   cls.tag = type;
   window.customCards = window.customCards || [];
-  window.customCards.push({ type, name: wxT(lang, key), description: wxT(lang, `${key}_desc`), preview: true, documentationURL: WX_REPO });
+  window.customCards.push({ type, name: wxT(lang, key), description: wxT(lang, `${key}_desc`), preview: false, documentationURL: WX_REPO });
 }
 
 if (!customElements.get("weather-plus-card")) {

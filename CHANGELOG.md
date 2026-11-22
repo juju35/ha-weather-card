@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.16.4 - 2026-11-22
+
+### Performance
+- Card picker: the cards no longer ask Home Assistant for a live preview (`preview: false` in `window.customCards`). The picker drew every card at once (history requests, animations), which made the list slow to open; it now shows each card's description instead.
+
 ## 1.16.3 - 2026-11-20
 
 ### Fixes
