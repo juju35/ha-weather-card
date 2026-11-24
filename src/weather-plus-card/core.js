@@ -3,14 +3,14 @@
  * (alerts, rain in the next hour, hourly and daily forecasts, UV, pollen, sun), each from the integration that has it.
  */
 
-const WX_FC_DAILY = 1;
-const WX_FC_HOURLY = 2;
-const WX_FC_TWICE = 4;
+export const WX_FC_DAILY = 1;
+export const WX_FC_HOURLY = 2;
+export const WX_FC_TWICE = 4;
 // Each card's own number, suffixed to the ids of its banner's gradients so that several cards never share one.
-let wxUid = 0;
+export let wxUid = 0;
 
 // A twice-daily forecast folded into days: the day's high, the night's low, the daytime condition.
-function wxFoldTwiceDaily(list, tz) {
+export function wxFoldTwiceDaily(list, tz) {
   const days = [];
   for (const f of list || []) {
     let day = days.find((x) => wxSameDay(x.datetime, f.datetime, tz));
@@ -31,8 +31,8 @@ function wxFoldTwiceDaily(list, tz) {
 
 // The number of entities of a `hass.states` object, counted once per object (every state change replaces it):
 // the hass setter runs on each update, and Object.keys() over a large instance allocates a lot for nothing.
-const WX_STATE_COUNTS = new WeakMap();
-function wxStatesCount(states) {
+export const WX_STATE_COUNTS = new WeakMap();
+export function wxStatesCount(states) {
   let n = WX_STATE_COUNTS.get(states);
   if (n === undefined) {
     n = Object.keys(states).length;
@@ -42,7 +42,7 @@ function wxStatesCount(states) {
 }
 
 // Minimum time the refresh icon turns, in ms.
-const WX_REFRESH_MIN = 600;
+export const WX_REFRESH_MIN = 600;
 
 // Every entity id the card tracks.
 // The status pill's place, decided by measurement after each render and each new width (the same rule on every
@@ -51,7 +51,7 @@ const WX_REFRESH_MIN = 600;
 // does not fit alone). When the label is still cut there, or the text block leaves the banner or runs over its lawn
 // strip, the pill keeps its dot alone, on the title row (its label stays in title and aria-label). A card of 200 px
 // or less shows the dot alone anyway (CSS), beside the title.
-const wxPlacePill = (head, row, ground) => {
+export const wxPlacePill = (head, row, ground) => {
   if (!head) return;
   head.removeAttribute("data-wrap");
   head.removeAttribute("data-dot");
@@ -72,12 +72,12 @@ const wxPlacePill = (head, row, ground) => {
   }
 };
 
-const wxEntIds = (ent) => [...Object.values(ent), ...Object.values(ent.air || {}), ...Object.values(ent.wind || {})].flat().filter((id) => typeof id === "string");
+export const wxEntIds = (ent) => [...Object.values(ent), ...Object.values(ent.air || {}), ...Object.values(ent.wind || {})].flat().filter((id) => typeof id === "string");
 
 // Runs `write` (which replaces the markup under `scope`) keeping what the viewer was doing: the scroll of `scope`, of
 // the hourly strips, and the focused control (found again by its action or entity) when `keepFocus` (the keyboard:
 // put back after a mouse click or a tap, the focus would draw the focus ring).
-function wxKeepView(root, scope, write, keepFocus = true) {
+export function wxKeepView(root, scope, write, keepFocus = true) {
   const top = scope.scrollTop;
   const strips = [...(root.querySelectorAll?.(".hscroll") || [])].map((el) => el.scrollLeft);
   const a = keepFocus ? root.activeElement : null;
@@ -95,7 +95,7 @@ function wxKeepView(root, scope, write, keepFocus = true) {
   }
 }
 
-class WeatherPlusCard extends WxElement {
+export class WeatherPlusCard extends WxElement {
   static get defaults() {
     return WX_DEFAULTS;
   }
@@ -1362,7 +1362,7 @@ class WeatherPlusCard extends WxElement {
   }
 }
 
-class WeatherPlusMiniCard extends wxMini(WeatherPlusCard) {}
+export class WeatherPlusMiniCard extends wxMini(WeatherPlusCard) {}
 
 wxRegister("weather-plus-card", WeatherPlusCard, "picker_card");
 wxRegister("weather-plus-mini-card", WeatherPlusMiniCard, "picker_mini");

@@ -1,10 +1,10 @@
 // Focus given back after a re-render (the zoom button replaced by its twin, the popup's close button, the popup
 // button once the popup closes) must not scroll the page: every focus() call passes { preventScroll: true }.
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import { makeHass, NOON } from "./hass.mjs";
 import { load, mount } from "./load.mjs";
+import { sources } from "./source.mjs";
 
 const lib = load(NOON);
 // A button stand-in that records the arguments of its focus() calls.
@@ -15,10 +15,9 @@ const noScroll = (b) => {
 };
 
 test("focus: every focus() call in the sources keeps the page where it is", () => {
-  const src = new URL("../src/", import.meta.url);
   const calls = [];
-  for (const f of readdirSync(src).filter((n) => n.endsWith(".js")))
-    for (const [i, line] of readFileSync(new URL(f, src), "utf8").split("\n").entries())
+  for (const [f, code] of Object.entries(sources))
+    for (const [i, line] of code.split("\n").entries())
       for (const m of line.matchAll(/\.focus(?:\?\.)?\(([^)]*)\)/g)) calls.push([`${f}:${i + 1}`, m[1]]);
   assert.ok(calls.length >= 4, `${calls.length} calls found`);
   for (const [at, arg] of calls) assert.match(arg, /preventScroll:\s*true/, at);
