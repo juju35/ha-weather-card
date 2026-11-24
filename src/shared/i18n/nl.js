@@ -188,7 +188,7 @@ export default {
   p_tree: "Bomen",
   p_weed: "Kruiden",
   p_willow: "Wilg",
-  daylight: "{h} u {m} daglicht",
+  daylight: "{h} u {m} min daglicht",
   zoom_in: "Volledige kaart tonen",
   popup_open: "Volledig scherm",
   popup_close: "Sluiten",

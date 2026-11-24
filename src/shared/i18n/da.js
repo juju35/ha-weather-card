@@ -188,7 +188,7 @@ export default {
   p_tree: "Træer",
   p_weed: "Urter",
   p_willow: "Pil",
-  daylight: "{h} t {m} dagslys",
+  daylight: "{h} t {m} min dagslys",
   zoom_in: "Vis hele kortet",
   popup_open: "Fuld skærm",
   popup_close: "Luk",

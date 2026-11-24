@@ -193,7 +193,7 @@ export default {
   p_weed: "Weeds",
   p_willow: "Willow",
   // Sun
-  daylight: "{h} h {m} of daylight",
+  daylight: "{h} h {m} min of daylight",
   // Mini card / zoom
   zoom_in: "Show the full card",
   popup_open: "Full screen",

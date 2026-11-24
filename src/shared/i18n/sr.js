@@ -188,7 +188,7 @@ export default {
   p_tree: "Дрвеће",
   p_weed: "Корови",
   p_willow: "Врба",
-  daylight: "{h} h {m} обданице",
+  daylight: "{h} ч {m} мин обданице",
   zoom_in: "Прикажи пуну картицу",
   popup_open: "Цео екран",
   popup_close: "Затвори",

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.16.7 - 2026-11-24
+
+### Fixes
+- Sun section: the daylight length now shows its minutes unit ("10 h 32 min of daylight" instead of "10 h 32 of daylight"), in every language that lacked it (#75).
+
 ## 1.16.6 - 2026-11-24
 
 ### Maintenance

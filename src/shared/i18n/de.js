@@ -188,7 +188,7 @@ export default {
   p_tree: "Bäume",
   p_weed: "Kräuter",
   p_willow: "Weide",
-  daylight: "{h} h {m} Tageslicht",
+  daylight: "{h} h {m} min Tageslicht",
   zoom_in: "Vollständige Karte anzeigen",
   popup_open: "Vollbild",
   popup_close: "Schließen",

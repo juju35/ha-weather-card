@@ -188,7 +188,7 @@ export default {
   p_tree: "Árvores",
   p_weed: "Ervas",
   p_willow: "Salgueiro",
-  daylight: "{h} h {m} de luz do dia",
+  daylight: "{h} h {m} min de luz do dia",
   zoom_in: "Mostrar o cartão completo",
   popup_open: "Ecrã inteiro",
   popup_close: "Fechar",

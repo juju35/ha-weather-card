@@ -188,7 +188,7 @@ export default {
   p_tree: "Arbori",
   p_weed: "Ierburi",
   p_willow: "Salcie",
-  daylight: "{h} h {m} de lumină",
+  daylight: "{h} h {m} min de lumină",
   zoom_in: "Afișează cardul complet",
   popup_open: "Ecran complet",
   popup_close: "Închide",

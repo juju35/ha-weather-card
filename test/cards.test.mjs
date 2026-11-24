@@ -148,7 +148,7 @@ test("card: rain in the next hour, alerts, VigiEau, lightning, pollen, UV and su
   assert.match(out, /class="chip tint"[^>]*title="Risque pollinique"><ha-icon icon="mdi:flower-pollen"><\/ha-icon><span class="ct">Pollens : moyen/);
   assert.match(out, /Modéré.*Lunettes et crème solaire/);
   assert.match(out, /class="sun up"/);
-  assert.match(out, /10 h 28 de jour/);
+  assert.match(out, /10 h 28 min de jour/);
 });
 
 test("card: sections follow `sections`, and hide without data", () => {
