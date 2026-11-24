@@ -188,7 +188,7 @@ export default {
   p_tree: "Arbres",
   p_weed: "Herbacées",
   p_willow: "Saule",
-  daylight: "{h} h {m} de jour",
+  daylight: "{h} h {m} min de jour",
   zoom_in: "Afficher la carte complète",
   popup_open: "Plein écran",
   popup_close: "Fermer",

@@ -188,7 +188,7 @@ export default {
   p_tree: "Drveće",
   p_weed: "Korovi",
   p_willow: "Vrba",
-  daylight: "{h} h {m} obdanice",
+  daylight: "{h} h {m} min obdanice",
   zoom_in: "Prikaži punu karticu",
   popup_open: "Ceo ekran",
   popup_close: "Zatvori",

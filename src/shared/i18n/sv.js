@@ -188,7 +188,7 @@ export default {
   p_tree: "Träd",
   p_weed: "Örter",
   p_willow: "Sälg",
-  daylight: "{h} h {m} dagsljus",
+  daylight: "{h} h {m} min dagsljus",
   zoom_in: "Visa hela kortet",
   popup_open: "Helskärm",
   popup_close: "Stäng",

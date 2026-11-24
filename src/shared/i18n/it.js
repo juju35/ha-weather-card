@@ -188,7 +188,7 @@ export default {
   p_tree: "Alberi",
   p_weed: "Erbacee",
   p_willow: "Salice",
-  daylight: "{h} h {m} di luce",
+  daylight: "{h} h {m} min di luce",
   zoom_in: "Mostra la scheda completa",
   popup_open: "Schermo intero",
   popup_close: "Chiudi",

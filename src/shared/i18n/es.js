@@ -188,7 +188,7 @@ export default {
   p_tree: "Árboles",
   p_weed: "Herbáceas",
   p_willow: "Sauce",
-  daylight: "{h} h {m} de luz",
+  daylight: "{h} h {m} min de luz",
   zoom_in: "Mostrar la tarjeta completa",
   popup_open: "Pantalla completa",
   popup_close: "Cerrar",

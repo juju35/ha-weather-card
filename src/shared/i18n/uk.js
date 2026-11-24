@@ -188,7 +188,7 @@ export default {
   p_tree: "Дерева",
   p_weed: "Бур'яни",
   p_willow: "Верба",
-  daylight: "Світловий день {h} год {m}",
+  daylight: "Світловий день {h} год {m} хв",
   zoom_in: "Показати повну картку",
   popup_open: "На весь екран",
   popup_close: "Закрити",

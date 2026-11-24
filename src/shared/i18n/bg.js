@@ -188,7 +188,7 @@ export default {
   p_tree: "Дървета",
   p_weed: "Тревисти растения",
   p_willow: "Върба",
-  daylight: "{h} ч {m} светлина",
+  daylight: "{h} ч {m} мин светлина",
   zoom_in: "Покажи цялата карта",
   popup_open: "Цял екран",
   popup_close: "Затвори",

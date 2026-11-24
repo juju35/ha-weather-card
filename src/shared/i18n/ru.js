@@ -188,7 +188,7 @@ export default {
   p_tree: "Деревья",
   p_weed: "Сорные травы",
   p_willow: "Ива",
-  daylight: "Световой день {h} ч {m}",
+  daylight: "Световой день {h} ч {m} мин",
   zoom_in: "Показать полную карточку",
   popup_open: "Во весь экран",
   popup_close: "Закрыть",
