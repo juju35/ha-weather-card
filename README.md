@@ -130,7 +130,7 @@ Click the button below to add the repository directly:
 
 [![Add to the Marketplace](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=juju35&repository=ha-weather-card&category=plugin)
 
-Then click **Install**, and reload your browser when the Marketplace asks you to.
+Then click **Install**, and reload your browser when the Marketplace asks you to. The resource is `/local/community/ha-weather-card/ha-weather-card.js`.
 
 Or manually:
 
@@ -231,15 +231,15 @@ Each animation has its own GIF, recorded from the mini card:
 
 | Scene | Light | Dark |
 |---|---|---|
-| Sunny: the sun turns and its rays pulse. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-sunny.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-sunny-dark.gif) |
-| Windy: clouds hurry across the sky. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-windy.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-windy-dark.gif) |
-| Pouring: heavy rain streams under the cloud. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-pouring.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-pouring-dark.gif) |
-| Snowy: snowflakes drift down and sway. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-snowy.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-snowy-dark.gif) |
-| Stormy rain: lightning flashes through the rain. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy-dark.gif) |
-| Stormy rain at night: the same storm under the stars. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy-night.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy-night-dark.gif) |
-| Clear night: the moon shines and the stars twinkle. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-clear-night.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-clear-night-dark.gif) |
-| Partly cloudy night: clouds drift past the moon. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-partlycloudy-night.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-partlycloudy-night-dark.gif) |
-| Rainy night: rain falls through the moonlight. | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-rainy-night.gif) | ![](https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-rainy-night-dark.gif) |
+| Sunny: the sun turns and its rays pulse. | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-sunny.gif" alt="scene sunny" width="292"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-sunny-dark.gif" alt="scene sunny dark" width="292"> |
+| Windy: clouds hurry across the sky. | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-windy.gif" alt="scene windy" width="292"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-windy-dark.gif" alt="scene windy dark" width="292"> |
+| Pouring: heavy rain streams under the cloud. | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-pouring.gif" alt="scene pouring" width="292"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-pouring-dark.gif" alt="scene pouring dark" width="292"> |
+| Snowy: snowflakes drift down and sway. | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-snowy.gif" alt="scene snowy" width="292"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-snowy-dark.gif" alt="scene snowy dark" width="292"> |
+| Stormy rain: lightning flashes through the rain. | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy.gif" alt="scene lightning rainy" width="292"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy-dark.gif" alt="scene lightning rainy dark" width="292"> |
+| Stormy rain at night: the same storm under the stars. | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy-night.gif" alt="scene lightning rainy night" width="292"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-lightning-rainy-night-dark.gif" alt="scene lightning rainy night dark" width="292"> |
+| Clear night: the moon shines and the stars twinkle. | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-clear-night.gif" alt="scene clear night" width="292"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-clear-night-dark.gif" alt="scene clear night dark" width="292"> |
+| Partly cloudy night: clouds drift past the moon. | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-partlycloudy-night.gif" alt="scene partlycloudy night" width="292"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-partlycloudy-night-dark.gif" alt="scene partlycloudy night dark" width="292"> |
+| Rainy night: rain falls through the moonlight. | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-rainy-night.gif" alt="scene rainy night" width="292"> | <img src="https://raw.githubusercontent.com/juju35/ha-weather-card/main/screenshots/scene-rainy-night-dark.gif" alt="scene rainy night dark" width="292"> |
 
 ## Development
 
